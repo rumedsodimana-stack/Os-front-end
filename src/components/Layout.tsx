@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { 
-  Bell, 
-  Search, 
-  Sun, 
-  Moon, 
-  User, 
+import {
+  Bell,
+  Search,
+  Sun,
+  Moon,
+  User,
   Menu,
   X,
   Hotel,
@@ -18,7 +18,8 @@ import {
   LineChart,
   Settings,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Palette
 } from "lucide-react";
 import { useTheme } from "./theme-provider";
 import { cn } from "../lib/utils";
@@ -179,6 +180,15 @@ export function Layout({
 
           {/* Bottom Links */}
           <div className="mt-auto pl-6 flex flex-col gap-2 pt-4 border-t border-violet-400/50 mx-4">
+            {import.meta.env.DEV && (
+              <a
+                href="/style-guide"
+                className="flex items-center gap-3 px-4 py-2 text-white/80 hover:text-white transition-colors"
+              >
+                <Palette className="w-5 h-5 shrink-0" />
+                <span className={cn("text-sm font-medium", !sidebarOpen && "md:hidden")}>Design System</span>
+              </a>
+            )}
             <button className="flex items-center gap-3 px-4 py-2 text-white/80 hover:text-white transition-colors">
               <Settings className="w-5 h-5 shrink-0" />
               <span className={cn("text-sm font-medium", !sidebarOpen && "md:hidden")}>Settings</span>

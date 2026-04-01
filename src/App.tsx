@@ -10,6 +10,7 @@ import { HumanResources } from "./pages/HumanResources";
 import { Engineering } from "./pages/Engineering";
 import { Executive } from "./pages/Executive";
 import { Login } from "./pages/Login";
+import { StyleGuide } from "./pages/StyleGuide";
 
 type Department =
   | "Dashboard"
@@ -65,8 +66,17 @@ export default function App() {
     <ThemeProvider defaultTheme="system" storageKey="omnistay-theme">
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/style-guide" element={<StyleGuideWrapper />} />
         <Route path="/*" element={<DashboardApp />} />
       </Routes>
     </ThemeProvider>
+  );
+}
+
+function StyleGuideWrapper() {
+  return (
+    <div className="min-h-screen bg-background font-sans">
+      <StyleGuide />
+    </div>
   );
 }
