@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./components/theme-provider";
+import { ThemeApplier } from "./components/ThemeApplier";
 import { Layout } from "./components/Layout";
 import { FrontDesk } from "./pages/FrontDesk";
 import { Housekeeping } from "./pages/Housekeeping";
@@ -9,6 +10,7 @@ import { SalesRevenue } from "./pages/SalesRevenue";
 import { HumanResources } from "./pages/HumanResources";
 import { Engineering } from "./pages/Engineering";
 import { Executive } from "./pages/Executive";
+import { Configuration } from "./pages/Configuration";
 import { Login } from "./pages/Login";
 import { StyleGuide } from "./pages/StyleGuide";
 
@@ -20,7 +22,8 @@ type Department =
   | "Sales & Revenue"
   | "Human Resources"
   | "Engineering"
-  | "Executive";
+  | "Executive"
+  | "Configuration";
 
 function DashboardApp() {
   const [activeDepartment, setActiveDepartment] = useState<Department>("Dashboard");
@@ -57,6 +60,9 @@ function DashboardApp() {
       {activeDepartment === "Executive" && (
         <Executive aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
       )}
+      {activeDepartment === "Configuration" && (
+        <Configuration />
+      )}
     </Layout>
   );
 }
@@ -64,6 +70,7 @@ function DashboardApp() {
 export default function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="omnistay-theme">
+      <ThemeApplier />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/style-guide" element={<StyleGuideWrapper />} />

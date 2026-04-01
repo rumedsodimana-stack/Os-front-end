@@ -19,22 +19,24 @@ import {
   Settings,
   LogOut,
   ChevronDown,
-  Palette
+  Palette,
+  Sliders
 } from "lucide-react";
 import { useTheme } from "./theme-provider";
 import { cn } from "../lib/utils";
 import { AgenticAIPanel } from "./AgenticAIPanel";
 import { motion } from "motion/react";
 
-type Department = 
-  | "Dashboard" 
-  | "Front Desk" 
-  | "Housekeeping" 
-  | "Food & Beverage" 
-  | "Sales & Revenue" 
-  | "Human Resources" 
-  | "Engineering" 
-  | "Executive";
+type Department =
+  | "Dashboard"
+  | "Front Desk"
+  | "Housekeeping"
+  | "Food & Beverage"
+  | "Sales & Revenue"
+  | "Human Resources"
+  | "Engineering"
+  | "Executive"
+  | "Configuration";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -55,6 +57,7 @@ const DEPARTMENTS: { name: Department; icon: React.ElementType; submenus: string
   { name: "Human Resources", icon: Users, submenus: ["Overview", "Employee List", "Attendance", "Payroll", "Recruiting"] },
   { name: "Engineering", icon: Wrench, submenus: ["Overview", "Work Orders", "Preventive Maintenance", "Asset Management"] },
   { name: "Executive", icon: LineChart, submenus: ["Overview", "High-level KPIs", "Financials", "Strategic Planning"] },
+  { name: "Configuration", icon: Sliders, submenus: ["Appearance", "Colours", "Typography", "Layout", "Brand Identity"] },
 ];
 
 export function Layout({ 
@@ -85,7 +88,7 @@ export function Layout({
         onMouseLeave={() => setHoveredDept(null)}
       >
         {/* Darker Left Strip (Main Menu) */}
-        <div className="w-16 bg-violet-700/90 backdrop-blur-md h-full rounded-r-2xl z-20 flex flex-col items-center py-6 shadow-xl absolute left-0 top-0 border-r border-white/10">
+        <div className="w-16 backdrop-blur-md h-full rounded-r-2xl z-20 flex flex-col items-center py-6 shadow-xl absolute left-0 top-0 border-r border-white/10" style={{ backgroundColor: 'var(--sidebar-color, #7c3aed)' }}>
           {/* Logo */}
           <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center mb-8 text-white font-bold text-xl shadow-inner">
             O
@@ -122,7 +125,7 @@ export function Layout({
         </div>
 
         {/* Submenu Area */}
-        <div className="flex-1 bg-violet-500/90 backdrop-blur-md h-full rounded-r-[40px] pl-16 flex flex-col z-10 py-6 transition-all">
+        <div className="flex-1 backdrop-blur-md h-full rounded-r-[40px] pl-16 flex flex-col z-10 py-6 transition-all" style={{ backgroundColor: 'color-mix(in srgb, var(--sidebar-color, #7c3aed) 70%, white 30%)' }}>
           
           {/* User Profile */}
           <div className="flex items-center gap-3 px-6 mb-8 text-white">
