@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Bell,
   Search,
@@ -77,6 +77,14 @@ export function Layout({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [hoveredDept, setHoveredDept] = useState<Department | null>(null);
   const [notifOpen, setNotifOpen] = useState(false);
+  const mainRef = useRef<HTMLElement>(null);
+
+  // Reset scroll to top whenever the user navigates to a different page
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+  }, [activeDepartment, activeSubmenu]);
 
   const displayDeptName = hoveredDept || activeDepartment;
   const displayDept = DEPARTMENTS.find(d => d.name === displayDeptName)!;
@@ -280,7 +288,7 @@ export function Layout({
         </header>
 
         {/* Main */}
-        <main className="flex-1 overflow-auto px-4 sm:px-8 pb-8">
+        <main ref={mainRef} className="flex-1 overflow-auto px-4 sm:px-8 pb-8">
           {children}
         </main>
       </div>
