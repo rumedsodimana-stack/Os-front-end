@@ -60,7 +60,7 @@ const DEPARTMENTS: { name: Department; icon: React.ElementType; submenus: string
   { name: "Events", icon: CalendarDays, submenus: ["Overview", "Event Timeline", "Floor Plan", "AV & Equipment", "Catering Orders", "Attendance", "Banquet Setup", "Post-Event", "All Events", "Reports"] },
   { name: "Procurement", icon: Package, submenus: ["Overview", "Purchase Orders", "GRN & Receiving", "Suppliers", "Supplier Scorecard", "Supplier Comparison", "Stock Levels", "Reports"] },
   { name: "Portfolio", icon: Building2, submenus: ["Overview", "All Properties", "Transfers", "Consolidated P&L", "SOP Library", "Benchmarking", "Occupancy Heatmap"] },
-  { name: "Settings", icon: SlidersHorizontal, submenus: ["Appearance", "Property Branding", "User Preferences", "Integrations", "System Settings"] },
+  { name: "Settings", icon: SlidersHorizontal, submenus: ["Hotel Profile", "Room Types", "Rate Plans", "User Roles", "Integrations", "Appearance", "Billing"] },
 ];
 
 export function Layout({
