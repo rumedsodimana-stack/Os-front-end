@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./components/theme-provider";
+import { ThemeApplier } from "./components/ThemeApplier";
 import { Layout } from "./components/Layout";
 import { FrontDesk } from "./pages/FrontDesk";
 import { Housekeeping } from "./pages/Housekeeping";
@@ -9,10 +10,18 @@ import { SalesRevenue } from "./pages/SalesRevenue";
 import { HumanResources } from "./pages/HumanResources";
 import { Engineering } from "./pages/Engineering";
 import { Executive } from "./pages/Executive";
+import { CRM } from "./pages/CRM";
+import { Finance } from "./pages/Finance";
+import { Security } from "./pages/Security";
+import { Comms } from "./pages/Comms";
+import { Events } from "./pages/Events";
+import { Procurement } from "./pages/Procurement";
+import { MultiProperty } from "./pages/MultiProperty";
+import { Configuration } from "./pages/Configuration";
 import { Login } from "./pages/Login";
 import { StyleGuide } from "./pages/StyleGuide";
 
-type Department =
+export type Department =
   | "Dashboard"
   | "Front Desk"
   | "Housekeeping"
@@ -20,7 +29,15 @@ type Department =
   | "Sales & Revenue"
   | "Human Resources"
   | "Engineering"
-  | "Executive";
+  | "Executive"
+  | "CRM"
+  | "Finance"
+  | "Security"
+  | "Comms"
+  | "Events"
+  | "Procurement"
+  | "Multi-Property"
+  | "Configuration";
 
 function DashboardApp() {
   const [activeDepartment, setActiveDepartment] = useState<Department>("Dashboard");
@@ -57,6 +74,30 @@ function DashboardApp() {
       {activeDepartment === "Executive" && (
         <Executive aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
       )}
+      {activeDepartment === "CRM" && (
+        <CRM aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
+      )}
+      {activeDepartment === "Finance" && (
+        <Finance aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
+      )}
+      {activeDepartment === "Security" && (
+        <Security aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
+      )}
+      {activeDepartment === "Comms" && (
+        <Comms aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
+      )}
+      {activeDepartment === "Events" && (
+        <Events aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
+      )}
+      {activeDepartment === "Procurement" && (
+        <Procurement aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
+      )}
+      {activeDepartment === "Multi-Property" && (
+        <MultiProperty aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
+      )}
+      {activeDepartment === "Configuration" && (
+        <Configuration aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
+      )}
     </Layout>
   );
 }
@@ -64,6 +105,7 @@ function DashboardApp() {
 export default function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="omnistay-theme">
+      <ThemeApplier />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/style-guide" element={<StyleGuideWrapper />} />

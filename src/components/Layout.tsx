@@ -4,9 +4,7 @@ import {
   Search,
   Sun,
   Moon,
-  User,
   Menu,
-  X,
   Hotel,
   Sparkles,
   ConciergeBell,
@@ -19,22 +17,22 @@ import {
   Settings,
   LogOut,
   ChevronDown,
-  Palette
+  Palette,
+  UserCircle,
+  Landmark,
+  ShieldCheck,
+  Radio,
+  CalendarDays,
+  Package,
+  Building2,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useTheme } from "./theme-provider";
 import { cn } from "../lib/utils";
 import { AgenticAIPanel } from "./AgenticAIPanel";
+import { NotificationsPanel } from "./NotificationsPanel";
 import { motion } from "motion/react";
-
-type Department = 
-  | "Dashboard" 
-  | "Front Desk" 
-  | "Housekeeping" 
-  | "Food & Beverage" 
-  | "Sales & Revenue" 
-  | "Human Resources" 
-  | "Engineering" 
-  | "Executive";
+import type { Department } from "../App";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -55,11 +53,19 @@ const DEPARTMENTS: { name: Department; icon: React.ElementType; submenus: string
   { name: "Human Resources", icon: Users, submenus: ["Overview", "Employee List", "Attendance", "Payroll", "Recruiting"] },
   { name: "Engineering", icon: Wrench, submenus: ["Overview", "Work Orders", "Preventive Maintenance", "Asset Management"] },
   { name: "Executive", icon: LineChart, submenus: ["Overview", "High-level KPIs", "Financials", "Strategic Planning"] },
+  { name: "CRM", icon: UserCircle, submenus: ["Guest Profiles", "Loyalty", "Stay History", "Preferences"] },
+  { name: "Finance", icon: Landmark, submenus: ["Overview", "Journal Entries", "Invoices", "Daily Balance", "Audit Log"] },
+  { name: "Security", icon: ShieldCheck, submenus: ["Incidents", "Access Log", "Key Cards", "Shift Handover"] },
+  { name: "Comms", icon: Radio, submenus: ["Messages", "Announcements", "Notification Log"] },
+  { name: "Events", icon: CalendarDays, submenus: ["Calendar", "Event Bookings", "Function Sheets", "Banquet Orders", "Room Setup"] },
+  { name: "Procurement", icon: Package, submenus: ["Purchase Orders", "Suppliers", "Inventory", "Reorder Alerts"] },
+  { name: "Multi-Property", icon: Building2, submenus: ["Portfolio Overview", "Properties", "Cross-Property", "Group Settings"] },
+  { name: "Configuration", icon: SlidersHorizontal, submenus: ["Appearance", "Property Branding", "User Preferences", "Integrations", "System Settings"] },
 ];
 
-export function Layout({ 
-  children, 
-  activeDepartment, 
+export function Layout({
+  children,
+  activeDepartment,
   setActiveDepartment,
   activeSubmenu,
   setActiveSubmenu,
@@ -69,6 +75,7 @@ export function Layout({
   const { theme, setTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [hoveredDept, setHoveredDept] = useState<Department | null>(null);
+  const [notifOpen, setNotifOpen] = useState(false);
 
   const displayDeptName = hoveredDept || activeDepartment;
   const displayDept = DEPARTMENTS.find(d => d.name === displayDeptName)!;
@@ -260,7 +267,7 @@ export function Layout({
               {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
 
-            <button className="text-muted-foreground hover:text-foreground relative">
+            <button onClick={() => setNotifOpen(o => !o)} className="text-muted-foreground hover:text-foreground relative">
               <Bell className="w-6 h-6" />
               <span className="absolute top-0 right-0 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-destructive border-2 border-background"></span>
             </button>
@@ -281,6 +288,9 @@ export function Layout({
       {aiEnabled && (
         <AgenticAIPanel department={activeDepartment} onClose={() => setAiEnabled(false)} />
       )}
+
+      {/* Notifications Panel */}
+      <NotificationsPanel open={notifOpen} onClose={() => setNotifOpen(false)} />
 
     </div>
   );

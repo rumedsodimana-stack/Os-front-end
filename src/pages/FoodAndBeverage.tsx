@@ -39,20 +39,13 @@ export function FoodAndBeverage({ aiEnabled, activeSubmenu = "Overview" }: FoodA
       case "POS":
         return <POSSystem />;
       case "Table Management":
+        return <TableManagement />;
       case "Room Service":
+        return <RoomService />;
       case "Inventory":
+        return <FAndBInventory />;
       default:
-        return (
-          <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-            <div className="w-24 h-24 bg-secondary rounded-full flex items-center justify-center mb-6">
-              <span className="text-4xl">🚧</span>
-            </div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">{activeSubmenu}</h2>
-            <p className="text-muted-foreground max-w-md">
-              This module is currently under construction.
-            </p>
-          </div>
-        );
+        return null;
     }
   };
 
@@ -601,7 +594,7 @@ function POSSystem() {
           </div>
           
           {orderType === "Room Service" && (
-            <button 
+            <button
               disabled={cart.length === 0 || !tableOrRoom}
               className="w-full mt-2 py-3 rounded-xl bg-primary text-primary-foreground font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors shadow-sm flex items-center justify-center gap-2"
             >
@@ -610,6 +603,400 @@ function POSSystem() {
             </button>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Table Management ────────────────────────────────────────────────────────
+
+type TableStatus = "available" | "occupied" | "reserved" | "cleaning";
+
+interface TableInfo {
+  id: number;
+  name: string;
+  capacity: number;
+  status: TableStatus;
+  occupiedSince?: string;
+  server?: string;
+  x: number;
+  y: number;
+}
+
+const STATUS_COLORS: Record<TableStatus, string> = {
+  available: "bg-emerald-100 dark:bg-emerald-900/40 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400",
+  occupied: "bg-amber-100 dark:bg-amber-900/40 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400",
+  reserved: "bg-violet-100 dark:bg-violet-900/40 border-violet-300 dark:border-violet-700 text-violet-700 dark:text-violet-400",
+  cleaning: "bg-blue-100 dark:bg-blue-900/40 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-400",
+};
+
+const INITIAL_TABLES: TableInfo[] = [
+  { id: 1, name: "T1", capacity: 2, status: "occupied", occupiedSince: "12:30", server: "Marco", x: 8, y: 10 },
+  { id: 2, name: "T2", capacity: 4, status: "available", x: 28, y: 10 },
+  { id: 3, name: "T3", capacity: 4, status: "reserved", x: 48, y: 10 },
+  { id: 4, name: "T4", capacity: 6, status: "occupied", occupiedSince: "13:15", server: "Aisha", x: 68, y: 10 },
+  { id: 5, name: "T5", capacity: 2, status: "cleaning", x: 8, y: 40 },
+  { id: 6, name: "T6", capacity: 4, status: "available", x: 28, y: 40 },
+  { id: 7, name: "T7", capacity: 8, status: "occupied", occupiedSince: "12:00", server: "James", x: 48, y: 40 },
+  { id: 8, name: "T8", capacity: 4, status: "available", x: 72, y: 40 },
+  { id: 9, name: "T9", capacity: 2, status: "reserved", x: 8, y: 70 },
+  { id: 10, name: "T10", capacity: 4, status: "available", x: 28, y: 70 },
+  { id: 11, name: "T11", capacity: 6, status: "occupied", occupiedSince: "13:45", server: "Priya", x: 50, y: 70 },
+  { id: 12, name: "T12", capacity: 4, status: "available", x: 72, y: 70 },
+];
+
+function TableManagement() {
+  const [tables, setTables] = useState<TableInfo[]>(INITIAL_TABLES);
+  const [selected, setSelected] = useState<TableInfo | null>(null);
+
+  const statusCounts = tables.reduce((acc, t) => {
+    acc[t.status] = (acc[t.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const cycleStatus = (id: number) => {
+    const order: TableStatus[] = ["available", "occupied", "reserved", "cleaning"];
+    setTables(ts =>
+      ts.map(t => {
+        if (t.id !== id) return t;
+        const next = order[(order.indexOf(t.status) + 1) % order.length];
+        return { ...t, status: next };
+      })
+    );
+    setSelected(s => s?.id === id ? { ...s, status: (order[(order.indexOf(s.status) + 1) % order.length]) } : s);
+  };
+
+  return (
+    <div>
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-xl font-semibold text-foreground">Table Management</h1>
+          <div className="flex gap-3">
+            {(["available", "occupied", "reserved", "cleaning"] as TableStatus[]).map(s => (
+              <div key={s} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium capitalize", STATUS_COLORS[s])}>
+                <span className="w-2 h-2 rounded-full bg-current" />
+                {statusCounts[s] || 0} {s}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col xl:flex-row gap-6 pb-8">
+        {/* Floor Plan */}
+        <div className="flex-1 bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-border flex items-center justify-between">
+            <h2 className="font-semibold text-sm">Restaurant Floor Plan</h2>
+            <span className="text-xs text-muted-foreground">Click a table to change status</span>
+          </div>
+          <div className="relative bg-secondary/20 m-4 rounded-xl" style={{ height: 360 }}>
+            {/* Decorative elements */}
+            <div className="absolute top-4 left-4 right-4 h-8 bg-secondary/50 rounded-lg flex items-center px-3">
+              <span className="text-xs text-muted-foreground">Bar Counter</span>
+            </div>
+            <div className="absolute bottom-4 left-4 right-4 h-6 bg-secondary/40 rounded-lg flex items-center px-3">
+              <span className="text-xs text-muted-foreground">Entrance</span>
+            </div>
+            {tables.map(table => (
+              <button
+                key={table.id}
+                onClick={() => { setSelected(table); cycleStatus(table.id); }}
+                style={{ left: `${table.x}%`, top: `${table.y + 14}%`, transform: "translate(-50%,-50%)" }}
+                className={cn(
+                  "absolute flex flex-col items-center justify-center border-2 rounded-xl transition-all hover:scale-110 shadow-sm",
+                  table.capacity <= 2 ? "w-12 h-12" : table.capacity <= 4 ? "w-14 h-14" : "w-16 h-16",
+                  STATUS_COLORS[table.status]
+                )}
+                title={`${table.name} — ${table.status}`}
+              >
+                <span className="text-xs font-bold">{table.name}</span>
+                <span className="text-[9px] opacity-70">{table.capacity}p</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Table List */}
+        <div className="xl:w-80 bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-border">
+            <h2 className="font-semibold text-sm">Table Status</h2>
+          </div>
+          <div className="divide-y divide-border overflow-y-auto" style={{ maxHeight: 400 }}>
+            {tables.map(t => (
+              <div key={t.id} className="flex items-center gap-3 p-3 hover:bg-secondary/30 transition-colors">
+                <div className={cn("w-10 h-10 rounded-lg border flex flex-col items-center justify-center shrink-0", STATUS_COLORS[t.status])}>
+                  <span className="text-xs font-bold">{t.name}</span>
+                  <span className="text-[9px]">{t.capacity}p</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium capitalize">{t.status}</p>
+                  {t.occupiedSince && <p className="text-xs text-muted-foreground">Since {t.occupiedSince} · {t.server}</p>}
+                </div>
+                <button
+                  onClick={() => cycleStatus(t.id)}
+                  className="text-xs px-2 py-1 border border-border rounded-lg hover:bg-secondary transition-colors"
+                >
+                  Change
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Room Service ────────────────────────────────────────────────────────────
+
+interface RoomOrder {
+  id: string;
+  room: string;
+  guest: string;
+  items: string;
+  total: number;
+  status: "received" | "preparing" | "out-for-delivery" | "delivered";
+  time: string;
+}
+
+const STATUS_STEPS = ["received", "preparing", "out-for-delivery", "delivered"] as const;
+
+const ORDER_STATUS_STYLES: Record<string, string> = {
+  received: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400",
+  preparing: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
+  "out-for-delivery": "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400",
+  delivered: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400",
+};
+
+const INITIAL_ROOM_ORDERS: RoomOrder[] = [
+  { id: "RS-001", room: "214", guest: "Alice Johnson", items: "Wagyu Burger, Artisan Coffee x2", total: 44, status: "out-for-delivery", time: "13:42" },
+  { id: "RS-002", room: "108", guest: "Brian Chen", items: "Truffle Risotto, Signature Cocktail", total: 44, status: "preparing", time: "13:55" },
+  { id: "RS-003", room: "302", guest: "Sofia Martinez", items: "Burrata Salad, Sparkling Water", total: 24, status: "received", time: "14:02" },
+  { id: "RS-004", room: "415", guest: "David Kim", items: "Molten Lava Cake x2, Espresso", total: 34, status: "delivered", time: "13:20" },
+  { id: "RS-005", room: "507", guest: "Emma Wilson", items: "Club Sandwich, Fresh Juice x2", total: 38, status: "preparing", time: "14:10" },
+];
+
+function RoomService() {
+  const [orders, setOrders] = useState<RoomOrder[]>(INITIAL_ROOM_ORDERS);
+
+  const advance = (id: string) => {
+    setOrders(os => os.map(o => {
+      if (o.id !== id) return o;
+      const idx = STATUS_STEPS.indexOf(o.status as typeof STATUS_STEPS[number]);
+      if (idx < STATUS_STEPS.length - 1) return { ...o, status: STATUS_STEPS[idx + 1] };
+      return o;
+    }));
+  };
+
+  const statusCounts = orders.reduce((acc, o) => {
+    acc[o.status] = (acc[o.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  return (
+    <div>
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold text-foreground">Room Service Orders</h1>
+          <div className="flex gap-3">
+            {STATUS_STEPS.map(s => (
+              <div key={s} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium capitalize", ORDER_STATUS_STYLES[s])}>
+                {statusCounts[s] || 0} {s.replace(/-/g, " ")}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 pb-8">
+        {orders.map(order => {
+          const stepIdx = STATUS_STEPS.indexOf(order.status as typeof STATUS_STEPS[number]);
+          return (
+            <div key={order.id} className="bg-card border border-border rounded-2xl p-5 shadow-sm">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="font-semibold text-sm">{order.id}</span>
+                    <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium capitalize", ORDER_STATUS_STYLES[order.status])}>
+                      {order.status.replace(/-/g, " ")}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Room <strong className="text-foreground">{order.room}</strong> · {order.guest} · Ordered at {order.time}
+                  </p>
+                  <p className="text-sm mt-1">{order.items}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-lg font-bold">${order.total}</p>
+                  {order.status !== "delivered" && (
+                    <button
+                      onClick={() => advance(order.id)}
+                      className="mt-2 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors"
+                    >
+                      Advance →
+                    </button>
+                  )}
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div className="flex items-center gap-2">
+                {STATUS_STEPS.map((step, idx) => (
+                  <React.Fragment key={step}>
+                    <div className={cn("flex items-center gap-1.5 text-xs font-medium capitalize transition-colors", idx <= stepIdx ? "text-primary" : "text-muted-foreground/40")}>
+                      <div className={cn("w-2.5 h-2.5 rounded-full border-2 transition-colors", idx <= stepIdx ? "bg-primary border-primary" : "border-muted-foreground/30")} />
+                      <span className="hidden sm:inline">{step.replace(/-/g, " ")}</span>
+                    </div>
+                    {idx < STATUS_STEPS.length - 1 && (
+                      <div className={cn("flex-1 h-0.5 rounded transition-colors", idx < stepIdx ? "bg-primary" : "bg-muted-foreground/20")} />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── F&B Inventory ───────────────────────────────────────────────────────────
+
+interface StockItem {
+  id: number;
+  name: string;
+  category: string;
+  unit: string;
+  current: number;
+  par: number;
+  reorderAt: number;
+  supplier: string;
+}
+
+const STOCK: StockItem[] = [
+  { id: 1, name: "Arborio Rice", category: "Dry Goods", unit: "kg", current: 45, par: 50, reorderAt: 20, supplier: "Metro Wholesale" },
+  { id: 2, name: "Black Truffle", category: "Speciality", unit: "g", current: 120, par: 500, reorderAt: 150, supplier: "Luxury Ingredients Co." },
+  { id: 3, name: "Wagyu Beef", category: "Meat", unit: "kg", current: 18, par: 30, reorderAt: 10, supplier: "Premium Meats" },
+  { id: 4, name: "Fresh Burrata", category: "Dairy", unit: "pcs", current: 8, par: 24, reorderAt: 8, supplier: "Cheese & Co." },
+  { id: 5, name: "Heirloom Tomatoes", category: "Produce", unit: "kg", current: 12, par: 15, reorderAt: 5, supplier: "Farm Direct" },
+  { id: 6, name: "Dark Chocolate", category: "Baking", unit: "kg", current: 6, par: 10, reorderAt: 3, supplier: "Valrhona" },
+  { id: 7, name: "Vanilla Ice Cream", category: "Frozen", unit: "L", current: 14, par: 20, reorderAt: 8, supplier: "Artisan Creamery" },
+  { id: 8, name: "Gin (Premium)", category: "Spirits", unit: "bottles", current: 22, par: 36, reorderAt: 12, supplier: "Spirits World" },
+  { id: 9, name: "Elderflower Cordial", category: "Mixer", unit: "bottles", current: 4, par: 12, reorderAt: 4, supplier: "Fever-Tree" },
+  { id: 10, name: "Espresso Beans", category: "Beverages", unit: "kg", current: 8, par: 15, reorderAt: 5, supplier: "Blue Bottle Coffee" },
+];
+
+function getStockLevel(item: StockItem): "critical" | "low" | "ok" {
+  const ratio = item.current / item.par;
+  if (item.current <= item.reorderAt) return ratio < 0.25 ? "critical" : "low";
+  return "ok";
+}
+
+const LEVEL_STYLES = {
+  critical: "text-red-600 dark:text-red-400",
+  low: "text-amber-600 dark:text-amber-400",
+  ok: "text-emerald-600 dark:text-emerald-400",
+};
+
+const BAR_STYLES = {
+  critical: "bg-red-500",
+  low: "bg-amber-500",
+  ok: "bg-emerald-500",
+};
+
+function FAndBInventory() {
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("All");
+
+  const categories = ["All", ...Array.from(new Set(STOCK.map(i => i.category)))];
+  const filtered = STOCK.filter(i =>
+    (filter === "All" || i.category === filter) &&
+    i.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const criticalCount = STOCK.filter(i => getStockLevel(i) === "critical").length;
+  const lowCount = STOCK.filter(i => getStockLevel(i) === "low").length;
+
+  return (
+    <div>
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-xl font-semibold text-foreground">F&B Inventory</h1>
+          <div className="flex gap-3 text-sm">
+            {criticalCount > 0 && <span className="flex items-center gap-1.5 px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg font-medium">{criticalCount} Critical</span>}
+            {lowCount > 0 && <span className="flex items-center gap-1.5 px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-lg font-medium">{lowCount} Low</span>}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <div className="flex items-center gap-2 bg-card border border-border rounded-xl px-3 py-2 flex-1 min-w-0 max-w-xs">
+            <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+            <input
+              type="text"
+              placeholder="Search items..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="bg-transparent border-none outline-none text-sm flex-1 text-foreground placeholder:text-muted-foreground"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setFilter(cat)}
+                className={cn("px-3 py-2 rounded-xl text-sm font-medium transition-all border",
+                  filter === cat ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground hover:bg-secondary"
+                )}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden mb-8">
+        <table className="w-full text-sm">
+          <thead className="border-b border-border bg-secondary/30">
+            <tr>
+              {["Item", "Category", "Stock Level", "Current / Par", "Supplier", "Status"].map(h => (
+                <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {filtered.map(item => {
+              const level = getStockLevel(item);
+              const pct = Math.min(100, (item.current / item.par) * 100);
+              return (
+                <tr key={item.id} className="hover:bg-secondary/20 transition-colors">
+                  <td className="px-5 py-3 font-medium">{item.name}</td>
+                  <td className="px-5 py-3 text-muted-foreground">{item.category}</td>
+                  <td className="px-5 py-3 w-36">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-2 rounded-full bg-secondary overflow-hidden">
+                        <div className={cn("h-full rounded-full transition-all", BAR_STYLES[level])} style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="text-xs w-8 text-right">{Math.round(pct)}%</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3 text-muted-foreground">
+                    <span className={cn("font-semibold", LEVEL_STYLES[level])}>{item.current}</span> / {item.par} {item.unit}
+                  </td>
+                  <td className="px-5 py-3 text-muted-foreground text-xs">{item.supplier}</td>
+                  <td className="px-5 py-3">
+                    <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full capitalize",
+                      level === "critical" ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400" :
+                      level === "low" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" :
+                      "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                    )}>
+                      {level === "ok" ? "In Stock" : level === "low" ? "Reorder Soon" : "Critical"}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
