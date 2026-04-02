@@ -52,7 +52,7 @@ const DEPARTMENTS: { name: Department; icon: React.ElementType; submenus: string
   { name: "Sales & Revenue", icon: TrendingUp, submenus: ["Overview", "Rate Management", "Channel Manager", "Comp Set", "Sales Pipeline", "Group Quotes", "Forecast"] },
   { name: "Team", icon: Users, submenus: ["Overview", "Employees", "Scheduling", "Leave Management", "Training & Certifications", "Performance Reviews", "Payroll", "Grievances"] },
   { name: "Maintenance", icon: Wrench, submenus: ["Overview", "Work Orders", "Preventive Maintenance", "Asset Management"] },
-  { name: "Insights", icon: LineChart, submenus: ["Overview", "P&L Summary", "ESG Dashboard", "Audit Trail"] },
+  { name: "Insights", icon: LineChart, submenus: ["Overview", "Revenue Analytics", "Department Scorecard", "Forecast", "P&L Summary", "ESG", "Audit Trail", "Board Report"] },
   { name: "Guests", icon: UserCircle, submenus: ["Overview", "All Guests", "Arrivals Today", "VIP Intelligence", "Guest Moments", "Loyalty & Rewards", "Feedback", "Journey"] },
   { name: "Finance", icon: Landmark, submenus: ["Overview", "Night Audit", "Folios", "Receivables", "Payables", "Cashier", "Budget vs Actual", "FX Rates"] },
   { name: "Security", icon: ShieldCheck, submenus: ["Overview", "Incidents", "Visitor Management", "Key Management", "Patrol Log"] },

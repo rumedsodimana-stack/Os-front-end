@@ -600,8 +600,8 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
         )}
 
         {/* BUDGET VS ACTUAL */}
-        {activeSubmenu === "Budget" && (
-          <motion.div key="Budget" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
+        {activeSubmenu === "Budget vs Actual" && (
+          <motion.div key="Budget vs Actual" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
                 <h2 className="text-xl font-bold text-foreground">Budget vs Actual</h2>
