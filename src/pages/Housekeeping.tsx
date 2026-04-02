@@ -382,7 +382,7 @@ const taskStatusColors: Record<TaskStatus, string> = {
   Pending: "bg-slate-100 text-slate-600",
   "In Progress": "bg-orange-100 text-orange-700",
   Completed: "bg-emerald-100 text-emerald-700",
-  Skipped: "bg-gray-100 text-gray-500",
+  Skipped: "bg-secondary text-muted-foreground",
 };
 
 const supplyStatusColors: Record<SupplyStatus, string> = {
@@ -394,14 +394,14 @@ const supplyStatusColors: Record<SupplyStatus, string> = {
 const staffStatusColors: Record<StaffStatus, string> = {
   Active: "bg-emerald-100 text-emerald-700",
   Break: "bg-yellow-100 text-yellow-700",
-  Off: "bg-gray-100 text-gray-500",
+  Off: "bg-secondary text-muted-foreground",
 };
 
 const foundStatusColors: Record<FoundStatus, string> = {
   Unclaimed: "bg-orange-100 text-orange-700",
   Claimed: "bg-emerald-100 text-emerald-700",
   Donated: "bg-blue-100 text-blue-700",
-  Disposed: "bg-gray-100 text-gray-500",
+  Disposed: "bg-secondary text-muted-foreground",
 };
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
@@ -567,9 +567,9 @@ function RoomStatusView() {
       <div className="flex items-center gap-2 flex-wrap">
         <Layers className="h-4 w-4 text-muted-foreground" />
         <span className="text-xs font-medium text-muted-foreground">Floor:</span>
-        <button onClick={() => setFloorFilter("all")} className={cn("rounded-lg px-3 py-1 text-xs font-medium transition-colors", floorFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>All</button>
+        <button onClick={() => setFloorFilter("all")} className={cn("rounded-xl px-3 py-1 text-xs font-medium transition-colors", floorFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>All</button>
         {floors.map((f) => (
-          <button key={f} onClick={() => setFloorFilter(f)} className={cn("rounded-lg px-3 py-1 text-xs font-medium transition-colors", floorFilter === f ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>Floor {f}</button>
+          <button key={f} onClick={() => setFloorFilter(f)} className={cn("rounded-xl px-3 py-1 text-xs font-medium transition-colors", floorFilter === f ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>Floor {f}</button>
         ))}
         <span className="ml-auto text-xs text-muted-foreground">{filtered.length} rooms</span>
       </div>
@@ -659,7 +659,7 @@ function TaskListView() {
           <span className="text-xs font-medium text-muted-foreground">Status:</span>
           {(["all", "Pending", "In Progress", "Completed"] as const).map((s) => (
             <button key={s} onClick={() => setStatusFilter(s as TaskStatus | "all")}
-              className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-colors", statusFilter === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>
+              className={cn("rounded-xl px-2.5 py-1 text-xs font-medium transition-colors", statusFilter === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>
               {s === "all" ? "All" : s}
             </button>
           ))}
@@ -668,7 +668,7 @@ function TaskListView() {
           <span className="text-xs font-medium text-muted-foreground">Priority:</span>
           {(["all", "High", "Medium", "Low"] as const).map((p) => (
             <button key={p} onClick={() => setPriorityFilter(p as Priority | "all")}
-              className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-colors", priorityFilter === p ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>
+              className={cn("rounded-xl px-2.5 py-1 text-xs font-medium transition-colors", priorityFilter === p ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>
               {p === "all" ? "All" : p}
             </button>
           ))}
@@ -677,7 +677,7 @@ function TaskListView() {
           <span className="text-xs font-medium text-muted-foreground">Type:</span>
           {(["all", "Checkout", "Stayover", "Deep Clean", "Turndown", "Inspection"] as const).map((t) => (
             <button key={t} onClick={() => setTypeFilter(t as TaskType | "all")}
-              className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-colors", typeFilter === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>
+              className={cn("rounded-xl px-2.5 py-1 text-xs font-medium transition-colors", typeFilter === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>
               {t === "all" ? "All" : t}
             </button>
           ))}
@@ -705,7 +705,7 @@ function TaskListView() {
                       "bg-blue-100 text-blue-700": task.type === "Stayover",
                       "bg-purple-100 text-purple-700": task.type === "Deep Clean",
                       "bg-amber-100 text-amber-700": task.type === "Turndown",
-                      "bg-teal-100 text-teal-700": task.type === "Inspection",
+                      "bg-violet-100 text-violet-700": task.type === "Inspection",
                     })}>{task.type}</span>
                   </td>
                   <td className="px-4 py-3 text-foreground">{task.assignedTo}</td>
@@ -721,12 +721,12 @@ function TaskListView() {
                     <div className="flex gap-1">
                       {task.status === "Pending" && (
                         <>
-                          <button className="rounded-lg bg-blue-100 px-2 py-1 text-[10px] font-semibold text-blue-700 hover:bg-blue-200 transition-colors">Assign</button>
-                          <button className="rounded-lg bg-orange-100 px-2 py-1 text-[10px] font-semibold text-orange-700 hover:bg-orange-200 transition-colors">Start</button>
+                          <button className="rounded-xl bg-blue-100 px-2 py-1 text-[10px] font-semibold text-blue-700 hover:bg-blue-200 transition-colors">Assign</button>
+                          <button className="rounded-xl bg-orange-100 px-2 py-1 text-[10px] font-semibold text-orange-700 hover:bg-orange-200 transition-colors">Start</button>
                         </>
                       )}
                       {task.status === "In Progress" && (
-                        <button className="rounded-lg bg-emerald-100 px-2 py-1 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-200 transition-colors">Complete</button>
+                        <button className="rounded-xl bg-emerald-100 px-2 py-1 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-200 transition-colors">Complete</button>
                       )}
                       {task.status === "Completed" && (
                         <span className="text-[10px] text-muted-foreground">Done</span>
@@ -812,15 +812,15 @@ function SupervisorDashboard() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
           <div className="flex items-center gap-2 border-b border-border px-5 py-4">
-            <ClipboardList className="h-4 w-4 text-teal-500" />
+            <ClipboardList className="h-4 w-4 text-violet-500" />
             <h3 className="text-sm font-semibold text-foreground">Inspection Queue</h3>
-            <span className="ml-auto rounded-full bg-teal-100 px-2.5 py-0.5 text-xs font-semibold text-teal-700">{inspectionQueue.length} rooms</span>
+            <span className="ml-auto rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-700">{inspectionQueue.length} rooms</span>
           </div>
           <div className="divide-y divide-border">
             {inspectionQueue.slice(0, 8).map((r) => (
               <div key={r.room} className="flex items-center gap-3 px-5 py-3 hover:bg-muted/30 transition-colors">
-                <div className="h-9 w-9 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
-                  <span className="text-sm font-bold text-teal-700">{r.room}</span>
+                <div className="h-9 w-9 rounded-xl bg-violet-50 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-bold text-violet-700">{r.room}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">{r.type} — Room {r.room}</p>
@@ -830,7 +830,7 @@ function SupervisorDashboard() {
                   <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold",
                     r.urgency === "High" ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-600"
                   )}>{r.urgency}</span>
-                  <button className="rounded-lg bg-teal-100 px-2.5 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-200 transition-colors">Inspect</button>
+                  <button className="rounded-xl bg-violet-100 px-2.5 py-1 text-xs font-semibold text-violet-700 hover:bg-violet-200 transition-colors">Inspect</button>
                 </div>
               </div>
             ))}
@@ -847,14 +847,14 @@ function SupervisorDashboard() {
             <div className="space-y-2">
               {unassignedRooms.slice(0, 6).map((r) => (
                 <div key={r.id} className="flex items-center gap-3 rounded-xl border border-dashed border-border bg-muted/30 px-4 py-2.5">
-                  <div className="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+                  <div className="h-8 w-8 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
                     <span className="text-xs font-bold text-red-600">{r.id}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-foreground">{r.type} · {r.priority} priority</p>
                     <p className="text-[10px] text-muted-foreground">{r.status} · {formatMins(r.updatedMins)}</p>
                   </div>
-                  <select className="rounded-lg border border-border bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shrink-0">
+                  <select className="rounded-xl border border-border bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shrink-0">
                     <option value="">Assign to...</option>
                     {availableStaff.map((s) => (
                       <option key={s.name} value={s.name}>{s.name}</option>
@@ -993,15 +993,15 @@ function LostAndFound() {
       <div className="flex flex-wrap gap-2">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-xs font-medium text-muted-foreground">Category:</span>
-          <button onClick={() => setCategoryFilter("all")} className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-colors", categoryFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>All</button>
+          <button onClick={() => setCategoryFilter("all")} className={cn("rounded-xl px-2.5 py-1 text-xs font-medium transition-colors", categoryFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>All</button>
           {categories.map((c) => (
-            <button key={c} onClick={() => setCategoryFilter(c)} className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-colors", categoryFilter === c ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>{c}</button>
+            <button key={c} onClick={() => setCategoryFilter(c)} className={cn("rounded-xl px-2.5 py-1 text-xs font-medium transition-colors", categoryFilter === c ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>{c}</button>
           ))}
         </div>
         <div className="flex items-center gap-1.5 flex-wrap ml-2">
           <span className="text-xs font-medium text-muted-foreground">Status:</span>
           {(["all", "Unclaimed", "Claimed", "Donated", "Disposed"] as const).map((s) => (
-            <button key={s} onClick={() => setStatusFilter(s as FoundStatus | "all")} className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-colors", statusFilter === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>
+            <button key={s} onClick={() => setStatusFilter(s as FoundStatus | "all")} className={cn("rounded-xl px-2.5 py-1 text-xs font-medium transition-colors", statusFilter === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>
               {s === "all" ? "All" : s}
             </button>
           ))}
@@ -1028,7 +1028,7 @@ function LostAndFound() {
                       "bg-blue-100 text-blue-700": item.category === "Electronics",
                       "bg-purple-100 text-purple-700": item.category === "Clothing",
                       "bg-amber-100 text-amber-700": item.category === "Jewelry",
-                      "bg-teal-100 text-teal-700": item.category === "Documents",
+                      "bg-violet-100 text-violet-700": item.category === "Documents",
                       "bg-slate-100 text-slate-700": item.category === "Other",
                     })}>{item.category}</span>
                   </td>
@@ -1135,9 +1135,9 @@ function InventorySupplies() {
 
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-xs font-medium text-muted-foreground">Category:</span>
-            <button onClick={() => setCategoryFilter("all")} className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-colors", categoryFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>All</button>
+            <button onClick={() => setCategoryFilter("all")} className={cn("rounded-xl px-2.5 py-1 text-xs font-medium transition-colors", categoryFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>All</button>
             {supplyCategories.map((c) => (
-              <button key={c} onClick={() => setCategoryFilter(c)} className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-colors", categoryFilter === c ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>{c}</button>
+              <button key={c} onClick={() => setCategoryFilter(c)} className={cn("rounded-xl px-2.5 py-1 text-xs font-medium transition-colors", categoryFilter === c ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>{c}</button>
             ))}
           </div>
 
@@ -1159,7 +1159,7 @@ function InventorySupplies() {
                         <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", {
                           "bg-violet-100 text-violet-700": s.category === "Amenities",
                           "bg-blue-100 text-blue-700": s.category === "Cleaning",
-                          "bg-teal-100 text-teal-700": s.category === "Paper",
+                          "bg-indigo-100 text-indigo-700": s.category === "Paper",
                           "bg-amber-100 text-amber-700": s.category === "Guest",
                         })}>{s.category}</span>
                       </td>
@@ -1221,7 +1221,7 @@ function InspectionChecklist() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <ClipboardList className="h-4 w-4 text-teal-600" />
+          <ClipboardList className="h-4 w-4 text-violet-600" />
           <span className="text-sm font-semibold text-foreground">Inspection Room:</span>
           <select
             value={selectedRoom}
@@ -1255,7 +1255,7 @@ function InspectionChecklist() {
         <div className="flex gap-4 text-center shrink-0">
           <div><p className="text-xs text-muted-foreground">Pass</p><p className="text-lg font-bold text-emerald-600">{counts.pass}</p></div>
           <div><p className="text-xs text-muted-foreground">Fail</p><p className="text-lg font-bold text-red-500">{counts.fail}</p></div>
-          <div><p className="text-xs text-muted-foreground">N/A</p><p className="text-lg font-bold text-gray-400">{counts.na}</p></div>
+          <div><p className="text-xs text-muted-foreground">N/A</p><p className="text-lg font-bold text-muted-foreground">{counts.na}</p></div>
         </div>
       </div>
 
@@ -1273,7 +1273,7 @@ function InspectionChecklist() {
                   <th className="px-5 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground w-full">Checkpoint</th>
                   {(["Pass", "Fail", "N/A"] as CheckResult[]).map((v) => (
                     <th key={v} className={cn("px-6 py-2 text-center text-xs font-semibold uppercase tracking-wide whitespace-nowrap",
-                      v === "Pass" ? "text-emerald-600" : v === "Fail" ? "text-red-500" : "text-gray-400"
+                      v === "Pass" ? "text-emerald-600" : v === "Fail" ? "text-red-500" : "text-muted-foreground"
                     )}>{v}</th>
                   ))}
                 </tr>

@@ -9,12 +9,12 @@ const getBadgeColor = (status: string) => {
     case "Confirmed":
     case "Checked In":
     case "Checked Out":
-      return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400";
+      return "bg-emerald-100 text-emerald-700";
     case "Pending":
-      return "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400";
+      return "bg-amber-100 text-amber-700";
     case "Cancelled":
     case "OOS":
-      return "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400";
+      return "bg-red-100 text-red-700";
     default:
       return "bg-secondary text-secondary-foreground";
   }
@@ -91,7 +91,7 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
           <div key={i} className={cn("rounded-2xl p-6 shadow-sm text-white relative overflow-hidden", stat.bg)}>
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 bg-white/20 rounded-lg">
+                <div className="p-2 bg-white/20 rounded-xl">
                   <stat.icon className="w-6 h-6 text-white" />
                 </div>
                 <p className="text-lg font-medium text-white/90">{stat.label}</p>
@@ -121,7 +121,7 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
                 <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                 <span className="text-muted-foreground">F&B Rev</span>
               </div>
-              <select className="bg-secondary text-secondary-foreground border-none rounded-md px-3 py-1.5 outline-none cursor-pointer text-xs font-medium ml-2">
+              <select className="bg-secondary text-secondary-foreground border-none rounded-xl px-3 py-1.5 outline-none cursor-pointer text-xs font-medium ml-2">
                 <option>This Month</option>
               </select>
             </div>
@@ -156,7 +156,7 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
         <div className="bg-card rounded-2xl p-6 shadow-sm border border-border flex flex-col">
           <div className="flex justify-between items-center mb-2">
             <h2 className="font-semibold text-lg">Status</h2>
-            <select className="bg-secondary text-secondary-foreground border-none rounded-md px-3 py-1.5 outline-none cursor-pointer text-xs font-medium">
+            <select className="bg-secondary text-secondary-foreground border-none rounded-xl px-3 py-1.5 outline-none cursor-pointer text-xs font-medium">
               <option>Today</option>
             </select>
           </div>
@@ -196,7 +196,7 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Occupied</p>
             </div>
             <div className="text-center">
-              <p className="text-sm font-bold text-gray-400">640</p>
+              <p className="text-sm font-bold text-muted-foreground">640</p>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Vacant</p>
             </div>
           </div>
@@ -211,7 +211,7 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
         <div className="lg:col-span-2 bg-card rounded-2xl p-6 shadow-sm border border-border">
           <div className="flex justify-between items-center mb-6">
             <h2 className="font-semibold text-lg">Recent Bookings</h2>
-            <select className="bg-secondary text-secondary-foreground border-none rounded-md px-3 py-1.5 outline-none cursor-pointer text-xs font-medium">
+            <select className="bg-secondary text-secondary-foreground border-none rounded-xl px-3 py-1.5 outline-none cursor-pointer text-xs font-medium">
               <option>This Week</option>
             </select>
           </div>
@@ -255,7 +255,7 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
         <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
           <div className="flex justify-between items-center mb-6">
             <h2 className="font-semibold text-lg">Top Regions</h2>
-            <select className="bg-secondary text-secondary-foreground border-none rounded-md px-3 py-1.5 outline-none cursor-pointer text-xs font-medium">
+            <select className="bg-secondary text-secondary-foreground border-none rounded-xl px-3 py-1.5 outline-none cursor-pointer text-xs font-medium">
               <option>This Year</option>
             </select>
           </div>
@@ -584,7 +584,7 @@ function FrontDeskArrivals() {
 
   return (
     <div>
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
+      <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-semibold text-foreground">Arrival List</h1>
         </div>
@@ -607,7 +607,7 @@ function FrontDeskArrivals() {
           </div>
           <div className="flex items-center gap-2">
             <select 
-              className="bg-secondary border-none rounded-lg px-3 py-2 text-sm outline-none cursor-pointer"
+              className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
@@ -641,7 +641,7 @@ function FrontDeskArrivals() {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{arrival.guest}</span>
                       {arrival.vip && (
-                        <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 text-[10px] font-bold uppercase tracking-wider">VIP</span>
+                        <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold uppercase tracking-wider">VIP</span>
                       )}
                     </div>
                   </td>
@@ -672,7 +672,7 @@ function FrontDeskArrivals() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button 
-                      className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={arrival.status === "Checked In"}
                     >
                       {arrival.status === "Checked In" ? "Checked In" : "Check In"}
@@ -708,7 +708,7 @@ function FrontDeskDepartures() {
 
   return (
     <div>
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
+      <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-semibold text-foreground">Departure List</h1>
         </div>
@@ -731,7 +731,7 @@ function FrontDeskDepartures() {
           </div>
           <div className="flex items-center gap-2">
             <select 
-              className="bg-secondary border-none rounded-lg px-3 py-2 text-sm outline-none cursor-pointer"
+              className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
@@ -766,7 +766,7 @@ function FrontDeskDepartures() {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{departure.guest}</span>
                       {departure.vip && (
-                        <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 text-[10px] font-bold uppercase tracking-wider">VIP</span>
+                        <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold uppercase tracking-wider">VIP</span>
                       )}
                     </div>
                   </td>
@@ -792,7 +792,7 @@ function FrontDeskDepartures() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button 
-                      className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={departure.status === "Checked Out" || departure.balance !== "$0.00"}
                       title={departure.balance !== "$0.00" ? "Clear balance before checkout" : ""}
                     >
@@ -1336,7 +1336,7 @@ function FrontDeskTimeline() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)]">
-      <div className="flex-none sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
+      <div className="flex-none mb-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-semibold text-foreground">Timeline</h1>
         </div>
@@ -1362,10 +1362,10 @@ function FrontDeskTimeline() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="bg-secondary border-none rounded-lg px-3 py-2 text-sm outline-none cursor-pointer hover:bg-secondary/80 transition-colors">
+            <button className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer hover:bg-secondary/80 transition-colors">
               Today
             </button>
-            <select className="bg-secondary border-none rounded-lg px-3 py-2 text-sm outline-none cursor-pointer">
+            <select className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer">
               <option>14 Days</option>
               <option>7 Days</option>
               <option>30 Days</option>
@@ -1380,13 +1380,13 @@ function FrontDeskTimeline() {
           <table className="w-full border-collapse min-w-max">
             <thead>
               <tr>
-                <th className="sticky top-0 left-0 z-30 bg-secondary/90 backdrop-blur border-b border-r border-border p-4 min-w-[120px] text-left font-semibold shadow-[2px_2px_0_0_rgba(0,0,0,0.05)] dark:shadow-[2px_2px_0_0_rgba(255,255,255,0.02)]">
+                <th className="sticky top-0 left-0 z-30 bg-secondary/90 backdrop-blur border-b border-r border-border p-4 min-w-[120px] text-left font-semibold shadow-sm">
                   Room
                 </th>
                 {dates.map((d, i) => (
                   <th key={i} className={cn(
-                    "sticky top-0 z-20 bg-secondary/90 backdrop-blur border-b border-r border-border p-3 min-w-[120px] text-center font-medium shadow-[0_2px_0_0_rgba(0,0,0,0.05)] dark:shadow-[0_2px_0_0_rgba(255,255,255,0.02)]",
-                    i === 0 && "bg-violet-100/50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300"
+                    "sticky top-0 z-20 bg-secondary/90 backdrop-blur border-b border-r border-border p-3 min-w-[120px] text-center font-medium shadow-sm",
+                    i === 0 && "bg-violet-100/50 text-violet-700"
                   )}>
                     <div className="text-xs uppercase tracking-wider opacity-70">{d.dayStr}</div>
                     <div className="text-sm">{d.dateStr}</div>
@@ -1399,7 +1399,7 @@ function FrontDeskTimeline() {
                 const roomBookings = bookings.filter(b => b.room === room);
                 return (
                   <tr key={room} className="hover:bg-secondary/20 transition-colors">
-                    <td className="sticky left-0 z-20 bg-card border-b border-r border-border p-4 font-medium shadow-[2px_0_0_0_rgba(0,0,0,0.05)] dark:shadow-[2px_0_0_0_rgba(255,255,255,0.02)]">
+                    <td className="sticky left-0 z-20 bg-card border-b border-r border-border p-4 font-medium shadow-[2px_0_0_0_rgba(0,0,0,0.05)],255,255,0.02)]">
                       {room}
                     </td>
                     {dates.map((_, i) => {
@@ -1409,12 +1409,12 @@ function FrontDeskTimeline() {
                       return (
                         <td key={i} className={cn(
                           "border-b border-r border-border relative h-14 p-1",
-                          i === 0 && "bg-violet-50/30 dark:bg-violet-900/10"
+                          i === 0 && "bg-violet-50/30"
                         )}>
                           {booking && (
                             <div 
                               className={cn(
-                                "absolute top-1.5 bottom-1.5 left-1 rounded-md px-3 py-1.5 text-xs text-white font-medium shadow-sm flex items-center overflow-hidden z-10 cursor-pointer hover:brightness-110 transition-all",
+                                "absolute top-1.5 bottom-1.5 left-1 rounded-xl px-3 py-1.5 text-xs text-white font-medium shadow-sm flex items-center overflow-hidden z-10 cursor-pointer hover:brightness-110 transition-all",
                                 booking.color
                               )}
                               style={{ 
