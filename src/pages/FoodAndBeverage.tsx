@@ -43,6 +43,8 @@ export function FoodAndBeverage({ aiEnabled, activeSubmenu = "Overview" }: FoodA
         return <TableManagement />;
       case "Room Service":
         return <RoomService />;
+      case "Bar":
+        return <BarManagement />;
       case "Inventory":
         return <FAndBInventory />;
       default:
@@ -325,7 +327,7 @@ function MenuCard4D({ item, onAdd }: { item: any, onAdd: () => void }) {
 }
 
 // POS Hub — wraps Terminal, KDS, Bar, Reports as internal tabs
-type POSTab = "terminal" | "kds" | "bar" | "reports";
+type POSTab = "terminal" | "kds" | "reports";
 
 function POSHub() {
   const [activeTab, setActiveTab] = useState<POSTab>("terminal");
@@ -333,7 +335,6 @@ function POSHub() {
   const tabs: { key: POSTab; label: string; icon: React.ReactNode }[] = [
     { key: "terminal", label: "Order Terminal", icon: <ShoppingCart className="w-4 h-4" /> },
     { key: "kds",      label: "Kitchen Display", icon: <ChefHat className="w-4 h-4" /> },
-    { key: "bar",      label: "Bar",             icon: <UtensilsCrossed className="w-4 h-4" /> },
     { key: "reports",  label: "F&B Reports",     icon: <BarChart2 className="w-4 h-4" /> },
   ];
 
@@ -368,7 +369,6 @@ function POSHub() {
         >
           {activeTab === "terminal" && <POSSystem />}
           {activeTab === "kds"      && <KitchenDisplay />}
-          {activeTab === "bar"      && <BarManagement />}
           {activeTab === "reports"  && <FNBReports />}
         </motion.div>
       </AnimatePresence>
