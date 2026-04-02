@@ -619,15 +619,31 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
           <motion.div key="loyalty" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-5">
             <div><h2 className="text-2xl font-bold text-foreground">Loyalty & Rewards</h2><p className="text-muted-foreground text-sm mt-1">Points, perks and progress across every tier</p></div>
             {/* Tier cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-              {tierDistribution.map(t => (
-                <div key={t.name} className="bg-card rounded-2xl shadow-sm border border-border p-4 text-center">
-                  <div className="w-8 h-8 rounded-full mx-auto mb-2" style={{background:t.color}} />
-                  <p className="text-xs font-medium text-muted-foreground">{t.name}</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">{t.value}</p>
-                  <p className="text-xs text-muted-foreground">members</p>
-                </div>
-              ))}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              {tierDistribution.map(t => {
+                const gradientMap: Record<string, string> = {
+                  "Platinum Elite": "from-purple-400 to-purple-500",
+                  "Platinum": "from-indigo-400 to-indigo-500",
+                  "Gold": "from-amber-400 to-amber-500",
+                  "Silver": "from-slate-400 to-slate-500",
+                  "Member": "from-gray-400 to-gray-500"
+                };
+                return (
+                  <div key={t.name} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white", gradientMap[t.name])}>
+                    <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="text-white/80 text-xs font-medium uppercase tracking-wide">{t.name}</p>
+                        <p className="text-3xl font-bold mt-1">{t.value}</p>
+                        <p className="text-white/70 text-xs mt-1">members</p>
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0 ml-2">
+                        <div className="w-5 h-5 rounded-full" style={{background:t.color}} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
             {/* Tier benefits matrix */}
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">

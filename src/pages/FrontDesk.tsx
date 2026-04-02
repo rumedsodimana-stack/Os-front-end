@@ -329,7 +329,7 @@ function FrontDeskRooms() {
   };
 
   const floorRooms = useMemo(() => {
-    const floorNum = floors.indexOf(selectedFloor);
+    const floorNum = floors.indexOf(selectedFloor) + 1; // Ground=1, Floor 1=2, etc.
     return mockRooms.filter(room => {
       const roomFloor = parseInt(room.number.charAt(0)) || 0;
       return roomFloor === floorNum;

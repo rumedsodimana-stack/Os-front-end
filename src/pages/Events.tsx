@@ -11,7 +11,7 @@ import {
   CheckCircle2, AlertCircle, Star, ChevronRight, Search,
   Filter, Plus, Edit2, Trash2, Download, Eye, Send,
   Coffee, Music, Video, Wifi, Projector, Volume2,
-  Award, TrendingUp, BarChart2, FileText, Settings
+  Award, TrendingUp, BarChart2, FileText, Settings, Package
 } from "lucide-react";
 
 interface EventsProps {
@@ -573,14 +573,20 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
             {/* Summary cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: "Total Items", value: avEquipment.reduce((s, a) => s + a.quantity, 0), color: "text-indigo-600" },
-                { label: "Currently Available", value: avEquipment.reduce((s, a) => s + a.available, 0), color: "text-emerald-600" },
-                { label: "In Use / Assigned", value: avEquipment.reduce((s, a) => s + (a.quantity - a.available), 0), color: "text-amber-600" },
-                { label: "Needs Service", value: avEquipment.filter(a => a.condition === "Needs Service").length, color: "text-red-600" },
-              ].map(c => (
-                <div key={c.label} className="bg-card rounded-2xl shadow-sm border border-border p-4">
-                  <p className="text-sm text-muted-foreground">{c.label}</p>
-                  <p className={cn("text-3xl font-bold mt-1", c.color)}>{c.value}</p>
+                { label: "Total Items", value: avEquipment.reduce((s, a) => s + a.quantity, 0), gradient: "from-indigo-400 to-indigo-500", icon: Package },
+                { label: "Currently Available", value: avEquipment.reduce((s, a) => s + a.available, 0), gradient: "from-emerald-400 to-emerald-500", icon: CheckCircle2 },
+                { label: "In Use / Assigned", value: avEquipment.reduce((s, a) => s + (a.quantity - a.available), 0), gradient: "from-amber-400 to-amber-500", icon: Award },
+                { label: "Needs Service", value: avEquipment.filter(a => a.condition === "Needs Service").length, gradient: "from-red-400 to-red-500", icon: AlertCircle },
+              ].map(({ label, value, gradient, icon: Icon }) => (
+                <div key={label} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white", gradient)}>
+                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-white/80 text-sm">{label}</p>
+                      <p className="text-3xl font-bold mt-1">{value}</p>
+                    </div>
+                    <div className="bg-white/20 p-2.5 rounded-xl"><Icon size={20} /></div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -757,12 +763,18 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
               {[
                 { label: "Total RSVPs", value: attendees.length, color: "text-blue-600" },
                 { label: "Checked In", value: attendees.filter(a => a.checkedIn).length, color: "text-emerald-600" },
-                { label: "VIP Guests", value: attendees.filter(a => a.vip).length, color: "text-amber-600" },
-                { label: "No-Shows (Today)", value: attendees.filter(a => !a.checkedIn && a.rsvpStatus === "Confirmed").length, color: "text-red-600" },
-              ].map(c => (
-                <div key={c.label} className="bg-card rounded-2xl shadow-sm border border-border p-4">
-                  <p className="text-sm text-muted-foreground">{c.label}</p>
-                  <p className={cn("text-3xl font-bold mt-1", c.color)}>{c.value}</p>
+                { label: "VIP Guests", value: attendees.filter(a => a.vip).length, gradient: "from-amber-400 to-amber-500", icon: Star },
+                { label: "No-Shows (Today)", value: attendees.filter(a => !a.checkedIn && a.rsvpStatus === "Confirmed").length, gradient: "from-red-400 to-red-500", icon: AlertCircle },
+              ].map(({ label, value, gradient, icon: Icon }) => (
+                <div key={label} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white", gradient)}>
+                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-white/80 text-sm">{label}</p>
+                      <p className="text-3xl font-bold mt-1">{value}</p>
+                    </div>
+                    <div className="bg-white/20 p-2.5 rounded-xl"><Icon size={20} /></div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -823,12 +835,18 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
               {[
                 { label: "Total Setups", value: banquetSetups.length, color: "text-indigo-600" },
                 { label: "Ready", value: banquetSetups.filter(b => b.status === "Ready").length, color: "text-emerald-600" },
-                { label: "In Progress", value: banquetSetups.filter(b => b.status === "In Progress").length, color: "text-amber-600" },
-                { label: "Pending", value: banquetSetups.filter(b => b.status === "Pending").length, color: "text-blue-600" },
-              ].map(c => (
-                <div key={c.label} className="bg-card rounded-2xl shadow-sm border border-border p-4">
-                  <p className="text-sm text-muted-foreground">{c.label}</p>
-                  <p className={cn("text-3xl font-bold mt-1", c.color)}>{c.value}</p>
+                { label: "In Progress", value: banquetSetups.filter(b => b.status === "In Progress").length, gradient: "from-amber-400 to-amber-500", icon: Clock },
+                { label: "Pending", value: banquetSetups.filter(b => b.status === "Pending").length, gradient: "from-blue-400 to-blue-500", icon: AlertCircle },
+              ].map(({ label, value, gradient, icon: Icon }) => (
+                <div key={label} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white", gradient)}>
+                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-white/80 text-sm">{label}</p>
+                      <p className="text-3xl font-bold mt-1">{value}</p>
+                    </div>
+                    <div className="bg-white/20 p-2.5 rounded-xl"><Icon size={20} /></div>
+                  </div>
                 </div>
               ))}
             </div>

@@ -11,7 +11,7 @@ import {
   CheckCircle2, AlertCircle, Clock, Star, Users,
   ChevronRight, Plus, Edit2, Trash2, Download,
   Archive, Filter, Mic2, MapPin, BookOpen, Radio,
-  Megaphone, Smartphone, BellRing, Eye, RefreshCw, FileText
+  Megaphone, Smartphone, BellRing, Eye, RefreshCw, FileText, TrendingDown
 } from "lucide-react";
 
 interface CommsProps {
@@ -331,17 +331,26 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
             {/* Stats row */}
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
               {[
-                { label: "Open", value: open, color: "text-blue-600" },
-                { label: "In Progress", value: inProgress, color: "text-amber-600" },
-                { label: "Resolved", value: resolved, color: "text-emerald-600" },
-                { label: "Escalated", value: guestRequests.filter(r => r.status === "Escalated").length, color: "text-red-600" },
-                { label: "Avg Response", value: `${avgResponseTime}m`, color: avgResponseTime <= 15 ? "text-emerald-600" : "text-amber-600" },
-              ].map(c => (
-                <div key={c.label} className="bg-card rounded-2xl shadow-sm border border-border p-4 text-center">
-                  <p className={cn("text-2xl font-bold", c.color)}>{c.value}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{c.label}</p>
-                </div>
-              ))}
+                { label: "Open", value: open, gradient: "from-blue-400 to-blue-500", icon: MessageSquare },
+                { label: "In Progress", value: inProgress, gradient: "from-amber-400 to-amber-500", icon: Clock },
+                { label: "Resolved", value: resolved, gradient: "from-emerald-400 to-emerald-500", icon: CheckCircle2 },
+                { label: "Escalated", value: guestRequests.filter(r => r.status === "Escalated").length, gradient: "from-red-400 to-red-500", icon: AlertCircle },
+                { label: "Avg Response", value: `${avgResponseTime}m`, gradient: avgResponseTime <= 15 ? "from-emerald-400 to-emerald-500" : "from-amber-400 to-amber-500", icon: Clock },
+              ].map(c => {
+                const IconComponent = c.icon;
+                return (
+                  <div key={c.label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${c.gradient} p-5 text-white`}>
+                    <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                    <div className="flex items-start justify-between relative z-10">
+                      <div>
+                        <p className="text-white/80 text-sm">{c.label}</p>
+                        <p className="text-3xl font-bold mt-1">{c.value}</p>
+                      </div>
+                      <div className="bg-white/20 p-2.5 rounded-xl"><IconComponent size={20} /></div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Filters */}
@@ -438,16 +447,25 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: "Total Tasks", value: conciergeLog.length, color: "text-indigo-600" },
-                { label: "Confirmed", value: conciergeLog.filter(c => c.status === "Confirmed").length, color: "text-emerald-600" },
-                { label: "Pending", value: conciergeLog.filter(c => c.status === "Pending").length, color: "text-amber-600" },
-                { label: "Completed", value: conciergeLog.filter(c => c.status === "Done").length, color: "text-blue-600" },
-              ].map(c => (
-                <div key={c.label} className="bg-card rounded-2xl shadow-sm border border-border p-4">
-                  <p className="text-sm text-muted-foreground">{c.label}</p>
-                  <p className={cn("text-3xl font-bold mt-1", c.color)}>{c.value}</p>
-                </div>
-              ))}
+                { label: "Total Tasks", value: conciergeLog.length, gradient: "from-indigo-400 to-indigo-500", icon: BookOpen },
+                { label: "Confirmed", value: conciergeLog.filter(c => c.status === "Confirmed").length, gradient: "from-emerald-400 to-emerald-500", icon: CheckCircle2 },
+                { label: "Pending", value: conciergeLog.filter(c => c.status === "Pending").length, gradient: "from-amber-400 to-amber-500", icon: Clock },
+                { label: "Completed", value: conciergeLog.filter(c => c.status === "Done").length, gradient: "from-blue-400 to-blue-500", icon: Star },
+              ].map(c => {
+                const IconComponent = c.icon;
+                return (
+                  <div key={c.label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${c.gradient} p-5 text-white`}>
+                    <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                    <div className="flex items-start justify-between relative z-10">
+                      <div>
+                        <p className="text-white/80 text-sm">{c.label}</p>
+                        <p className="text-3xl font-bold mt-1">{c.value}</p>
+                      </div>
+                      <div className="bg-white/20 p-2.5 rounded-xl"><IconComponent size={20} /></div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="space-y-4">
@@ -503,16 +521,25 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: "Sent This Month", value: broadcastMessages.filter(b => b.status === "Sent").length, color: "text-emerald-600" },
-                { label: "Scheduled", value: broadcastMessages.filter(b => b.status === "Scheduled").length, color: "text-blue-600" },
-                { label: "Total Recipients", value: broadcastMessages.reduce((s, b) => s + b.recipients, 0), color: "text-indigo-600" },
-                { label: "Avg Open Rate", value: `${Math.round(broadcastMessages.filter(b => b.recipients > 0).reduce((s, b) => s + (b.opened / Math.max(b.recipients, 1)) * 100, 0) / broadcastMessages.filter(b => b.recipients > 0).length)}%`, color: "text-amber-600" },
-              ].map(c => (
-                <div key={c.label} className="bg-card rounded-2xl shadow-sm border border-border p-4">
-                  <p className="text-sm text-muted-foreground">{c.label}</p>
-                  <p className={cn("text-3xl font-bold mt-1", c.color)}>{c.value}</p>
-                </div>
-              ))}
+                { label: "Sent This Month", value: broadcastMessages.filter(b => b.status === "Sent").length, gradient: "from-emerald-400 to-emerald-500", icon: Send },
+                { label: "Scheduled", value: broadcastMessages.filter(b => b.status === "Scheduled").length, gradient: "from-blue-400 to-blue-500", icon: Clock },
+                { label: "Total Recipients", value: broadcastMessages.reduce((s, b) => s + b.recipients, 0), gradient: "from-indigo-400 to-indigo-500", icon: Users },
+                { label: "Avg Open Rate", value: `${Math.round(broadcastMessages.filter(b => b.recipients > 0).reduce((s, b) => s + (b.opened / Math.max(b.recipients, 1)) * 100, 0) / broadcastMessages.filter(b => b.recipients > 0).length)}%`, gradient: "from-amber-400 to-amber-500", icon: Eye },
+              ].map(c => {
+                const IconComponent = c.icon;
+                return (
+                  <div key={c.label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${c.gradient} p-5 text-white`}>
+                    <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                    <div className="flex items-start justify-between relative z-10">
+                      <div>
+                        <p className="text-white/80 text-sm">{c.label}</p>
+                        <p className="text-3xl font-bold mt-1">{c.value}</p>
+                      </div>
+                      <div className="bg-white/20 p-2.5 rounded-xl"><IconComponent size={20} /></div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="space-y-4">
@@ -728,17 +755,26 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: "Guest Satisfaction (Comms)", value: "4.6/5", change: "+0.2", up: true },
-                { label: "Request Resolution Rate", value: "94%", change: "+3%", up: true },
-                { label: "Avg Response Time", value: `${avgResponseTime}m`, change: "-4m", up: true },
-                { label: "Escalation Rate", value: "2%", change: "-1%", up: true },
-              ].map(k => (
-                <div key={k.label} className="bg-card rounded-2xl shadow-sm border border-border p-4">
-                  <p className="text-sm text-muted-foreground">{k.label}</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">{k.value}</p>
-                  <p className={cn("text-xs mt-1 font-medium", k.up ? "text-emerald-600" : "text-red-500")}>{k.up ? "↑" : "↓"} {k.change} vs last week</p>
-                </div>
-              ))}
+                { label: "Guest Satisfaction (Comms)", value: "4.6/5", sub: "+0.2 vs last week", gradient: "from-emerald-400 to-emerald-500", icon: Star },
+                { label: "Request Resolution Rate", value: "94%", sub: "+3% vs last week", gradient: "from-blue-400 to-blue-500", icon: CheckCircle2 },
+                { label: "Avg Response Time", value: `${avgResponseTime}m`, sub: "-4m vs last week", gradient: "from-violet-400 to-violet-500", icon: Clock },
+                { label: "Escalation Rate", value: "2%", sub: "-1% vs last week", gradient: "from-emerald-400 to-emerald-500", icon: TrendingDown },
+              ].map(k => {
+                const IconComponent = k.icon;
+                return (
+                  <div key={k.label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${k.gradient} p-5 text-white`}>
+                    <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                    <div className="flex items-start justify-between relative z-10">
+                      <div>
+                        <p className="text-white/80 text-sm">{k.label}</p>
+                        <p className="text-3xl font-bold mt-1">{k.value}</p>
+                        <p className="text-white/70 text-xs mt-1">{k.sub}</p>
+                      </div>
+                      <div className="bg-white/20 p-2.5 rounded-xl"><IconComponent size={20} /></div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

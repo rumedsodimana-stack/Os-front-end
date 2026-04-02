@@ -75,21 +75,22 @@ function FAndBOverview({ aiEnabled }: { aiEnabled: boolean }) {
           <h1 className="text-xl font-semibold text-foreground">Food & Beverage Overview</h1>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         {[
-          { label: "Today's Revenue", value: "$4,250", sub: "+12% vs yesterday", icon: UtensilsCrossed, color: "text-blue-500" },
-          { label: "Active Orders", value: "24", sub: "8 Room Service, 16 POS", icon: ShoppingCart, color: "text-amber-500" },
-          { label: "Avg Prep Time", value: "18m", sub: "On target", icon: Clock, color: "text-emerald-500" },
-          { label: "Low Stock Items", value: "12", sub: "Needs attention", icon: Info, color: "text-red-500" },
+          { label: "Today's Revenue", value: "$4,250", sub: "+12% vs yesterday", icon: Banknote, gradient: "from-blue-400 to-blue-500" },
+          { label: "Active Orders", value: "24", sub: "8 Room Service, 16 POS", icon: ShoppingCart, gradient: "from-amber-400 to-amber-500" },
+          { label: "Avg Prep Time", value: "18m", sub: "On target", icon: Clock, gradient: "from-emerald-400 to-emerald-500" },
+          { label: "Low Stock Items", value: "12", sub: "Needs attention", icon: Info, gradient: "from-red-400 to-red-500" },
         ].map((kpi, i) => (
-          <div key={i} className="bg-card p-6 rounded-2xl border border-border shadow-sm flex items-center gap-4">
-            <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center bg-secondary", kpi.color)}>
-              <kpi.icon className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">{kpi.label}</p>
-              <h3 className="text-2xl font-bold text-foreground">{kpi.value}</h3>
-              <p className="text-xs text-muted-foreground mt-1">{kpi.sub}</p>
+          <div key={i} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white", kpi.gradient)}>
+            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-white/80 text-sm">{kpi.label}</p>
+                <p className="text-3xl font-bold mt-1">{kpi.value}</p>
+                <p className="text-white/70 text-xs mt-1">{kpi.sub}</p>
+              </div>
+              <div className="bg-white/20 p-2.5 rounded-xl"><kpi.icon size={20} /></div>
             </div>
           </div>
         ))}

@@ -4,6 +4,7 @@ import {
   UserCheck,
   UserX,
   Calendar,
+  CalendarDays,
   Clock,
   DollarSign,
   Award,
@@ -864,39 +865,22 @@ const AttendanceView = () => {
       className="space-y-4"
     >
       <div className="grid grid-cols-3 gap-4">
-        <SectionCard className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-emerald-100 p-2.5 dark:bg-emerald-900/40">
-              <UserCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Present Today</p>
-              <p className="text-2xl font-bold text-foreground">{todayStats.present}</p>
-            </div>
-          </div>
-        </SectionCard>
-        <SectionCard className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-amber-100 p-2.5 dark:bg-amber-900/40">
-              <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Late Today</p>
-              <p className="text-2xl font-bold text-foreground">{todayStats.late}</p>
+        {[
+          { label: "Present Today", value: todayStats.present, icon: UserCheck, gradient: "from-emerald-400 to-emerald-500" },
+          { label: "Late Today", value: todayStats.late, icon: Clock, gradient: "from-amber-400 to-amber-500" },
+          { label: "Absent Today", value: todayStats.absent, icon: UserX, gradient: "from-red-400 to-red-500" },
+        ].map(({ label, value, icon: Icon, gradient }) => (
+          <div key={label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${gradient} p-5 text-white`}>
+            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-white/80 text-sm">{label}</p>
+                <p className="text-3xl font-bold mt-1">{value}</p>
+              </div>
+              <div className="bg-white/20 p-2.5 rounded-xl"><Icon className="h-5 w-5" /></div>
             </div>
           </div>
-        </SectionCard>
-        <SectionCard className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-red-100 p-2.5 dark:bg-red-900/40">
-              <UserX className="h-5 w-5 text-red-600 dark:text-red-400" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Absent Today</p>
-              <p className="text-2xl font-bold text-foreground">{todayStats.absent}</p>
-            </div>
-          </div>
-        </SectionCard>
+        ))}
       </div>
 
       <FilterBar>
@@ -1248,22 +1232,23 @@ const LeaveManagementView = () => {
       className="space-y-4"
     >
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <SectionCard className="p-4">
-          <p className="text-xs text-muted-foreground">Pending Requests</p>
-          <p className="mt-1 text-2xl font-bold text-amber-600">{pendingCount}</p>
-        </SectionCard>
-        <SectionCard className="p-4">
-          <p className="text-xs text-muted-foreground">Avg Annual Leave Days</p>
-          <p className="mt-1 text-2xl font-bold text-foreground">{annualAvgDays}d</p>
-        </SectionCard>
-        <SectionCard className="p-4">
-          <p className="text-xs text-muted-foreground">Approved This Cycle</p>
-          <p className="mt-1 text-2xl font-bold text-emerald-600">{approvedCount}</p>
-        </SectionCard>
-        <SectionCard className="p-4">
-          <p className="text-xs text-muted-foreground">Total Days Approved</p>
-          <p className="mt-1 text-2xl font-bold text-foreground">{totalDaysTaken}</p>
-        </SectionCard>
+        {[
+          { label: "Pending Requests", value: pendingCount, icon: Clock, gradient: "from-amber-400 to-amber-500" },
+          { label: "Avg Annual Leave Days", value: `${annualAvgDays}d`, icon: CalendarDays, gradient: "from-blue-400 to-blue-500" },
+          { label: "Approved This Cycle", value: approvedCount, icon: CheckCircle2, gradient: "from-emerald-400 to-emerald-500" },
+          { label: "Total Days Approved", value: totalDaysTaken, icon: Users, gradient: "from-violet-400 to-violet-500" },
+        ].map(({ label, value, icon: Icon, gradient }) => (
+          <div key={label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${gradient} p-5 text-white`}>
+            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-white/80 text-sm">{label}</p>
+                <p className="text-3xl font-bold mt-1">{value}</p>
+              </div>
+              <div className="bg-white/20 p-2.5 rounded-xl"><Icon className="h-5 w-5" /></div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <FilterBar>

@@ -246,16 +246,22 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
             {/* Revenue KPIs */}
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
               {[
-                { label: "Mar Revenue", value: `BHD ${(latestMonth.total/1000).toFixed(0)}k`, sub: "↑ vs Feb" },
-                { label: "ADR", value: `BHD ${latestKPI.adr}`, sub: "Mar 2026" },
-                { label: "RevPAR", value: `BHD ${latestKPI.revpar}`, sub: "Mar 2026" },
-                { label: "Occupancy", value: `${latestKPI.occ}%`, sub: "Mar 2026" },
-                { label: "6M Total", value: `BHD ${(revenueTotal.reduce((s,m)=>s+m.total,0)/1000).toFixed(0)}k`, sub: "Oct–Mar" },
+                { label: "Mar Revenue", value: `BHD ${(latestMonth.total/1000).toFixed(0)}k`, sub: "↑ vs Feb", gradient: "from-emerald-400 to-emerald-500", icon: <DollarSign size={20} /> },
+                { label: "ADR", value: `BHD ${latestKPI.adr}`, sub: "Mar 2026", gradient: "from-blue-400 to-blue-500", icon: <Building size={20} /> },
+                { label: "RevPAR", value: `BHD ${latestKPI.revpar}`, sub: "Mar 2026", gradient: "from-violet-400 to-violet-500", icon: <BarChart2 size={20} /> },
+                { label: "Occupancy", value: `${latestKPI.occ}%`, sub: "Mar 2026", gradient: "from-amber-400 to-amber-500", icon: <Percent size={20} /> },
+                { label: "6M Total", value: `BHD ${(revenueTotal.reduce((s,m)=>s+m.total,0)/1000).toFixed(0)}k`, sub: "Oct–Mar", gradient: "from-indigo-400 to-indigo-500", icon: <TrendingUp size={20} /> },
               ].map(k=>(
-                <div key={k.label} className="bg-card rounded-2xl shadow-sm border border-border p-4 text-center">
-                  <p className="text-xs text-muted-foreground">{k.label}</p>
-                  <p className="text-xl font-bold text-foreground mt-1">{k.value}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{k.sub}</p>
+                <div key={k.label} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r", k.gradient, "p-5 text-white")}>
+                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-white/80 text-sm">{k.label}</p>
+                      <p className="text-3xl font-bold mt-1">{k.value}</p>
+                      <p className="text-white/70 text-xs mt-1">{k.sub}</p>
+                    </div>
+                    <div className="bg-white/20 p-2.5 rounded-xl">{k.icon}</div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -455,12 +461,17 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
               const np = totRev - totCogs - totLabor - totOverhead;
               return (
                 <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                  {[{l:"Total Revenue",v:totRev,color:"from-emerald-400 to-emerald-600"},{l:"Cost of Sales",v:totCogs,color:"from-red-400 to-red-500"},{l:"Labour Cost",v:totLabor,color:"from-orange-400 to-orange-500"},{l:"Gross Profit",v:gp,color:"from-blue-400 to-blue-600"},{l:"Net Profit",v:np,color:"from-violet-400 to-violet-600"}].map(k=>(
-                    <div key={k.l} className={cn("relative overflow-hidden rounded-2xl p-4 bg-gradient-to-r text-white shadow-md",k.color)}>
-                      <p className="text-white/80 text-xs font-medium uppercase">{k.l}</p>
-                      <p className="text-2xl font-bold mt-1">BHD {(k.v/1000).toFixed(0)}k</p>
-                      <p className="text-white/70 text-xs mt-0.5">{Math.round(k.v/totRev*100)}% of revenue</p>
+                  {[{l:"Total Revenue",v:totRev,color:"from-emerald-400 to-emerald-600",icon:<DollarSign size={20}/>},{l:"Cost of Sales",v:totCogs,color:"from-red-400 to-red-500",icon:<TrendingDown size={20}/>},{l:"Labour Cost",v:totLabor,color:"from-orange-400 to-orange-500",icon:<Users size={20}/>},{l:"Gross Profit",v:gp,color:"from-blue-400 to-blue-600",icon:<TrendingUp size={20}/>},{l:"Net Profit",v:np,color:"from-violet-400 to-violet-600",icon:<Award size={20}/>}].map(k=>(
+                    <div key={k.l} className={cn("relative overflow-hidden rounded-2xl p-5 bg-gradient-to-r text-white",k.color)}>
                       <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl"/>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-white/80 text-sm">{k.l}</p>
+                          <p className="text-3xl font-bold mt-1">BHD {(k.v/1000).toFixed(0)}k</p>
+                          <p className="text-white/70 text-xs mt-1">{Math.round(k.v/totRev*100)}% of revenue</p>
+                        </div>
+                        <div className="bg-white/20 p-2.5 rounded-xl">{k.icon}</div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -520,20 +531,17 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
               {esgMetrics.map(m => {
                 const onTrack = m.label === "Waste Diverted" || m.label === "Solar Coverage" ? m.current <= m.target + 10 : m.current <= m.target * 1.1;
+                const gradient = m.label === "Carbon Footprint" ? "from-green-400 to-green-500" : m.label === "Water Usage" ? "from-blue-400 to-blue-500" : m.label === "Electricity (kWh)" ? "from-yellow-400 to-yellow-500" : m.label === "Waste Diverted" ? "from-emerald-400 to-emerald-500" : m.label === "Solar Coverage" ? "from-amber-400 to-amber-500" : "from-orange-400 to-orange-500";
                 return (
-                  <div key={m.label} className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-2xl">{m.icon}</span>
-                      <span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold", onTrack ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700")}>{onTrack ? "On Track" : "Attention"}</span>
-                    </div>
-                    <p className="text-sm font-semibold text-foreground">{m.label}</p>
-                    <p className="text-2xl font-bold text-foreground mt-1">{m.current.toLocaleString()} <span className="text-sm font-normal text-muted-foreground">{m.unit}</span></p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Target: {m.target.toLocaleString()} {m.unit}</p>
-                    <div className="mt-3 h-1.5 bg-secondary rounded-full overflow-hidden">
-                      <div className={cn("h-full rounded-full", onTrack ? "bg-emerald-500" : "bg-red-400")} style={{width:`${Math.min(Math.round((m.current/m.target)*100),100)}%`}}/>
-                    </div>
-                    <div className={cn("text-xs mt-1.5 flex items-center gap-1 font-medium", m.trend < 0 ? "text-emerald-600" : "text-red-500")}>
-                      {m.trend < 0 ? "↓" : "↑"} {Math.abs(m.trend)}% vs last year
+                  <div key={m.label} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r", gradient, "p-5 text-white")}>
+                    <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-white/80 text-sm">{m.label}</p>
+                        <p className="text-3xl font-bold mt-1">{m.current.toLocaleString()} <span className="text-sm font-normal text-white/70">{m.unit}</span></p>
+                        <p className="text-white/70 text-xs mt-1">Target: {m.target.toLocaleString()} {m.unit}</p>
+                      </div>
+                      <div className="bg-white/20 p-2.5 rounded-xl text-xl">{m.icon}</div>
                     </div>
                   </div>
                 );

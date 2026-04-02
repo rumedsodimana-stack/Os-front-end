@@ -560,14 +560,20 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: "Total Suppliers", value: suppliers.length, color: "text-indigo-600" },
-                { label: "Preferred", value: suppliers.filter(s => s.status === "Preferred").length, color: "text-emerald-600" },
-                { label: "On Probation", value: suppliers.filter(s => s.status === "Probation").length, color: "text-amber-600" },
-                { label: "Avg On-Time Delivery", value: `${Math.round(suppliers.reduce((s, sup) => s + sup.onTimeDelivery, 0) / suppliers.length)}%`, color: "text-blue-600" },
-              ].map(c => (
-                <div key={c.label} className="bg-card rounded-2xl shadow-sm border border-border p-4">
-                  <p className="text-sm text-muted-foreground">{c.label}</p>
-                  <p className={cn("text-3xl font-bold mt-1", c.color)}>{c.value}</p>
+                { label: "Total Suppliers", value: suppliers.length, gradient: "from-indigo-400 to-indigo-500", icon: Package },
+                { label: "Preferred", value: suppliers.filter(s => s.status === "Preferred").length, gradient: "from-emerald-400 to-emerald-500", icon: Star },
+                { label: "On Probation", value: suppliers.filter(s => s.status === "Probation").length, gradient: "from-amber-400 to-amber-500", icon: AlertTriangle },
+                { label: "Avg On-Time Delivery", value: `${Math.round(suppliers.reduce((s, sup) => s + sup.onTimeDelivery, 0) / suppliers.length)}%`, gradient: "from-blue-400 to-blue-500", icon: Clock },
+              ].map(({ label, value, gradient, icon: Icon }) => (
+                <div key={label} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white", gradient)}>
+                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-white/80 text-sm">{label}</p>
+                      <p className="text-3xl font-bold mt-1">{value}</p>
+                    </div>
+                    <div className="bg-white/20 p-2.5 rounded-xl"><Icon size={20} /></div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -758,14 +764,20 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: "Total SKUs", value: stockItems.length, color: "text-indigo-600" },
-                { label: "Critical (Below Reorder)", value: stockItems.filter(s => s.currentStock <= s.reorderPoint).length, color: "text-red-600" },
-                { label: "Auto-Reorder Enabled", value: stockItems.filter(s => s.autoReorder).length, color: "text-emerald-600" },
-                { label: "Est. Stock Value", value: `BHD ${stockItems.reduce((s, i) => s + i.currentStock * i.unitCost, 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: "text-blue-600" },
-              ].map(c => (
-                <div key={c.label} className="bg-card rounded-2xl shadow-sm border border-border p-4">
-                  <p className="text-sm text-muted-foreground">{c.label}</p>
-                  <p className={cn("text-2xl font-bold mt-1", c.color)}>{c.value}</p>
+                { label: "Total SKUs", value: stockItems.length, gradient: "from-indigo-400 to-indigo-500", icon: Package },
+                { label: "Critical (Below Reorder)", value: stockItems.filter(s => s.currentStock <= s.reorderPoint).length, gradient: "from-red-400 to-red-500", icon: AlertTriangle },
+                { label: "Auto-Reorder Enabled", value: stockItems.filter(s => s.autoReorder).length, gradient: "from-emerald-400 to-emerald-500", icon: CheckCircle2 },
+                { label: "Est. Stock Value", value: `BHD ${stockItems.reduce((s, i) => s + i.currentStock * i.unitCost, 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, gradient: "from-blue-400 to-blue-500", icon: DollarSign },
+              ].map(({ label, value, gradient, icon: Icon }) => (
+                <div key={label} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white", gradient)}>
+                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-white/80 text-sm">{label}</p>
+                      <p className="text-3xl font-bold mt-1">{value}</p>
+                    </div>
+                    <div className="bg-white/20 p-2.5 rounded-xl"><Icon size={20} /></div>
+                  </div>
                 </div>
               ))}
             </div>

@@ -102,11 +102,15 @@ export function Security({ aiEnabled, activeSubmenu = "Overview" }: SecurityProp
                 { label: "Keys Outstanding", value: keyRecords.filter(k => k.status === "Issued").length, icon: Key, color: "from-amber-400 to-amber-500" },
                 { label: "Patrols Today", value: patrols.filter(p => p.status === "Completed").length, icon: Shield, color: "from-emerald-400 to-emerald-500" },
               ].map(c => (
-                <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-4 text-white relative overflow-hidden`}>
+                <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-5 text-white relative overflow-hidden`}>
                   <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                  <div className="bg-white/20 rounded-lg w-8 h-8 flex items-center justify-center mb-2"><c.icon className="w-4 h-4 text-white" /></div>
-                  <p className="text-2xl font-bold">{c.value}</p>
-                  <p className="text-white/80 text-xs">{c.label}</p>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-white/80 text-sm">{c.label}</p>
+                      <p className="text-3xl font-bold mt-1">{c.value}</p>
+                    </div>
+                    <div className="bg-white/20 p-2.5 rounded-xl"><c.icon className="w-5 h-5 text-white" /></div>
+                  </div>
                 </div>
               ))}
             </div>

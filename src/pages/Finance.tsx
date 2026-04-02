@@ -201,12 +201,16 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
                 { label: "Outstanding AR", value: `BHD ${totalAR.toLocaleString()}`, icon: ArrowUpRight, color: "from-amber-400 to-amber-500", sub: "3 overdue invoices" },
                 { label: "Payables Due", value: `BHD ${totalAP.toLocaleString()}`, icon: ArrowDownRight, color: "from-red-400 to-red-500", sub: "Within 14 days" },
               ].map(c => (
-                <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-4 text-white relative overflow-hidden`}>
+                <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-5 text-white relative overflow-hidden`}>
                   <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                  <div className="bg-white/20 rounded-lg w-8 h-8 flex items-center justify-center mb-2"><c.icon className="w-4 h-4 text-white" /></div>
-                  <p className="text-2xl font-bold">{c.value}</p>
-                  <p className="text-white/80 text-xs">{c.label}</p>
-                  <p className="text-white/60 text-xs mt-0.5">{c.sub}</p>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-white/80 text-sm">{c.label}</p>
+                      <p className="text-3xl font-bold mt-1">{c.value}</p>
+                      <p className="text-white/70 text-xs mt-1">{c.sub}</p>
+                    </div>
+                    <div className="bg-white/20 p-2.5 rounded-xl"><c.icon className="w-5 h-5 text-white" /></div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -364,15 +368,20 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
             {/* Summary */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: "Open Folios", value: folios.filter(f => f.status === "Open").length, color: "from-blue-400 to-blue-500" },
-                { label: "Outstanding", value: `BHD ${folios.filter(f => f.status === "Open").reduce((s, f) => s + f.balance, 0).toLocaleString()}`, color: "from-amber-400 to-amber-500" },
-                { label: "Closed Today", value: folios.filter(f => f.status === "Closed").length, color: "from-emerald-400 to-emerald-500" },
-                { label: "Disputed", value: folios.filter(f => f.status === "Disputed").length, color: "from-red-400 to-red-500" },
+                { label: "Open Folios", value: folios.filter(f => f.status === "Open").length, color: "from-blue-400 to-blue-500", icon: <FileText size={20} /> },
+                { label: "Outstanding", value: `BHD ${folios.filter(f => f.status === "Open").reduce((s, f) => s + f.balance, 0).toLocaleString()}`, color: "from-amber-400 to-amber-500", icon: <AlertTriangle size={20} /> },
+                { label: "Closed Today", value: folios.filter(f => f.status === "Closed").length, color: "from-emerald-400 to-emerald-500", icon: <CheckCircle2 size={20} /> },
+                { label: "Disputed", value: folios.filter(f => f.status === "Disputed").length, color: "from-red-400 to-red-500", icon: <XCircle size={20} /> },
               ].map(c => (
-                <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-4 text-white relative overflow-hidden`}>
+                <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-5 text-white relative overflow-hidden`}>
                   <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                  <p className="text-2xl font-bold">{c.value}</p>
-                  <p className="text-white/80 text-xs">{c.label}</p>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-white/80 text-sm">{c.label}</p>
+                      <p className="text-3xl font-bold mt-1">{c.value}</p>
+                    </div>
+                    <div className="bg-white/20 p-2.5 rounded-xl">{c.icon}</div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -434,15 +443,20 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
             {/* AR Aging Summary */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: "Current", value: arEntries.filter(a => a.status === "Current").reduce((s, a) => s + a.amount, 0), color: "from-emerald-400 to-emerald-500" },
-                { label: "Overdue 30", value: arEntries.filter(a => a.status === "Overdue 30").reduce((s, a) => s + a.amount, 0), color: "from-amber-400 to-amber-500" },
-                { label: "Overdue 60", value: arEntries.filter(a => a.status === "Overdue 60").reduce((s, a) => s + a.amount, 0), color: "from-orange-400 to-orange-500" },
-                { label: "Overdue 90+", value: arEntries.filter(a => a.status === "Overdue 90+").reduce((s, a) => s + a.amount, 0), color: "from-red-400 to-red-500" },
+                { label: "Current", value: arEntries.filter(a => a.status === "Current").reduce((s, a) => s + a.amount, 0), color: "from-emerald-400 to-emerald-500", icon: <CheckCircle2 size={20} /> },
+                { label: "Overdue 30", value: arEntries.filter(a => a.status === "Overdue 30").reduce((s, a) => s + a.amount, 0), color: "from-amber-400 to-amber-500", icon: <Clock size={20} /> },
+                { label: "Overdue 60", value: arEntries.filter(a => a.status === "Overdue 60").reduce((s, a) => s + a.amount, 0), color: "from-orange-400 to-orange-500", icon: <AlertTriangle size={20} /> },
+                { label: "Overdue 90+", value: arEntries.filter(a => a.status === "Overdue 90+").reduce((s, a) => s + a.amount, 0), color: "from-red-400 to-red-500", icon: <AlertTriangle size={20} /> },
               ].map(c => (
-                <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-4 text-white relative overflow-hidden`}>
+                <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-5 text-white relative overflow-hidden`}>
                   <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                  <p className="text-2xl font-bold">BHD {c.value.toLocaleString()}</p>
-                  <p className="text-white/80 text-xs">{c.label}</p>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-white/80 text-sm">{c.label}</p>
+                      <p className="text-3xl font-bold mt-1">BHD {c.value.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-white/20 p-2.5 rounded-xl">{c.icon}</div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -502,15 +516,20 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: "Total Payable", value: `BHD ${totalAP.toLocaleString()}`, color: "from-red-400 to-red-500" },
-                { label: "Pending Approval", value: apEntries.filter(a => a.status === "Pending").length, color: "from-amber-400 to-amber-500" },
-                { label: "Approved to Pay", value: apEntries.filter(a => a.status === "Approved").length, color: "from-blue-400 to-blue-500" },
-                { label: "Paid This Month", value: apEntries.filter(a => a.status === "Paid").length, color: "from-emerald-400 to-emerald-500" },
+                { label: "Total Payable", value: `BHD ${totalAP.toLocaleString()}`, color: "from-red-400 to-red-500", icon: <Banknote size={20} /> },
+                { label: "Pending Approval", value: apEntries.filter(a => a.status === "Pending").length, color: "from-amber-400 to-amber-500", icon: <Clock size={20} /> },
+                { label: "Approved to Pay", value: apEntries.filter(a => a.status === "Approved").length, color: "from-blue-400 to-blue-500", icon: <CheckCircle2 size={20} /> },
+                { label: "Paid This Month", value: apEntries.filter(a => a.status === "Paid").length, color: "from-emerald-400 to-emerald-500", icon: <CreditCard size={20} /> },
               ].map(c => (
-                <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-4 text-white relative overflow-hidden`}>
+                <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-5 text-white relative overflow-hidden`}>
                   <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                  <p className="text-2xl font-bold">{c.value}</p>
-                  <p className="text-white/80 text-xs">{c.label}</p>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-white/80 text-sm">{c.label}</p>
+                      <p className="text-3xl font-bold mt-1">{c.value}</p>
+                    </div>
+                    <div className="bg-white/20 p-2.5 rounded-xl">{c.icon}</div>
+                  </div>
                 </div>
               ))}
             </div>

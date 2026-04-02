@@ -321,16 +321,25 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: "Total Transfers", value: transferRequests.length, color: "text-indigo-600" },
-                { label: "Pending", value: transferRequests.filter(t => t.status === "Pending").length, color: "text-amber-600" },
-                { label: "Approved", value: transferRequests.filter(t => t.status === "Approved").length, color: "text-emerald-600" },
-                { label: "Completed", value: transferRequests.filter(t => t.status === "Completed").length, color: "text-blue-600" },
-              ].map(c => (
-                <div key={c.label} className="bg-card rounded-2xl shadow-sm border border-border p-4">
-                  <p className="text-sm text-muted-foreground">{c.label}</p>
-                  <p className={cn("text-3xl font-bold mt-1", c.color)}>{c.value}</p>
-                </div>
-              ))}
+                { label: "Total Transfers", value: transferRequests.length, gradient: "from-indigo-400 to-indigo-500", icon: Users },
+                { label: "Pending", value: transferRequests.filter(t => t.status === "Pending").length, gradient: "from-amber-400 to-amber-500", icon: Clock },
+                { label: "Approved", value: transferRequests.filter(t => t.status === "Approved").length, gradient: "from-emerald-400 to-emerald-500", icon: CheckCircle2 },
+                { label: "Completed", value: transferRequests.filter(t => t.status === "Completed").length, gradient: "from-blue-400 to-blue-500", icon: Star },
+              ].map(c => {
+                const IconComponent = c.icon;
+                return (
+                  <div key={c.label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${c.gradient} p-5 text-white`}>
+                    <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                    <div className="flex items-start justify-between relative z-10">
+                      <div>
+                        <p className="text-white/80 text-sm">{c.label}</p>
+                        <p className="text-3xl font-bold mt-1">{c.value}</p>
+                      </div>
+                      <div className="bg-white/20 p-2.5 rounded-xl"><IconComponent size={20} /></div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="space-y-4">
@@ -403,17 +412,26 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
             {/* Chain summary KPIs */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: "Total Chain Revenue", value: `$${(totalRevenue / 1000000).toFixed(2)}M`, sub: "MTD Apr 2026", color: "text-indigo-600" },
-                { label: "Total GOP", value: `$${(properties.reduce((s, p) => s + p.gop, 0) / 1000000).toFixed(2)}M`, sub: "Gross Operating Profit", color: "text-emerald-600" },
-                { label: "Chain GOP %", value: `${Math.round(properties.filter(p => p.revenue > 0).reduce((s, p) => s + p.gopPct, 0) / properties.filter(p => p.revenue > 0).length)}%`, sub: "Average across properties", color: "text-blue-600" },
-                { label: "Total Room Revenue", value: `$${(consolidatedPL.find(d => d.dept === "Rooms") ? Object.values(consolidatedPL.find(d => d.dept === "Rooms")!).slice(1).reduce((a, b) => (a as number) + (b as number), 0) as number / 1000000 : 0).toFixed(2)}M`, sub: "Rooms dept only", color: "text-amber-600" },
-              ].map(c => (
-                <div key={c.label} className="bg-card rounded-2xl shadow-sm border border-border p-4">
-                  <p className="text-sm text-muted-foreground">{c.label}</p>
-                  <p className={cn("text-2xl font-bold mt-1", c.color)}>{c.value}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{c.sub}</p>
-                </div>
-              ))}
+                { label: "Total Chain Revenue", value: `$${(totalRevenue / 1000000).toFixed(2)}M`, sub: "MTD Apr 2026", gradient: "from-indigo-400 to-indigo-500", icon: DollarSign },
+                { label: "Total GOP", value: `$${(properties.reduce((s, p) => s + p.gop, 0) / 1000000).toFixed(2)}M`, sub: "Gross Operating Profit", gradient: "from-emerald-400 to-emerald-500", icon: TrendingUp },
+                { label: "Chain GOP %", value: `${Math.round(properties.filter(p => p.revenue > 0).reduce((s, p) => s + p.gopPct, 0) / properties.filter(p => p.revenue > 0).length)}%`, sub: "Average across properties", gradient: "from-blue-400 to-blue-500", icon: BarChart2 },
+                { label: "Total Room Revenue", value: `$${(consolidatedPL.find(d => d.dept === "Rooms") ? Object.values(consolidatedPL.find(d => d.dept === "Rooms")!).slice(1).reduce((a, b) => (a as number) + (b as number), 0) as number / 1000000 : 0).toFixed(2)}M`, sub: "Rooms dept only", gradient: "from-amber-400 to-amber-500", icon: Building2 },
+              ].map(c => {
+                const IconComponent = c.icon;
+                return (
+                  <div key={c.label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${c.gradient} p-5 text-white`}>
+                    <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                    <div className="flex items-start justify-between relative z-10">
+                      <div>
+                        <p className="text-white/80 text-sm">{c.label}</p>
+                        <p className="text-3xl font-bold mt-1">{c.value}</p>
+                        <p className="text-white/70 text-xs mt-1">{c.sub}</p>
+                      </div>
+                      <div className="bg-white/20 p-2.5 rounded-xl"><IconComponent size={20} /></div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Revenue by dept + property */}
