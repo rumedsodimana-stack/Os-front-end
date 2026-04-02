@@ -7,17 +7,17 @@ import { FrontDesk } from "./pages/FrontDesk";
 import { Housekeeping } from "./pages/Housekeeping";
 import { FoodAndBeverage } from "./pages/FoodAndBeverage";
 import { SalesRevenue } from "./pages/SalesRevenue";
-import { HumanResources } from "./pages/HumanResources";
-import { Engineering } from "./pages/Engineering";
-import { Executive } from "./pages/Executive";
-import { CRM } from "./pages/CRM";
+import { Team } from "./pages/Team";
+import { Engineering as Maintenance } from "./pages/Engineering";
+import { Insights } from "./pages/Insights";
+import { Guests } from "./pages/Guests";
 import { Finance } from "./pages/Finance";
 import { Security } from "./pages/Security";
 import { Comms } from "./pages/Comms";
 import { Events } from "./pages/Events";
 import { Procurement } from "./pages/Procurement";
-import { MultiProperty } from "./pages/MultiProperty";
-import { Configuration } from "./pages/Configuration";
+import { Portfolio } from "./pages/Portfolio";
+import { Settings } from "./pages/Settings";
 import { Login } from "./pages/Login";
 import { StyleGuide } from "./pages/StyleGuide";
 
@@ -27,17 +27,17 @@ export type Department =
   | "Housekeeping"
   | "Food & Beverage"
   | "Sales & Revenue"
-  | "Human Resources"
-  | "Engineering"
-  | "Executive"
-  | "CRM"
+  | "Team"
+  | "Maintenance"
+  | "Insights"
+  | "Guests"
   | "Finance"
   | "Security"
   | "Comms"
   | "Events"
   | "Procurement"
-  | "Multi-Property"
-  | "Configuration";
+  | "Portfolio"
+  | "Settings";
 
 function DashboardApp() {
   const [activeDepartment, setActiveDepartment] = useState<Department>("Dashboard");
@@ -65,17 +65,17 @@ function DashboardApp() {
       {activeDepartment === "Sales & Revenue" && (
         <SalesRevenue aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
       )}
-      {activeDepartment === "Human Resources" && (
-        <HumanResources aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
+      {activeDepartment === "Team" && (
+        <Team aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
       )}
-      {activeDepartment === "Engineering" && (
-        <Engineering aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
+      {activeDepartment === "Maintenance" && (
+        <Maintenance aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
       )}
-      {activeDepartment === "Executive" && (
-        <Executive aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
+      {activeDepartment === "Insights" && (
+        <Insights aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
       )}
-      {activeDepartment === "CRM" && (
-        <CRM aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
+      {activeDepartment === "Guests" && (
+        <Guests aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
       )}
       {activeDepartment === "Finance" && (
         <Finance aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
@@ -92,11 +92,11 @@ function DashboardApp() {
       {activeDepartment === "Procurement" && (
         <Procurement aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
       )}
-      {activeDepartment === "Multi-Property" && (
-        <MultiProperty aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
+      {activeDepartment === "Portfolio" && (
+        <Portfolio aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
       )}
-      {activeDepartment === "Configuration" && (
-        <Configuration aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
+      {activeDepartment === "Settings" && (
+        <Settings aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
       )}
     </Layout>
   );

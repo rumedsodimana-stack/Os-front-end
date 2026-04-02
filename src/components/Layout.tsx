@@ -50,17 +50,17 @@ const DEPARTMENTS: { name: Department; icon: React.ElementType; submenus: string
   { name: "Housekeeping", icon: Brush, submenus: ["Overview", "Room Status", "Tasks", "My Team", "Turndown Service", "Lost & Found", "Linen & Inventory", "Inspections", "Minibar", "Reports"] },
   { name: "Food & Beverage", icon: UtensilsCrossed, submenus: ["Overview", "Smart Menu (4D)", "POS", "Table Management", "Room Service", "Inventory"] },
   { name: "Sales & Revenue", icon: TrendingUp, submenus: ["Overview", "Rate Management", "Channel Manager", "Comp Set", "Sales Pipeline", "Group Quotes", "Forecast"] },
-  { name: "Human Resources", icon: Users, submenus: ["Overview", "Employees", "Scheduling", "Leave Management", "Training & Certifications", "Performance Reviews", "Payroll", "Grievances"] },
-  { name: "Engineering", icon: Wrench, submenus: ["Overview", "Work Orders", "Preventive Maintenance", "Asset Management"] },
-  { name: "Executive", icon: LineChart, submenus: ["Overview", "P&L Summary", "ESG Dashboard", "Audit Trail"] },
-  { name: "CRM", icon: UserCircle, submenus: ["Overview", "Guest Profiles", "Campaigns", "Complaints", "Stay History"] },
+  { name: "Team", icon: Users, submenus: ["Overview", "Employees", "Scheduling", "Leave Management", "Training & Certifications", "Performance Reviews", "Payroll", "Grievances"] },
+  { name: "Maintenance", icon: Wrench, submenus: ["Overview", "Work Orders", "Preventive Maintenance", "Asset Management"] },
+  { name: "Insights", icon: LineChart, submenus: ["Overview", "P&L Summary", "ESG Dashboard", "Audit Trail"] },
+  { name: "Guests", icon: UserCircle, submenus: ["Overview", "All Guests", "Arrivals Today", "VIP Intelligence", "Guest Moments", "Loyalty & Rewards", "Feedback", "Journey"] },
   { name: "Finance", icon: Landmark, submenus: ["Overview", "Night Audit", "Folios", "Receivables", "Payables", "Cashier", "Budget vs Actual", "FX Rates"] },
   { name: "Security", icon: ShieldCheck, submenus: ["Overview", "Incidents", "Visitor Management", "Key Management", "Patrol Log"] },
   { name: "Comms", icon: Radio, submenus: ["Overview", "Guest Requests", "Concierge", "Broadcast", "Staff Briefings", "Internal Messages", "Reports"] },
   { name: "Events", icon: CalendarDays, submenus: ["Overview", "Event Timeline", "Floor Plan", "AV & Equipment", "Catering Orders", "Attendance", "Banquet Setup", "Post-Event", "All Events", "Reports"] },
   { name: "Procurement", icon: Package, submenus: ["Overview", "Purchase Orders", "GRN & Receiving", "Suppliers", "Supplier Scorecard", "Supplier Comparison", "Stock Levels", "Reports"] },
-  { name: "Multi-Property", icon: Building2, submenus: ["Overview", "All Properties", "Transfers", "Consolidated P&L", "SOP Library", "Benchmarking", "Occupancy Heatmap"] },
-  { name: "Configuration", icon: SlidersHorizontal, submenus: ["Appearance", "Property Branding", "User Preferences", "Integrations", "System Settings"] },
+  { name: "Portfolio", icon: Building2, submenus: ["Overview", "All Properties", "Transfers", "Consolidated P&L", "SOP Library", "Benchmarking", "Occupancy Heatmap"] },
+  { name: "Settings", icon: SlidersHorizontal, submenus: ["Appearance", "Property Branding", "User Preferences", "Integrations", "System Settings"] },
 ];
 
 export function Layout({
