@@ -1467,30 +1467,7 @@ export function SalesRevenue({ aiEnabled, activeSubmenu = "Overview" }: SalesRev
   const currentView = subviewMap[activeSubmenu] ?? subviewMap["Overview"];
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      {/* Page Header */}
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Sales &amp; Revenue</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {activeSubmenu} — Singularity Grand Hotel · Sandton, Johannesburg
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {aiEnabled && (
-            <div className="flex items-center gap-1.5 rounded-lg bg-violet-100 px-3 py-1.5 text-xs font-medium text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
-              <span className="h-1.5 w-1.5 rounded-full bg-violet-500 animate-pulse inline-block" />
-              AI Revenue Insights On
-            </div>
-          )}
-          <button className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground hover:bg-secondary/50 transition-colors">
-            <Download className="h-4 w-4" />
-            Export Report
-          </button>
-        </div>
-      </div>
-
-      {/* Active Sub-view */}
+    <div className="p-6">
       <AnimatePresence mode="wait">
         <motion.div
           key={activeSubmenu}

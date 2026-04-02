@@ -184,7 +184,7 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
           <motion.div key="Overview" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Finance</h1>
+                <h2 className="text-2xl font-bold text-foreground">Overview</h2>
                 <p className="text-muted-foreground text-sm mt-0.5">Today's financial snapshot — {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}</p>
               </div>
               <div className="flex gap-2">

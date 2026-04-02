@@ -1723,58 +1723,10 @@ const submenuKeyMap: Record<string, TabKey> = {
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 const Team: React.FC<TeamProps> = ({ aiEnabled, activeSubmenu }) => {
-  const defaultTab = useMemo<TabKey>(() => {
-    if (activeSubmenu && submenuKeyMap[activeSubmenu]) {
-      return submenuKeyMap[activeSubmenu];
-    }
-    return "overview";
-  }, [activeSubmenu]);
-
-  const [activeTab, setActiveTab] = React.useState<TabKey>(defaultTab);
-
-  React.useEffect(() => {
-    if (activeSubmenu && submenuKeyMap[activeSubmenu]) {
-      setActiveTab(submenuKeyMap[activeSubmenu]);
-    }
-  }, [activeSubmenu]);
+  const activeTab = submenuKeyMap[activeSubmenu ?? ""] ?? "overview";
 
   return (
     <div className="space-y-5 px-1">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Human Resources</h1>
-          <p className="text-sm text-muted-foreground">
-            Staff management, scheduling, payroll & compliance — Singularity Hotel Group
-          </p>
-        </div>
-        {aiEnabled && (
-          <div className="flex items-center gap-2 rounded-2xl border border-indigo-300 bg-indigo-50 px-3 py-2 dark:border-indigo-800 dark:bg-indigo-950/40">
-            <TrendingUp className="h-4 w-4 text-indigo-500" />
-            <span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">
-              AI Insights Active
-            </span>
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-wrap gap-1.5 rounded-2xl border border-border bg-card p-1.5">
-        {TABS.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
-            className={cn(
-              "flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium transition-all",
-              activeTab === key
-                ? "bg-indigo-600 text-white shadow-sm"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            <Icon className="h-3.5 w-3.5" />
-            {label}
-          </button>
-        ))}
-      </div>
-
       <AnimatePresence mode="wait">
         {activeTab === "overview" && <OverviewView key="overview" />}
         {activeTab === "directory" && <StaffDirectoryView key="directory" />}

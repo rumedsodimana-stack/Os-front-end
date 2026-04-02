@@ -89,7 +89,7 @@ export function Security({ aiEnabled, activeSubmenu = "Overview" }: SecurityProp
           <motion.div key="Overview" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Security</h1>
+                <h2 className="text-2xl font-bold text-foreground">Overview</h2>
                 <p className="text-muted-foreground text-sm mt-0.5">Live security operations — {new Date().toLocaleDateString("en-GB")}</p>
               </div>
               <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><Plus className="w-4 h-4" /> Log Incident</button>
