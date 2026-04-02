@@ -103,15 +103,14 @@ export function Layout({
         {/* Darker Left Strip (Main Menu) */}
         <div className="w-16 bg-violet-700/90 backdrop-blur-md h-full rounded-r-2xl z-20 flex flex-col items-center py-6 shadow-xl absolute left-0 top-0 border-r border-white/10">
           {/* Logo */}
-          <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center mb-8 text-white font-bold text-xl shadow-inner">
+          <div className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center mb-4 text-white font-bold text-lg shadow-inner shrink-0">
             O
           </div>
 
           {/* Main Menu Icons */}
-          <div className="flex flex-col gap-3 w-full px-2">
+          <div className="flex flex-col gap-1 w-full px-2 flex-1 overflow-y-auto scrollbar-hide">
             {DEPARTMENTS.map(dept => {
               const isActive = activeDepartment === dept.name;
-              const isHovered = hoveredDept === dept.name;
               return (
                 <button
                   key={dept.name}
@@ -121,12 +120,12 @@ export function Layout({
                     setActiveSubmenu(dept.submenus[0]);
                   }}
                   className={cn(
-                    "w-full aspect-square rounded-xl flex items-center justify-center transition-all relative group",
+                    "w-full h-9 rounded-xl flex items-center justify-center transition-all relative group shrink-0",
                     isActive ? "bg-violet-500/90 shadow-md text-white border border-white/10" : "text-violet-300 hover:text-white hover:bg-white/10"
                   )}
                   title={dept.name}
                 >
-                  <dept.icon className="w-6 h-6" />
+                  <dept.icon className="w-5 h-5" />
                   {/* Tooltip */}
                   <span className="absolute left-14 bg-gray-900/90 backdrop-blur-sm text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity border border-white/10">
                     {dept.name}
