@@ -19,18 +19,38 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// ── Demo credentials bypass ───────────────────────────────────────────────────
+const DEMO_EMAIL = 'demo@singularity.com';
+const DEMO_PASSWORD = 'demo1234';
+const DEMO_USER: User = {
+  id: 'demo-001',
+  name: 'Sarah Mitchell',
+  email: DEMO_EMAIL,
+  role: 'General Manager',
+  propertyId: 'SGM01',
+};
+const DEMO_TOKEN = 'demo-access-token';
+
+function isDemoCredentials(email: string, password: string) {
+  return email.trim().toLowerCase() === DEMO_EMAIL && password === DEMO_PASSWORD;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
+    if (token === DEMO_TOKEN) {
+      // Demo session — restore instantly without API call
+      setUser(DEMO_USER);
+      setLoading(false);
+      return;
+    }
     if (token) {
       authService.me()
         .then(setUser)
-        .catch(() => {
-          localStorage.removeItem('access_token');
-        })
+        .catch(() => localStorage.removeItem('access_token'))
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
@@ -38,6 +58,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
+    if (isDemoCredentials(email, password)) {
+      // Demo bypass — no backend required
+      localStorage.setItem('access_token', DEMO_TOKEN);
+      setUser(DEMO_USER);
+      return;
+    }
     const data = await authService.login({ email, password });
     localStorage.setItem('access_token', data.access_token);
     localStorage.setItem('refresh_token', data.refresh_token);
@@ -45,7 +71,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await authService.logout();
+    const token = localStorage.getItem('access_token');
+    if (token !== DEMO_TOKEN) await authService.logout().catch(() => {});
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     setUser(null);

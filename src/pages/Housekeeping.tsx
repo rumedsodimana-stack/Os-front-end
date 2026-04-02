@@ -1394,21 +1394,22 @@ function MinibarRestocking() {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function Housekeeping({ aiEnabled, activeSubmenu }: HousekeepingProps) {
-  const view = activeSubmenu || "overview";
+  const view = activeSubmenu || "Overview";
 
   const subviewMap: Record<string, { label: string; icon: React.ElementType; component: React.ReactNode }> = {
-    overview: { label: "Overview", icon: BarChart2, component: <Overview /> },
-    "room-status": { label: "Room Status", icon: Home, component: <RoomStatusView /> },
-    "task-list": { label: "Task List", icon: ClipboardList, component: <TaskListView /> },
-    supervisor: { label: "Supervisor Dashboard", icon: User, component: <SupervisorDashboard /> },
-    turndown: { label: "Turndown Service", icon: Coffee, component: <TurndownService /> },
-    "lost-found": { label: "Lost & Found", icon: Package, component: <LostAndFound /> },
-    inventory: { label: "Inventory & Supplies", icon: Layers, component: <InventorySupplies /> },
-    inspection: { label: "Inspection Checklist", icon: CheckCircle2, component: <InspectionChecklist /> },
-    minibar: { label: "Minibar Restocking", icon: Bell, component: <MinibarRestocking /> },
+    "Overview": { label: "Overview", icon: BarChart2, component: <Overview /> },
+    "Room Status": { label: "Room Status", icon: Home, component: <RoomStatusView /> },
+    "Tasks": { label: "Tasks", icon: ClipboardList, component: <TaskListView /> },
+    "My Team": { label: "My Team", icon: User, component: <SupervisorDashboard /> },
+    "Turndown Service": { label: "Turndown Service", icon: Coffee, component: <TurndownService /> },
+    "Lost & Found": { label: "Lost & Found", icon: Package, component: <LostAndFound /> },
+    "Linen & Inventory": { label: "Linen & Inventory", icon: Layers, component: <InventorySupplies /> },
+    "Inspections": { label: "Inspections", icon: CheckCircle2, component: <InspectionChecklist /> },
+    "Minibar": { label: "Minibar", icon: Bell, component: <MinibarRestocking /> },
+    "Reports": { label: "Reports", icon: BarChart2, component: <Overview /> },
   };
 
-  const current = subviewMap[view] ?? subviewMap["overview"];
+  const current = subviewMap[view] ?? subviewMap["Overview"];
   const Icon = current.icon;
 
   return (

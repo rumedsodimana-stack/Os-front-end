@@ -1690,13 +1690,18 @@ type TabKey = (typeof TABS)[number]["key"];
 
 const submenuKeyMap: Record<string, TabKey> = {
   "Staff Directory": "directory",
+  "Employees": "directory",
   Attendance: "attendance",
+  "Scheduling": "shifts",
   "Shift Scheduling": "shifts",
   Payroll: "payroll",
   "Leave Management": "leave",
   Training: "training",
+  "Training & Certifications": "training",
   Performance: "performance",
+  "Performance Reviews": "performance",
   Disciplinary: "disciplinary",
+  "Grievances": "disciplinary",
 };
 
 // ─── Main Component ──────────────────────────────────────────────────────────

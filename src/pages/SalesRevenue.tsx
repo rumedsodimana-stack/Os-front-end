@@ -1458,6 +1458,8 @@ export function SalesRevenue({ aiEnabled, activeSubmenu = "Overview" }: SalesRev
     "Channel Manager": <ChannelManager />,
     Forecast: <Forecast />,
     "Group Quotes": <GroupQuotes />,
+    "Comp Set": <CompetitorIntelligence />,
+    "Sales Pipeline": <ReservationsPipeline />,
     "Competitor Rate Intelligence": <CompetitorIntelligence />,
   };
 

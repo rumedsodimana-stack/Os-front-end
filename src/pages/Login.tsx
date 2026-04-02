@@ -13,6 +13,12 @@ export function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const fillDemo = () => {
+    setEmail('demo@singularity.com');
+    setPassword('demo1234');
+    setError('');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -49,10 +55,26 @@ export function Login() {
 
         {/* Card */}
         <div className="bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 shadow-2xl p-8">
-          <div className="mb-6">
+          <div className="mb-5">
             <h2 className="text-xl font-semibold text-white">Sign in to your account</h2>
             <p className="text-violet-200 text-sm mt-1">Enter your credentials to access the dashboard</p>
           </div>
+
+          {/* Demo credentials banner */}
+          <button
+            type="button"
+            onClick={fillDemo}
+            className="w-full mb-5 flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/30 rounded-2xl p-3.5 transition-all group text-left"
+          >
+            <div className="bg-violet-500/40 rounded-xl p-2 shrink-0">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-xs font-bold">Try the Live Demo</p>
+              <p className="text-violet-200 text-xs mt-0.5">demo@singularity.com · demo1234</p>
+            </div>
+            <span className="text-white/60 text-xs font-medium group-hover:text-white transition-colors">Auto-fill →</span>
+          </button>
 
           {error && (
             <div className="mb-4 flex items-start gap-3 bg-red-500/20 border border-red-400/30 rounded-xl px-4 py-3 text-red-200 text-sm">

@@ -2372,7 +2372,13 @@ const pageConfig: Record<string, { label: string; icon: React.ReactNode; descrip
 // ---------------------------------------------------------------------------
 
 export function Engineering({ aiEnabled, activeSubmenu }: EngineeringProps) {
-  const submenu = activeSubmenu ?? "overview";
+  const submenuNormalize: Record<string, string> = {
+    "Overview": "overview",
+    "Work Orders": "work-orders",
+    "Preventive Maintenance": "preventive-maintenance",
+    "Asset Management": "asset-registry",
+  };
+  const submenu = (activeSubmenu ? (submenuNormalize[activeSubmenu] ?? activeSubmenu) : null) ?? "overview";
   const page = pageConfig[submenu] ?? pageConfig["overview"];
 
   const renderContent = () => {

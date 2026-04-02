@@ -31,6 +31,7 @@ import { useTheme } from "./theme-provider";
 import { cn } from "../lib/utils";
 import { AgenticAIPanel } from "./AgenticAIPanel";
 import { NotificationsPanel } from "./NotificationsPanel";
+import { QuickActions } from "./QuickActions";
 import { motion } from "motion/react";
 import type { Department } from "../App";
 
@@ -290,7 +291,10 @@ export function Layout({
       )}
 
       {/* Notifications Panel */}
-      <NotificationsPanel open={notifOpen} onClose={() => setNotifOpen(false)} />
+      {notifOpen && <NotificationsPanel onClose={() => setNotifOpen(false)} />}
+
+      {/* Floating Quick Actions */}
+      <QuickActions />
 
     </div>
   );
