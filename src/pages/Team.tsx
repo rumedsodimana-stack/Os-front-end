@@ -15,6 +15,14 @@ import {
   Heart,
   FileText,
   TrendingUp,
+  UserPlus,
+  LogOut,
+  ArrowRightLeft,
+  Briefcase,
+  CheckCircle2,
+  AlertTriangle,
+  Download,
+  Plus,
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import {
@@ -1684,6 +1692,10 @@ const TABS = [
   { key: "training", label: "Training & Certs", icon: BookOpen },
   { key: "performance", label: "Performance", icon: Star },
   { key: "disciplinary", label: "Disciplinary", icon: Shield },
+  { key: "hire", label: "Hiring", icon: UserPlus },
+  { key: "offboarding", label: "Offboarding", icon: LogOut },
+  { key: "timeclock", label: "Time & Attendance", icon: Clock },
+  { key: "transfers", label: "Staff Transfers", icon: ArrowRightLeft },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -1702,6 +1714,10 @@ const submenuKeyMap: Record<string, TabKey> = {
   "Performance Reviews": "performance",
   Disciplinary: "disciplinary",
   "Grievances": "disciplinary",
+  Hiring: "hire",
+  Offboarding: "offboarding",
+  "Time & Attendance": "timeclock",
+  "Staff Transfers": "transfers",
 };
 
 // ─── Main Component ──────────────────────────────────────────────────────────
@@ -1769,10 +1785,717 @@ const Team: React.FC<TeamProps> = ({ aiEnabled, activeSubmenu }) => {
         {activeTab === "training" && <TrainingView key="training" />}
         {activeTab === "performance" && <PerformanceView key="performance" />}
         {activeTab === "disciplinary" && <DisciplinaryView key="disciplinary" />}
+        {activeTab === "hire" && <HireWizardView key="hire" />}
+        {activeTab === "offboarding" && <OffboardingView key="offboarding" />}
+        {activeTab === "timeclock" && <TimeClockView key="timeclock" />}
+        {activeTab === "transfers" && <TransferView key="transfers" />}
       </AnimatePresence>
     </div>
   );
 };
+
+// ─── Hire Wizard View ────────────────────────────────────────────────────────
+
+function HireWizardView() {
+  const [showPostForm, setShowPostForm] = React.useState(false);
+  const [newRole, setNewRole] = React.useState({
+    title: "",
+    department: "",
+    type: "Full-time",
+    salaryMin: "",
+    salaryMax: "",
+    startDate: "",
+  });
+
+  const pipelineColumns = [
+    { name: "Applications", count: 8, color: "from-blue-400 to-blue-500" },
+    { name: "Phone Screen", count: 5, color: "from-cyan-400 to-cyan-500" },
+    { name: "Interview", count: 3, color: "from-purple-400 to-purple-500" },
+    { name: "Offer", count: 2, color: "from-green-400 to-green-500" },
+    { name: "Hired", count: 1, color: "from-emerald-400 to-emerald-500" },
+  ];
+
+  const recentHires = [
+    { name: "Sarah Johnson", role: "Front Desk Manager", department: "Ops", startDate: "2026-03-15", status: "Active" },
+    { name: "Marcus Chen", role: "Sous Chef", department: "F&B", startDate: "2026-03-01", status: "Active" },
+    { name: "Emma Wilson", role: "Housekeeping Supervisor", department: "Housekeeping", startDate: "2026-02-20", status: "Active" },
+    { name: "James Murphy", role: "Concierge", department: "Guest Services", startDate: "2026-02-10", status: "Active" },
+    { name: "Lisa Park", role: "Revenue Analyst", department: "Sales", startDate: "2026-02-01", status: "Active" },
+  ];
+
+  const handlePostRole = () => {
+    if (newRole.title && newRole.department) {
+      setShowPostForm(false);
+      setNewRole({ title: "", department: "", type: "Full-time", salaryMin: "", salaryMax: "", startDate: "" });
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Hiring Pipeline</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Track candidates through recruitment stages</p>
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setShowPostForm(!showPostForm)}
+          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 text-sm font-medium text-white hover:shadow-lg transition-shadow"
+        >
+          <Plus size={16} />
+          Post New Role
+        </motion.button>
+      </div>
+
+      {showPostForm && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl bg-card border border-border p-6"
+        >
+          <h3 className="font-semibold text-foreground mb-4">Post New Job Opening</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <input
+              type="text"
+              placeholder="Job Title"
+              value={newRole.title}
+              onChange={(e) => setNewRole({ ...newRole, title: e.target.value })}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground"
+            />
+            <input
+              type="text"
+              placeholder="Department"
+              value={newRole.department}
+              onChange={(e) => setNewRole({ ...newRole, department: e.target.value })}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground"
+            />
+            <select
+              value={newRole.type}
+              onChange={(e) => setNewRole({ ...newRole, type: e.target.value })}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+            >
+              <option>Full-time</option>
+              <option>Part-time</option>
+              <option>Contract</option>
+            </select>
+            <input
+              type="text"
+              placeholder="Salary Range"
+              value={newRole.salaryMin}
+              onChange={(e) => setNewRole({ ...newRole, salaryMin: e.target.value })}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground"
+            />
+            <input
+              type="date"
+              value={newRole.startDate}
+              onChange={(e) => setNewRole({ ...newRole, startDate: e.target.value })}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground col-span-2"
+            />
+          </div>
+          <div className="flex gap-2 mt-4">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handlePostRole}
+              className="rounded-lg bg-gradient-to-r from-green-500 to-green-600 px-4 py-2 text-sm font-medium text-white hover:shadow-lg transition-shadow"
+            >
+              Post Role
+            </motion.button>
+            <button
+              onClick={() => setShowPostForm(false)}
+              className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+            >
+              Cancel
+            </button>
+          </div>
+        </motion.div>
+      )}
+
+      <div className="grid grid-cols-5 gap-4">
+        {pipelineColumns.map((col) => (
+          <div key={col.name} className="space-y-3">
+            <div className={`bg-gradient-to-r ${col.color} rounded-lg p-4 text-white shadow-sm`}>
+              <p className="text-sm font-semibold">{col.name}</p>
+              <p className="text-2xl font-bold">{col.count}</p>
+            </div>
+            <div className="space-y-2">
+              {col.count > 0 && (
+                <>
+                  <motion.div
+                    whileHover={{ y: -2 }}
+                    className="rounded-lg bg-card border border-border p-3 cursor-pointer hover:shadow-md transition-shadow"
+                  >
+                    <p className="font-medium text-sm text-foreground">Alice Brown</p>
+                    <p className="text-xs text-muted-foreground">Senior Chef</p>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-xs text-muted-foreground">5 days</span>
+                      <span className="text-xs font-semibold text-green-600">85/100</span>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-2xl bg-card border border-border overflow-hidden">
+        <div className="bg-secondary/50 px-6 py-3 border-b border-border">
+          <h3 className="font-semibold text-foreground">Recent Hires</h3>
+        </div>
+        <table className="w-full text-sm">
+          <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+            <tr>
+              <th className="text-left px-6 py-3 font-semibold">Name</th>
+              <th className="text-left px-6 py-3 font-semibold">Role</th>
+              <th className="text-left px-6 py-3 font-semibold">Department</th>
+              <th className="text-left px-6 py-3 font-semibold">Start Date</th>
+              <th className="text-left px-6 py-3 font-semibold">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {recentHires.map((hire) => (
+              <tr key={hire.name} className="hover:bg-secondary/30">
+                <td className="px-6 py-3 text-foreground">{hire.name}</td>
+                <td className="px-6 py-3 text-muted-foreground">{hire.role}</td>
+                <td className="px-6 py-3 text-muted-foreground">{hire.department}</td>
+                <td className="px-6 py-3 text-muted-foreground">{hire.startDate}</td>
+                <td className="px-6 py-3"><span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300">{hire.status}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ─── Offboarding View ────────────────────────────────────────────────────────
+
+function OffboardingView() {
+  const [showStartForm, setShowStartForm] = React.useState(false);
+  const [newOffboard, setNewOffboard] = React.useState({ name: "", lastDay: "" });
+
+  const activeOffboardings = [
+    {
+      id: 1,
+      name: "Robert Thompson",
+      role: "Night Manager",
+      lastDay: "2026-04-15",
+      progress: 75,
+      checklist: [
+        { item: "Exit interview", done: true },
+        { item: "Return equipment", done: true },
+        { item: "Deactivate accounts", done: false },
+        { item: "Final payroll", done: false },
+        { item: "NOC letter", done: false },
+        { item: "Knowledge transfer", done: false },
+      ],
+    },
+    {
+      id: 2,
+      name: "Jennifer Davis",
+      role: "Pastry Chef",
+      lastDay: "2026-04-22",
+      progress: 33,
+      checklist: [
+        { item: "Exit interview", done: true },
+        { item: "Return equipment", done: false },
+        { item: "Deactivate accounts", done: false },
+        { item: "Final payroll", done: false },
+        { item: "NOC letter", done: false },
+        { item: "Knowledge transfer", done: false },
+      ],
+    },
+  ];
+
+  const stats = [
+    { label: "Active Offboardings", value: "2", icon: AlertTriangle, color: "from-amber-400 to-amber-500" },
+    { label: "Completed This Month", value: "4", icon: CheckCircle2, color: "from-green-400 to-green-500" },
+  ];
+
+  const handleStartOffboard = () => {
+    if (newOffboard.name && newOffboard.lastDay) {
+      setShowStartForm(false);
+      setNewOffboard({ name: "", lastDay: "" });
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Staff Offboarding</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage staff exit processes</p>
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setShowStartForm(!showStartForm)}
+          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 text-sm font-medium text-white hover:shadow-lg transition-shadow"
+        >
+          <Plus size={16} />
+          Start Offboarding
+        </motion.button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`bg-gradient-to-r ${stat.color} rounded-2xl p-6 text-white shadow-sm`}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm opacity-90">{stat.label}</p>
+                  <p className="text-3xl font-bold mt-2">{stat.value}</p>
+                </div>
+                <div className="bg-white/20 rounded-lg p-2.5">
+                  <Icon size={20} />
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {showStartForm && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl bg-card border border-border p-6"
+        >
+          <h3 className="font-semibold text-foreground mb-4">Start New Offboarding</h3>
+          <div className="space-y-4">
+            <input
+              type="text"
+              placeholder="Staff Name"
+              value={newOffboard.name}
+              onChange={(e) => setNewOffboard({ ...newOffboard, name: e.target.value })}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground"
+            />
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={newOffboard.lastDay}
+                onChange={(e) => setNewOffboard({ ...newOffboard, lastDay: e.target.value })}
+                className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+              />
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleStartOffboard}
+                className="rounded-lg bg-gradient-to-r from-green-500 to-green-600 px-6 py-2 text-sm font-medium text-white hover:shadow-lg transition-shadow"
+              >
+                Start
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      <div className="space-y-4">
+        {activeOffboardings.map((offboard) => (
+          <motion.div
+            key={offboard.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl bg-card border border-border p-6"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="font-semibold text-foreground">{offboard.name}</h3>
+                <p className="text-sm text-muted-foreground">{offboard.role} • Last Day: {offboard.lastDay}</p>
+              </div>
+              <span className="text-sm font-semibold text-muted-foreground">{offboard.progress}%</span>
+            </div>
+            <div className="w-full h-2 bg-secondary rounded-full overflow-hidden mb-4">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${offboard.progress}%` }}
+                transition={{ duration: 0.8 }}
+                className="h-full bg-gradient-to-r from-blue-500 to-blue-600"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {offboard.checklist.map((item) => (
+                <div key={item.item} className="flex items-center gap-2">
+                  <div className={cn(
+                    "w-5 h-5 rounded border flex items-center justify-center",
+                    item.done ? "bg-green-500 border-green-500" : "border-border"
+                  )}>
+                    {item.done && <CheckCircle2 size={16} className="text-white" />}
+                  </div>
+                  <span className="text-xs text-muted-foreground">{item.item}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Time Clock View ─────────────────────────────────────────────────────────
+
+function TimeClockView() {
+  const [selectedDept, setSelectedDept] = React.useState("All");
+
+  const todayStats = [
+    { label: "Clocked In Now", value: "32", icon: Clock, color: "from-green-400 to-green-500" },
+    { label: "Late Today", value: "3", icon: AlertTriangle, color: "from-amber-400 to-amber-500" },
+    { label: "Absent", value: "2", icon: UserX, color: "from-red-400 to-red-500" },
+    { label: "On Leave", value: "4", icon: Heart, color: "from-purple-400 to-purple-500" },
+  ];
+
+  const attendanceData = [
+    { name: "Michael Johnson", dept: "Front Office", clockIn: "08:00", clockOut: "16:30", hours: "8.5h", status: "Present" },
+    { name: "Sarah Chen", dept: "F&B", clockIn: "07:45", clockOut: "15:45", hours: "8.0h", status: "Present" },
+    { name: "James Wilson", dept: "Housekeeping", clockIn: "08:15", clockOut: "", hours: "0.0h", status: "Present" },
+    { name: "Emma Rodriguez", dept: "Front Office", clockIn: "09:20", clockOut: "", hours: "0.0h", status: "Late" },
+    { name: "David Kumar", dept: "Engineering", clockIn: "07:30", clockOut: "15:30", hours: "8.0h", status: "Present" },
+    { name: "Lisa Park", dept: "F&B", clockIn: "", clockOut: "", hours: "0.0h", status: "Absent" },
+    { name: "Marco Silva", dept: "Security", clockIn: "21:00", clockOut: "", hours: "0.0h", status: "Present" },
+    { name: "Amanda Foster", dept: "Housekeeping", clockIn: "", clockOut: "", hours: "0.0h", status: "On Leave" },
+    { name: "Christopher Lee", dept: "Guest Services", clockIn: "08:00", clockOut: "16:00", hours: "8.0h", status: "Present" },
+    { name: "Rachel Martinez", dept: "Admin", clockIn: "08:30", clockOut: "", hours: "0.0h", status: "Present" },
+    { name: "Victor Santos", dept: "Engineering", clockIn: "", clockOut: "", hours: "0.0h", status: "On Leave" },
+    { name: "Nicole Adams", dept: "F&B", clockIn: "08:00", clockOut: "16:15", hours: "8.25h", status: "Present" },
+  ];
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case "Present": return "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300";
+      case "Late": return "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300";
+      case "Absent": return "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300";
+      case "On Leave": return "bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300";
+      default: return "bg-gray-100 text-gray-700 dark:bg-gray-950/40 dark:text-gray-300";
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Time & Attendance</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Today • April 2, 2026</p>
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 text-sm font-medium text-white hover:shadow-lg transition-shadow"
+        >
+          <Download size={16} />
+          Export
+        </motion.button>
+      </div>
+
+      <div className="grid grid-cols-4 gap-4">
+        {todayStats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`bg-gradient-to-r ${stat.color} rounded-2xl p-4 text-white shadow-sm`}
+            >
+              <p className="text-sm opacity-90">{stat.label}</p>
+              <p className="text-3xl font-bold mt-2">{stat.value}</p>
+              <div className="bg-white/20 rounded-lg p-1.5 w-fit mt-3">
+                <Icon size={16} />
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      <div className="flex items-center gap-4">
+        <label className="text-sm text-muted-foreground">Filter by Department:</label>
+        <select
+          value={selectedDept}
+          onChange={(e) => setSelectedDept(e.target.value)}
+          className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+        >
+          <option>All</option>
+          <option>Front Office</option>
+          <option>F&B</option>
+          <option>Housekeeping</option>
+          <option>Engineering</option>
+          <option>Guest Services</option>
+          <option>Admin</option>
+          <option>Security</option>
+        </select>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="ml-auto rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+        >
+          Manual Adjustment
+        </motion.button>
+      </div>
+
+      <div className="rounded-2xl bg-card border border-border overflow-hidden">
+        <div className="bg-secondary/50 px-6 py-3 border-b border-border">
+          <h3 className="font-semibold text-foreground">Attendance Log</h3>
+        </div>
+        <table className="w-full text-sm">
+          <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+            <tr>
+              <th className="text-left px-6 py-3 font-semibold">Name</th>
+              <th className="text-left px-6 py-3 font-semibold">Department</th>
+              <th className="text-left px-6 py-3 font-semibold">Clock In</th>
+              <th className="text-left px-6 py-3 font-semibold">Clock Out</th>
+              <th className="text-left px-6 py-3 font-semibold">Hours</th>
+              <th className="text-left px-6 py-3 font-semibold">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {attendanceData.map((record) => (
+              <tr key={record.name} className="hover:bg-secondary/30">
+                <td className="px-6 py-3 text-foreground font-medium">{record.name}</td>
+                <td className="px-6 py-3 text-muted-foreground">{record.dept}</td>
+                <td className="px-6 py-3 text-muted-foreground">{record.clockIn || "—"}</td>
+                <td className="px-6 py-3 text-muted-foreground">{record.clockOut || "—"}</td>
+                <td className="px-6 py-3 text-muted-foreground">{record.hours}</td>
+                <td className="px-6 py-3">
+                  <span className={cn("inline-block px-2 py-1 rounded-full text-xs font-medium", getStatusBadgeColor(record.status))}>
+                    {record.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ─── Transfer View ──────────────────────────────────────────────────────────
+
+function TransferView() {
+  const [showRequestForm, setShowRequestForm] = React.useState(false);
+  const [newTransfer, setNewTransfer] = React.useState({
+    staff: "",
+    fromDept: "",
+    toDept: "",
+    effectiveDate: "",
+    reason: "",
+  });
+
+  const activeTransfers = [
+    {
+      id: 1,
+      name: "Marcus Johnson",
+      fromDept: "Front Office",
+      toDept: "Guest Services",
+      requestedBy: "Sarah Williams",
+      date: "2026-03-28",
+      status: "Pending",
+    },
+    {
+      id: 2,
+      name: "Elena Rodriguez",
+      fromDept: "Housekeeping",
+      toDept: "F&B",
+      requestedBy: "James Murphy",
+      date: "2026-03-25",
+      status: "Approved",
+    },
+    {
+      id: 3,
+      name: "David Chen",
+      fromDept: "F&B",
+      toDept: "Operations",
+      requestedBy: "Lisa Park",
+      date: "2026-03-20",
+      status: "Pending",
+    },
+  ];
+
+  const completedTransfers = [
+    { name: "Anna Sofia", from: "Admin", to: "HR", date: "2026-03-15" },
+    { name: "Patrick O'Brien", from: "Security", to: "Operations", date: "2026-03-10" },
+    { name: "Monica Torres", from: "Housekeeping", to: "Training", date: "2026-03-05" },
+    { name: "Kevin Chan", from: "F&B", to: "Guest Services", date: "2026-02-28" },
+    { name: "Rachel Green", from: "Front Office", to: "Admin", date: "2026-02-20" },
+  ];
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Pending": return "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300";
+      case "Approved": return "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300";
+      case "Rejected": return "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300";
+      default: return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  const handleRequestTransfer = () => {
+    if (newTransfer.staff && newTransfer.toDept && newTransfer.effectiveDate) {
+      setShowRequestForm(false);
+      setNewTransfer({ staff: "", fromDept: "", toDept: "", effectiveDate: "", reason: "" });
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Staff Transfers</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage internal staff movements</p>
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setShowRequestForm(!showRequestForm)}
+          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 text-sm font-medium text-white hover:shadow-lg transition-shadow"
+        >
+          <Plus size={16} />
+          Request Transfer
+        </motion.button>
+      </div>
+
+      {showRequestForm && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl bg-card border border-border p-6"
+        >
+          <h3 className="font-semibold text-foreground mb-4">Request Staff Transfer</h3>
+          <div className="space-y-4">
+            <input
+              type="text"
+              placeholder="Select Staff"
+              value={newTransfer.staff}
+              onChange={(e) => setNewTransfer({ ...newTransfer, staff: e.target.value })}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground"
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                type="text"
+                placeholder="From (auto-filled)"
+                value={newTransfer.fromDept}
+                disabled
+                className="rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-muted-foreground"
+              />
+              <select
+                value={newTransfer.toDept}
+                onChange={(e) => setNewTransfer({ ...newTransfer, toDept: e.target.value })}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+              >
+                <option value="">Select Department</option>
+                <option>Front Office</option>
+                <option>F&B</option>
+                <option>Housekeeping</option>
+                <option>Operations</option>
+                <option>Guest Services</option>
+                <option>Admin</option>
+                <option>HR</option>
+                <option>Training</option>
+              </select>
+            </div>
+            <input
+              type="date"
+              value={newTransfer.effectiveDate}
+              onChange={(e) => setNewTransfer({ ...newTransfer, effectiveDate: e.target.value })}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+            />
+            <textarea
+              placeholder="Reason for transfer"
+              value={newTransfer.reason}
+              onChange={(e) => setNewTransfer({ ...newTransfer, reason: e.target.value })}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground resize-none h-20"
+            />
+            <div className="flex gap-2">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleRequestTransfer}
+                className="rounded-lg bg-gradient-to-r from-green-500 to-green-600 px-6 py-2 text-sm font-medium text-white hover:shadow-lg transition-shadow"
+              >
+                Submit Request
+              </motion.button>
+              <button
+                onClick={() => setShowRequestForm(false)}
+                className="rounded-lg border border-border px-6 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      <div className="space-y-4">
+        <div className="rounded-2xl bg-card border border-border overflow-hidden">
+          <div className="bg-secondary/50 px-6 py-3 border-b border-border">
+            <h3 className="font-semibold text-foreground">Active Transfer Requests</h3>
+          </div>
+          <table className="w-full text-sm">
+            <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+              <tr>
+                <th className="text-left px-6 py-3 font-semibold">Staff Name</th>
+                <th className="text-left px-6 py-3 font-semibold">From</th>
+                <th className="text-left px-6 py-3 font-semibold">To</th>
+                <th className="text-left px-6 py-3 font-semibold">Requested By</th>
+                <th className="text-left px-6 py-3 font-semibold">Date</th>
+                <th className="text-left px-6 py-3 font-semibold">Status</th>
+                <th className="text-left px-6 py-3 font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {activeTransfers.map((transfer) => (
+                <tr key={transfer.id} className="hover:bg-secondary/30">
+                  <td className="px-6 py-3 text-foreground font-medium">{transfer.name}</td>
+                  <td className="px-6 py-3 text-muted-foreground">{transfer.fromDept}</td>
+                  <td className="px-6 py-3 text-muted-foreground">{transfer.toDept}</td>
+                  <td className="px-6 py-3 text-muted-foreground">{transfer.requestedBy}</td>
+                  <td className="px-6 py-3 text-muted-foreground">{transfer.date}</td>
+                  <td className="px-6 py-3">
+                    <span className={cn("inline-block px-2 py-1 rounded-full text-xs font-medium", getStatusColor(transfer.status))}>
+                      {transfer.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-3 text-sm">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      Review
+                    </motion.button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="rounded-2xl bg-card border border-border p-6">
+          <h3 className="font-semibold text-foreground mb-4">Completed Transfers This Month</h3>
+          <div className="space-y-2">
+            {completedTransfers.map((transfer, idx) => (
+              <div key={idx} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0 opacity-60">
+                <div>
+                  <p className="text-sm font-medium text-foreground line-through">{transfer.name}</p>
+                  <p className="text-xs text-muted-foreground">{transfer.from} → {transfer.to}</p>
+                </div>
+                <span className="text-xs text-muted-foreground">{transfer.date}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default Team;
 export { Team };

@@ -640,7 +640,169 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
           </motion.div>
         )}
 
+        {/* ── KNOWLEDGE BASE ─────────────────────────────── */}
+        {activeSubmenu === "Knowledge Base" && <KnowledgeBaseView />}
+
       </AnimatePresence>
     </div>
+  );
+}
+
+function KnowledgeBaseView() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [showAIResponse, setShowAIResponse] = useState(false);
+
+  const documents = [
+    { id: 1, title: "Front Desk Manual", category: "Procedures", pages: 28, lastAccessed: "2026-03-24", icon: FileText },
+    { id: 2, title: "F&B Training Guide", category: "Training", pages: 45, lastAccessed: "2026-03-23", icon: FileText },
+    { id: 3, title: "Employee Handbook", category: "Policies", pages: 62, lastAccessed: "2026-03-22", icon: FileText },
+    { id: 4, title: "Fire Safety Procedure", category: "Compliance", pages: 18, lastAccessed: "2026-03-21", icon: FileText },
+    { id: 5, title: "Supplier Contracts Index", category: "Contracts", pages: 35, lastAccessed: "2026-03-20", icon: FileText },
+    { id: 6, title: "Q4 2025 Audit Report", category: "Reports", pages: 52, lastAccessed: "2026-03-19", icon: FileText },
+    { id: 7, title: "Q3 2025 Audit Report", category: "Reports", pages: 48, lastAccessed: "2026-03-15", icon: FileText },
+    { id: 8, title: "Brand Guidelines", category: "Procedures", pages: 41, lastAccessed: "2026-03-18", icon: FileText },
+    { id: 9, title: "F&B Menu Engineering Guide", category: "Training", pages: 55, lastAccessed: "2026-03-17", icon: FileText },
+    { id: 10, title: "Revenue Management Playbook", category: "Procedures", pages: 72, lastAccessed: "2026-03-14", icon: FileText },
+    { id: 11, title: "Health & Safety Policy", category: "Policies", pages: 39, lastAccessed: "2026-03-12", icon: FileText },
+    { id: 12, title: "IT Security Policy", category: "Compliance", pages: 44, lastAccessed: "2026-03-11", icon: FileText },
+    { id: 13, title: "Housekeeping Standards", category: "Procedures", pages: 31, lastAccessed: "2026-03-10", icon: FileText },
+    { id: 14, title: "Guest Complaint Protocol", category: "Procedures", pages: 22, lastAccessed: "2026-03-09", icon: FileText },
+    { id: 15, title: "Procurement Policy", category: "Policies", pages: 27, lastAccessed: "2026-03-08", icon: FileText },
+  ];
+
+  const recentSearches = ["check-in procedure", "overtime policy", "supplier payment terms", "VIP protocol"];
+
+  const filteredDocs = documents.filter(doc => {
+    const matchesSearch = doc.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === "All" || doc.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const categories = ["All", "Procedures", "Policies", "Contracts", "Reports", "Training", "Compliance"];
+
+  return (
+    <motion.div key="knowledge-base" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
+      {/* Header and Search */}
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-foreground mb-2">Knowledge Base</h2>
+        <p className="text-muted-foreground mb-6">Find everything you need about hotel operations</p>
+
+        {/* AI Search Bar */}
+        <div className="flex gap-3 max-w-2xl mx-auto mb-4">
+          <div className="flex-1 relative">
+            <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-violet-500" />
+            <input
+              value={searchQuery}
+              onChange={e => {
+                setSearchQuery(e.target.value);
+                setShowAIResponse(e.target.value.length > 0);
+              }}
+              type="text"
+              placeholder="Ask anything about hotel operations..."
+              className="w-full pl-12 pr-4 py-3 rounded-2xl border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+            />
+          </div>
+          <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 flex items-center gap-2 whitespace-nowrap">
+            <Plus className="w-4 h-4" /> Add Document
+          </button>
+        </div>
+
+        {/* Category Filters */}
+        <div className="flex flex-wrap justify-center gap-2">
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={cn(
+                "px-4 py-2 rounded-full text-sm font-medium transition-colors",
+                selectedCategory === cat
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-foreground hover:bg-secondary/80"
+              )}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* AI Response Card */}
+      {showAIResponse && searchQuery.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-r from-violet-50 to-indigo-50 rounded-2xl border border-violet-200 p-5">
+          <div className="flex gap-3">
+            <Sparkles className="w-5 h-5 text-violet-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground mb-2">AI Response</p>
+              <p className="text-sm text-foreground mb-3">
+                Based on your search "{searchQuery}", here is what I found: Check-in procedures are documented in the Front Desk Manual (28 pages) and follow our standard 3-step verification process.
+              </p>
+              <div className="flex gap-2">
+                <span className="inline-block px-2 py-1 bg-white rounded text-xs font-medium text-violet-700 border border-violet-200">From: Front Desk Manual</span>
+                <span className="inline-block px-2 py-1 bg-white rounded text-xs font-medium text-emerald-700 border border-emerald-200">Confidence: 94%</span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Recent Searches (when empty) */}
+      {searchQuery.length === 0 && (
+        <div>
+          <p className="text-sm font-medium text-foreground mb-3">Recent Searches</p>
+          <div className="flex flex-wrap gap-2">
+            {recentSearches.map(search => (
+              <button key={search} onClick={() => setSearchQuery(search)} className="px-3 py-2 bg-secondary rounded-lg text-sm text-foreground hover:bg-secondary/80 transition-colors">
+                {search}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Document Grid */}
+      <div>
+        <p className="text-sm font-medium text-foreground mb-4">{filteredDocs.length} Documents Found</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredDocs.map(doc => (
+            <motion.div key={doc.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="bg-card rounded-2xl shadow-sm border border-border p-4 hover:shadow-md transition-shadow">
+              <div className="flex items-start gap-3 mb-3">
+                <FileText className="w-5 h-5 text-violet-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium text-foreground text-sm mb-1 truncate">{doc.title}</h4>
+                  <span className="inline-block px-2 py-1 bg-secondary rounded text-xs font-medium text-foreground">{doc.category}</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
+                <span>{doc.pages} pages</span>
+                <span>Accessed {new Date(doc.lastAccessed).toLocaleDateString()}</span>
+              </div>
+              <button className="w-full px-3 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
+                Open
+              </button>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Recently Accessed */}
+      <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Recently Accessed</h3>
+        <div className="space-y-3">
+          {documents.slice(0, 5).map((doc, i) => (
+            <div key={i} className="flex items-center justify-between p-3 hover:bg-secondary/30 rounded-lg transition-colors">
+              <div className="flex items-center gap-3">
+                <FileText className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">{doc.title}</p>
+                  <p className="text-xs text-muted-foreground">You • {doc.lastAccessed}</p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </motion.div>
   );
 }

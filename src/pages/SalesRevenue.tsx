@@ -1458,6 +1458,7 @@ export function SalesRevenue({ aiEnabled, activeSubmenu = "Overview" }: SalesRev
     "Channel Manager": <ChannelManager />,
     Forecast: <Forecast />,
     "Group Quotes": <GroupQuotes />,
+    "Group Management": <GroupManagementView />,
     "Comp Set": <CompetitorIntelligence />,
     "Sales Pipeline": <ReservationsPipeline />,
     "Competitor Rate Intelligence": <CompetitorIntelligence />,
@@ -1501,6 +1502,312 @@ export function SalesRevenue({ aiEnabled, activeSubmenu = "Overview" }: SalesRev
           {currentView}
         </motion.div>
       </AnimatePresence>
+    </div>
+  );
+}
+
+// ─── Group Management View ──────────────────────────────────────────────────
+
+function GroupManagementView() {
+  const [expandedGroup, setExpandedGroup] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<"blocks" | "rooming">("blocks");
+
+  const statCards = [
+    { label: "Active Groups", value: "8", trend: 12, icon: "📊" },
+    { label: "Rooms Blocked", value: "142", trend: 8, icon: "🛏️" },
+    { label: "Pick-up Rate", value: "73%", trend: 5, icon: "📈" },
+    { label: "Group Revenue MTD", value: "BHD 48,200", trend: 18, icon: "💰" },
+  ];
+
+  const groupBlocks = [
+    {
+      id: 1,
+      name: "Acme Corp Retreat",
+      org: "Acme Corporation",
+      arrival: "2026-04-10",
+      departure: "2026-04-12",
+      blocked: 35,
+      picked: 28,
+      rate: 165,
+      status: "Confirmed",
+      contact: "John Smith",
+      roomTypes: ["Deluxe Room (20)", "Suite (8)", "Presidential (2)"],
+      roomingSubmitted: 28,
+      roomingTotal: 35,
+      notes: "CEO conference, special rate negotiated",
+    },
+    {
+      id: 2,
+      name: "Silva Wedding Block",
+      org: "Silva Family",
+      arrival: "2026-04-18",
+      departure: "2026-04-20",
+      blocked: 42,
+      picked: 38,
+      rate: 195,
+      status: "Confirmed",
+      contact: "Maria Silva",
+      roomTypes: ["Deluxe Room (25)", "Suite (12)", "Family Room (5)"],
+      roomingSubmitted: 38,
+      roomingTotal: 42,
+      notes: "Wedding celebration, includes welcome cocktail",
+    },
+    {
+      id: 3,
+      name: "Tech Conference MENA",
+      org: "Tech Summit Ltd",
+      arrival: "2026-05-05",
+      departure: "2026-05-08",
+      blocked: 85,
+      picked: 72,
+      rate: 155,
+      status: "Confirmed",
+      contact: "Ahmed Hassan",
+      roomTypes: ["Standard Room (50)", "Deluxe Room (30)", "Suite (5)"],
+      roomingSubmitted: 65,
+      roomingTotal: 85,
+      notes: "3-day conference, bulk rooming list pending",
+    },
+    {
+      id: 4,
+      name: "Global Tours Group",
+      org: "Global Travel Ltd",
+      arrival: "2026-04-15",
+      departure: "2026-04-22",
+      blocked: 28,
+      picked: 18,
+      rate: 135,
+      status: "Tentative",
+      contact: "Robert Jones",
+      roomTypes: ["Standard Room (20)", "Deluxe Room (8)"],
+      roomingSubmitted: 15,
+      roomingTotal: 28,
+      notes: "Tour operator group, subject to confirmation",
+    },
+    {
+      id: 5,
+      name: "Medical Association Meeting",
+      org: "African Medical Assoc",
+      arrival: "2026-04-25",
+      departure: "2026-04-27",
+      blocked: 56,
+      picked: 42,
+      rate: 175,
+      status: "Confirmed",
+      contact: "Dr. Amara Okafor",
+      roomTypes: ["Deluxe Room (35)", "Suite (15)", "Presidential (1)"],
+      roomingSubmitted: 40,
+      roomingTotal: 56,
+      notes: "Professional association, group rate applied",
+    },
+    {
+      id: 6,
+      name: "Corporate Incentive Trip",
+      org: "Premium Banking Ltd",
+      arrival: "2026-05-12",
+      departure: "2026-05-16",
+      blocked: 48,
+      picked: 0,
+      rate: 185,
+      status: "Cancelled",
+      contact: "Lisa Chen",
+      roomTypes: ["Suite (25)", "Deluxe Room (20)", "Presidential (3)"],
+      roomingSubmitted: 0,
+      roomingTotal: 0,
+      notes: "Cancelled due to budget constraints",
+    },
+  ];
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case "Confirmed": return "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300";
+      case "Tentative": return "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300";
+      case "Cancelled": return "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300 line-through";
+      default: return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  const pickupPercentage = (picked: number, blocked: number) => {
+    return Math.round((picked / blocked) * 100);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Group Management</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage group bookings and block allocations</p>
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 text-sm font-medium text-white hover:shadow-lg transition-shadow"
+        >
+          <span className="text-base">+</span>
+          New Group Block
+        </motion.button>
+      </div>
+
+      {/* Stat Cards */}
+      <div className="grid grid-cols-4 gap-4">
+        {statCards.map((card) => (
+          <motion.div
+            key={card.label}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl bg-card border border-border p-6"
+          >
+            <p className="text-sm text-muted-foreground">{card.label}</p>
+            <div className="flex items-end justify-between mt-3">
+              <p className="text-3xl font-bold text-foreground">{card.value}</p>
+              <span className="text-xs font-semibold text-green-600 dark:text-green-400">+{card.trend}%</span>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Group Blocks Table */}
+      <div className="rounded-2xl bg-card border border-border overflow-hidden">
+        <div className="bg-secondary/50 px-6 py-3 border-b border-border">
+          <h3 className="font-semibold text-foreground">Group Blocks</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+              <tr>
+                <th className="text-left px-6 py-3 font-semibold">Group Name</th>
+                <th className="text-left px-6 py-3 font-semibold">Organization</th>
+                <th className="text-left px-6 py-3 font-semibold">Arrival</th>
+                <th className="text-left px-6 py-3 font-semibold">Departure</th>
+                <th className="text-left px-6 py-3 font-semibold">Blocked</th>
+                <th className="text-left px-6 py-3 font-semibold">Picked</th>
+                <th className="text-left px-6 py-3 font-semibold">Rate</th>
+                <th className="text-left px-6 py-3 font-semibold">Status</th>
+                <th className="text-left px-6 py-3 font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {groupBlocks.map((group) => (
+                <React.Fragment key={group.id}>
+                  <motion.tr
+                    className="hover:bg-secondary/30 cursor-pointer"
+                    onClick={() => setExpandedGroup(expandedGroup === group.id ? null : group.id)}
+                  >
+                    <td className="px-6 py-3 font-medium text-foreground">{group.name}</td>
+                    <td className="px-6 py-3 text-muted-foreground">{group.org}</td>
+                    <td className="px-6 py-3 text-muted-foreground">{group.arrival}</td>
+                    <td className="px-6 py-3 text-muted-foreground">{group.departure}</td>
+                    <td className="px-6 py-3 text-foreground font-semibold">{group.blocked}</td>
+                    <td className="px-6 py-3 text-foreground font-semibold">{group.picked}</td>
+                    <td className="px-6 py-3 text-foreground font-semibold">BHD {group.rate}</td>
+                    <td className="px-6 py-3">
+                      <span className={cn("inline-block px-2 py-1 rounded-full text-xs font-medium", getStatusBadgeColor(group.status))}>
+                        {group.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3 text-sm">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        View
+                      </motion.button>
+                    </td>
+                  </motion.tr>
+
+                  {/* Expanded Row */}
+                  <AnimatePresence>
+                    {expandedGroup === group.id && (
+                      <motion.tr
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="bg-secondary/20"
+                      >
+                        <td colSpan={9} className="px-6 py-4">
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-3 gap-4">
+                              <div>
+                                <p className="text-xs text-muted-foreground">Contact Person</p>
+                                <p className="font-medium text-foreground">{group.contact}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Rooming List Status</p>
+                                <p className="font-medium text-foreground">{group.roomingSubmitted} of {group.roomingTotal} submitted</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Pick-up Rate</p>
+                                <p className="font-medium text-foreground">{pickupPercentage(group.picked, group.blocked)}%</p>
+                              </div>
+                            </div>
+
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-2">Room Types Blocked</p>
+                              <div className="flex flex-wrap gap-2">
+                                {group.roomTypes.map((type) => (
+                                  <span key={type} className="inline-block px-2 py-1 rounded bg-secondary/50 text-xs text-foreground">
+                                    {type}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-2">Notes</p>
+                              <p className="text-sm text-foreground">{group.notes}</p>
+                            </div>
+
+                            {/* Tab Toggle */}
+                            <div className="flex gap-2 pt-2 border-t border-border/50">
+                              <button
+                                onClick={() => setActiveTab("blocks")}
+                                className={cn(
+                                  "px-3 py-1.5 text-xs font-medium rounded transition-colors",
+                                  activeTab === "blocks"
+                                    ? "bg-blue-500 text-white"
+                                    : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                                )}
+                              >
+                                Block Details
+                              </button>
+                              <button
+                                onClick={() => setActiveTab("rooming")}
+                                className={cn(
+                                  "px-3 py-1.5 text-xs font-medium rounded transition-colors",
+                                  activeTab === "rooming"
+                                    ? "bg-blue-500 text-white"
+                                    : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                                )}
+                              >
+                                Rooming List
+                              </button>
+                              <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="ml-auto px-3 py-1.5 text-xs font-medium rounded bg-green-500 text-white hover:shadow-lg transition-shadow"
+                              >
+                                Group Invoice
+                              </motion.button>
+                            </div>
+
+                            {activeTab === "rooming" && (
+                              <div className="text-sm text-muted-foreground text-center py-4 bg-secondary/30 rounded">
+                                Rooming list details for {group.name}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </motion.tr>
+                    )}
+                  </AnimatePresence>
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

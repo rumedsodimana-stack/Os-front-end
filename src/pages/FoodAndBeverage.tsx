@@ -44,6 +44,10 @@ export function FoodAndBeverage({ aiEnabled, activeSubmenu = "Overview" }: FoodA
         return <RoomService />;
       case "Inventory":
         return <FAndBInventory />;
+      case "KDS":
+        return <KitchenDisplay />;
+      case "Bar":
+        return <BarManagement />;
       default:
         return null;
     }
@@ -997,6 +1001,307 @@ function FAndBInventory() {
             })}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+function KitchenDisplay() {
+  const [columns, setColumns] = useState({
+    incoming: [
+      { id: "0891", table: "T14", time: "12:45", items: ["2x Wagyu Burger", "1x Caesar Salad", "1x House Fries"], priority: "normal" },
+      { id: "0892", table: "R305", time: "12:50", items: ["1x Grilled Fish", "2x Seasonal Vegetables"], priority: "rush" },
+      { id: "0893", table: "T22", time: "13:02", items: ["1x Pasta Carbonara"], priority: "vip" },
+    ],
+    inProgress: [
+      { id: "0890", table: "T08", time: "12:30", items: ["2x Ribeye Steak", "1x Lobster Tail"], priority: "vip" },
+      { id: "0888", table: "T19", time: "12:15", items: ["3x House Burger", "2x French Fries"], priority: "normal" },
+    ],
+    ready: [
+      { id: "0887", table: "T11", time: "12:00", items: ["1x Chicken Parmesan"], priority: "normal" },
+      { id: "0886", table: "R220", time: "11:55", items: ["1x Soup", "1x Salad"], priority: "normal" },
+    ],
+  });
+
+  const [station, setStation] = useState("All");
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  React.useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const calculateElapsed = (timeStr: string) => {
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    const orderTime = new Date();
+    orderTime.setHours(hours, minutes, 0);
+    const elapsed = Math.floor((currentTime.getTime() - orderTime.getTime()) / 60000);
+    return elapsed;
+  };
+
+  const moveCard = (fromColumn: string, toColumn: string, cardId: string) => {
+    const card = columns[fromColumn as keyof typeof columns].find(c => c.id === cardId);
+    if (!card) return;
+    setColumns(prev => ({
+      ...prev,
+      [fromColumn]: prev[fromColumn as keyof typeof columns].filter(c => c.id !== cardId),
+      [toColumn]: [...prev[toColumn as keyof typeof columns], card],
+    }));
+  };
+
+  const getCardBorderColor = (time: string) => {
+    const elapsed = calculateElapsed(time);
+    if (elapsed > 15) return "border-red-500";
+    if (elapsed > 8) return "border-amber-500";
+    return "border-emerald-500";
+  };
+
+  const getPriorityBadge = (priority: string) => {
+    if (priority === "vip") return "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400";
+    if (priority === "rush") return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400";
+    return "bg-slate-100 dark:bg-slate-900/30 text-slate-700 dark:text-slate-400";
+  };
+
+  const TicketCard = ({ card, columnKey }: any) => {
+    const elapsed = calculateElapsed(card.time);
+    return (
+      <motion.div
+        layout
+        className={cn(
+          "p-4 bg-card border-2 rounded-xl shadow-sm hover:shadow-md transition-shadow",
+          getCardBorderColor(card.time)
+        )}
+      >
+        <div className="flex justify-between items-start mb-3">
+          <div>
+            <div className="font-bold text-lg text-foreground">#{card.id}</div>
+            <div className="text-xs text-muted-foreground">{card.table} · {elapsed} min</div>
+          </div>
+          <span className={cn("text-xs font-medium px-2 py-1 rounded-full capitalize", getPriorityBadge(card.priority))}>
+            {card.priority}
+          </span>
+        </div>
+        <div className="space-y-1 mb-4">
+          {card.items.map((item: string, idx: number) => (
+            <div key={idx} className="text-sm text-foreground">{item}</div>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          {columnKey === "incoming" && (
+            <button
+              onClick={() => moveCard("incoming", "inProgress", card.id)}
+              className="flex-1 px-2 py-1.5 text-xs font-medium bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              Start
+            </button>
+          )}
+          {columnKey === "inProgress" && (
+            <button
+              onClick={() => moveCard("inProgress", "ready", card.id)}
+              className="flex-1 px-2 py-1.5 text-xs font-medium bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+            >
+              Ready
+            </button>
+          )}
+          {columnKey === "ready" && (
+            <button
+              onClick={() => moveCard("ready", "ready", card.id)}
+              className="flex-1 px-2 py-1.5 text-xs font-medium bg-slate-500 text-white rounded-lg hover:bg-slate-600 transition-colors"
+            >
+              Deliver
+            </button>
+          )}
+        </div>
+      </motion.div>
+    );
+  };
+
+  return (
+    <div>
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-xl font-semibold text-foreground">Kitchen Display</h1>
+            <div className="text-xs text-muted-foreground mt-1">{currentTime.toLocaleTimeString()}</div>
+          </div>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {["All", "Hot Kitchen", "Cold Kitchen", "Pastry", "Grill"].map(s => (
+            <button
+              key={s}
+              onClick={() => setStation(s)}
+              className={cn(
+                "px-3 py-2 rounded-lg text-sm font-medium transition-all border",
+                station === s ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        {["incoming", "inProgress", "ready"].map(col => {
+          const headers = { incoming: "Incoming", inProgress: "In Progress", ready: "Ready" };
+          const headerColors = { incoming: "bg-blue-500", inProgress: "bg-amber-500", ready: "bg-emerald-500" };
+          return (
+            <div key={col} className="space-y-3">
+              <div className={cn("h-10 rounded-t-lg flex items-center px-4 text-sm font-semibold text-white", headerColors[col as keyof typeof headerColors])}>
+                {headers[col as keyof typeof headers]}
+              </div>
+              <div className="space-y-3">
+                <AnimatePresence mode="popLayout">
+                  {columns[col as keyof typeof columns].map(card => (
+                    <TicketCard key={card.id} card={card} columnKey={col} />
+                  ))}
+                </AnimatePresence>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-4 gap-4">
+        {[
+          { label: "Avg Ticket Time", value: "12m", icon: Clock, color: "from-blue-400 to-blue-500" },
+          { label: "Orders Today", value: "47", icon: UtensilsCrossed, color: "from-emerald-400 to-emerald-500" },
+          { label: "Pending Orders", value: "5", icon: Clock, color: "from-amber-400 to-amber-500" },
+          { label: "Rush Orders", value: "2", icon: Printer, color: "from-red-400 to-red-500" },
+        ].map((stat, idx) => (
+          <div key={idx} className={cn("p-4 rounded-xl bg-gradient-to-r text-white shadow-sm", `${stat.color}`)}>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs opacity-90">{stat.label}</div>
+                <div className="text-2xl font-bold mt-1">{stat.value}</div>
+              </div>
+              <stat.icon className="w-8 h-8 opacity-80" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BarManagement() {
+  const [tabs, setTabs] = useState([
+    { id: "B001", guest: "T05", items: ["Mocktail 1", "Iced Tea"], total: "$28.50", status: "Open" },
+    { id: "B002", guest: "T12", items: ["Fresh Juice", "Sparkling Water"], total: "$15.25", status: "Closed" },
+    { id: "B003", guest: "R401", items: ["House Special"], total: "$12.00", status: "Open" },
+    { id: "B004", guest: "T08", items: ["Mocktail 1", "Mocktail 1", "Iced Tea"], total: "$45.75", status: "On Hold" },
+  ]);
+
+  const openTabs = tabs.filter(t => t.status === "Open").length;
+  const revenue = tabs.reduce((sum, t) => {
+    const amount = parseFloat(t.total.replace("$", ""));
+    return sum + amount;
+  }, 0);
+  const avgTabValue = (revenue / tabs.length).toFixed(2);
+  const mostPopular = "Mocktail of the Day";
+
+  const beverages = [
+    { name: "Mocktail 1", price: "$8.50" },
+    { name: "Iced Tea", price: "$4.50" },
+    { name: "Fresh Juice", price: "$5.25" },
+    { name: "Sparkling Water", price: "$3.00" },
+    { name: "House Special", price: "$12.00" },
+    { name: "Smoothie", price: "$6.75" },
+  ];
+
+  return (
+    <div>
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-xl font-semibold text-foreground">Bar</h1>
+            <div className="text-xs text-muted-foreground mt-1">Shift Summary: {openTabs} open tabs · Revenue: ${revenue.toFixed(2)}</div>
+          </div>
+          <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+            Open New Tab
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-4 gap-4 mb-8">
+        {[
+          { label: "Open Tabs", value: openTabs.toString(), icon: Wine, color: "from-purple-400 to-purple-500" },
+          { label: "Today's Revenue", value: `$${revenue.toFixed(2)}`, icon: Banknote, color: "from-emerald-400 to-emerald-500" },
+          { label: "Most Popular", value: "Mocktail", icon: Coffee, color: "from-amber-400 to-amber-500" },
+          { label: "Avg Tab Value", value: `$${avgTabValue}`, icon: CreditCard, color: "from-blue-400 to-blue-500" },
+        ].map((stat, idx) => (
+          <div key={idx} className={cn("p-4 rounded-xl bg-gradient-to-r text-white shadow-sm", `${stat.color}`)}>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs opacity-90">{stat.label}</div>
+                <div className="text-2xl font-bold mt-1">{stat.value}</div>
+              </div>
+              <stat.icon className="w-8 h-8 opacity-80" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 gap-8">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground mb-4">Active Tabs</h2>
+          <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="border-b border-border bg-secondary/30">
+                <tr>
+                  {["Tab ID", "Guest/Table", "Items", "Total", "Status", "Actions"].map(h => (
+                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {tabs.map(tab => (
+                  <tr key={tab.id} className="hover:bg-secondary/20 transition-colors">
+                    <td className="px-4 py-3 font-medium">{tab.id}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{tab.guest}</td>
+                    <td className="px-4 py-3 text-xs">{tab.items.length} items</td>
+                    <td className="px-4 py-3 font-medium">{tab.total}</td>
+                    <td className="px-4 py-3">
+                      <span className={cn(
+                        "text-xs font-medium px-2 py-1 rounded-full",
+                        tab.status === "Open" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" :
+                        tab.status === "Closed" ? "bg-slate-100 dark:bg-slate-900/30 text-slate-700 dark:text-slate-400" :
+                        "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+                      )}>
+                        {tab.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs space-x-2">
+                      <button className="px-2 py-1 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors">Add</button>
+                      <button className="px-2 py-1 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors">Close</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-lg font-semibold text-foreground mb-4">Quick Order</h2>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-3 py-2 bg-red-100 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800">
+              <div className="w-2 h-2 rounded-full bg-red-500" />
+              <span className="text-xs font-medium text-red-700 dark:text-red-400">3 items running low</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {beverages.map((bev, idx) => (
+                <button
+                  key={idx}
+                  className="p-3 bg-secondary hover:bg-secondary/80 border border-border rounded-lg text-sm font-medium text-foreground transition-colors"
+                >
+                  {bev.name}
+                  <div className="text-xs text-muted-foreground">{bev.price}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

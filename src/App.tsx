@@ -20,6 +20,7 @@ import { Portfolio } from "./pages/Portfolio";
 import { Settings } from "./pages/Settings";
 import { Login } from "./pages/Login";
 import { StyleGuide } from "./pages/StyleGuide";
+import { GuestApp } from "./pages/GuestApp";
 
 export type Department =
   | "Dashboard"
@@ -109,6 +110,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/style-guide" element={<StyleGuideWrapper />} />
+        <Route path="/guest" element={<GuestApp />} />
         <Route path="/*" element={<DashboardApp />} />
       </Routes>
     </ThemeProvider>

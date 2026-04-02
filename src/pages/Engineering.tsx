@@ -17,6 +17,14 @@ import {
   BarChart2,
   Thermometer,
   Gauge,
+  Home,
+  Lock,
+  Eye,
+  BellOff,
+  Unlock,
+  AlertCircle,
+  Clock,
+  User,
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import {
@@ -2365,6 +2373,21 @@ const pageConfig: Record<string, { label: string; icon: React.ReactNode; descrip
     icon: <Shield className="w-5 h-5" />,
     description: "Regulatory inspections, certificates, and expiry management",
   },
+  "smart-rooms": {
+    label: "Smart Rooms",
+    icon: <Home className="w-5 h-5" />,
+    description: "Guest room automation — temperature, lighting, locks, and comfort controls",
+  },
+  "energy": {
+    label: "Energy & Utilities",
+    icon: <Zap className="w-5 h-5" />,
+    description: "Real-time energy consumption and cost monitoring dashboard",
+  },
+  "access-control": {
+    label: "Access Control",
+    icon: <Lock className="w-5 h-5" />,
+    description: "Secure access point monitoring and visitor management",
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -2377,6 +2400,9 @@ export function Engineering({ aiEnabled, activeSubmenu }: EngineeringProps) {
     "Work Orders": "work-orders",
     "Preventive Maintenance": "preventive-maintenance",
     "Asset Management": "asset-registry",
+    "Smart Rooms": "smart-rooms",
+    "Energy & Utilities": "energy",
+    "Access Control": "access-control",
   };
   const submenu = (activeSubmenu ? (submenuNormalize[activeSubmenu] ?? activeSubmenu) : null) ?? "overview";
   const page = pageConfig[submenu] ?? pageConfig["overview"];
@@ -2401,6 +2427,12 @@ export function Engineering({ aiEnabled, activeSubmenu }: EngineeringProps) {
         return <CapexView />;
       case "compliance-safety":
         return <ComplianceView />;
+      case "smart-rooms":
+        return <SmartRoomsView />;
+      case "energy":
+        return <EnergyDashboardView />;
+      case "access-control":
+        return <AccessControlView />;
       default:
         return <OverviewView />;
     }
@@ -2436,5 +2468,592 @@ export function Engineering({ aiEnabled, activeSubmenu }: EngineeringProps) {
         {renderContent()}
       </motion.div>
     </AnimatePresence>
+  );
+}
+
+
+// ---------------------------------------------------------------------------
+// Smart Rooms View
+// ---------------------------------------------------------------------------
+
+interface RoomStatus {
+  roomNumber: string;
+  status: "normal" | "alert" | "offline";
+  temperature: number;
+  brightness: number;
+  lockStatus: "locked" | "unlocked";
+  dnd: boolean;
+}
+
+const roomsData: RoomStatus[] = [
+  // First floor
+  { roomNumber: "101", status: "normal", temperature: 22, brightness: 75, lockStatus: "locked", dnd: false },
+  { roomNumber: "102", status: "normal", temperature: 21, brightness: 50, lockStatus: "locked", dnd: true },
+  { roomNumber: "103", status: "alert", temperature: 19, brightness: 0, lockStatus: "locked", dnd: false },
+  { roomNumber: "104", status: "normal", temperature: 23, brightness: 80, lockStatus: "unlocked", dnd: false },
+  { roomNumber: "105", status: "offline", temperature: 20, brightness: 0, lockStatus: "locked", dnd: false },
+  { roomNumber: "106", status: "normal", temperature: 22, brightness: 40, lockStatus: "locked", dnd: false },
+  { roomNumber: "107", status: "normal", temperature: 21, brightness: 100, lockStatus: "locked", dnd: false },
+  { roomNumber: "108", status: "normal", temperature: 24, brightness: 60, lockStatus: "locked", dnd: false },
+  { roomNumber: "109", status: "alert", temperature: 25, brightness: 0, lockStatus: "unlocked", dnd: true },
+  { roomNumber: "110", status: "normal", temperature: 22, brightness: 70, lockStatus: "locked", dnd: false },
+  { roomNumber: "111", status: "normal", temperature: 21, brightness: 45, lockStatus: "locked", dnd: false },
+  { roomNumber: "112", status: "normal", temperature: 22, brightness: 85, lockStatus: "locked", dnd: false },
+  { roomNumber: "113", status: "normal", temperature: 23, brightness: 55, lockStatus: "locked", dnd: false },
+  { roomNumber: "114", status: "normal", temperature: 21, brightness: 90, lockStatus: "locked", dnd: false },
+  { roomNumber: "115", status: "normal", temperature: 22, brightness: 65, lockStatus: "locked", dnd: false },
+  // Second floor
+  { roomNumber: "201", status: "normal", temperature: 22, brightness: 75, lockStatus: "locked", dnd: false },
+  { roomNumber: "202", status: "normal", temperature: 21, brightness: 50, lockStatus: "locked", dnd: false },
+  { roomNumber: "203", status: "normal", temperature: 20, brightness: 0, lockStatus: "locked", dnd: false },
+  { roomNumber: "204", status: "alert", temperature: 26, brightness: 80, lockStatus: "unlocked", dnd: true },
+  { roomNumber: "205", status: "normal", temperature: 22, brightness: 0, lockStatus: "locked", dnd: false },
+  { roomNumber: "206", status: "normal", temperature: 21, brightness: 40, lockStatus: "locked", dnd: false },
+  { roomNumber: "207", status: "offline", temperature: 20, brightness: 0, lockStatus: "locked", dnd: false },
+  { roomNumber: "208", status: "normal", temperature: 24, brightness: 60, lockStatus: "locked", dnd: false },
+  { roomNumber: "209", status: "normal", temperature: 23, brightness: 70, lockStatus: "locked", dnd: false },
+  { roomNumber: "210", status: "normal", temperature: 22, brightness: 50, lockStatus: "locked", dnd: false },
+  { roomNumber: "211", status: "normal", temperature: 21, brightness: 45, lockStatus: "locked", dnd: false },
+  { roomNumber: "212", status: "normal", temperature: 22, brightness: 85, lockStatus: "locked", dnd: false },
+  { roomNumber: "213", status: "normal", temperature: 23, brightness: 55, lockStatus: "locked", dnd: false },
+  { roomNumber: "214", status: "normal", temperature: 21, brightness: 90, lockStatus: "locked", dnd: false },
+  { roomNumber: "215", status: "normal", temperature: 22, brightness: 65, lockStatus: "locked", dnd: false },
+];
+
+function SmartRoomsView() {
+  const [selectedRoom, setSelectedRoom] = React.useState<RoomStatus>(roomsData[0]);
+  const alertCount = roomsData.filter((r) => r.status === "alert").length;
+
+  const getRoomBgClass = (status: string) => {
+    switch (status) {
+      case "alert":
+        return "bg-red-50 border-red-200 hover:bg-red-100";
+      case "offline":
+        return "bg-gray-100 border-gray-300 hover:bg-gray-200";
+      default:
+        return "bg-card border-border hover:bg-secondary";
+    }
+  };
+
+  const roomsList = [
+    { title: "First Floor", rooms: roomsData.slice(0, 15) },
+    { title: "Second Floor", rooms: roomsData.slice(15, 30) },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Global Controls */}
+      <div className="flex flex-wrap gap-3">
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition"
+        >
+          Apply to All
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="px-4 py-2 bg-secondary text-foreground rounded-lg text-sm font-medium hover:bg-secondary/80 transition"
+        >
+          Night Mode (all rooms)
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="px-4 py-2 bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded-lg text-sm font-medium hover:bg-red-200 transition"
+        >
+          Emergency Unlock (all)
+        </motion.button>
+        {alertCount > 0 && (
+          <div className="px-4 py-2 bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded-lg text-sm font-medium">
+            {alertCount} Alert{alertCount !== 1 ? "s" : ""}
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-3 gap-6">
+        {/* Room selector */}
+        <div className="col-span-2 space-y-4">
+          {roomsList.map((section) => (
+            <div key={section.title}>
+              <h3 className="text-sm font-semibold text-muted-foreground mb-3">{section.title}</h3>
+              <div className="grid grid-cols-5 gap-3">
+                {section.rooms.map((room) => (
+                  <motion.button
+                    key={room.roomNumber}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setSelectedRoom(room)}
+                    className={cn(
+                      "p-4 border-2 rounded-xl transition text-center font-medium",
+                      selectedRoom.roomNumber === room.roomNumber
+                        ? "border-primary bg-primary/10"
+                        : getRoomBgClass(room.status)
+                    )}
+                  >
+                    <div className="text-lg font-bold">{room.roomNumber}</div>
+                    <div className="text-xs text-muted-foreground mt-1 capitalize">{room.status}</div>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Selected room panel */}
+        <div className="space-y-4">
+          <div className="bg-card rounded-2xl p-6 border border-border">
+            <h3 className="text-lg font-bold mb-1">Room {selectedRoom.roomNumber}</h3>
+            <p className="text-xs text-muted-foreground mb-6 capitalize">Status: {selectedRoom.status}</p>
+
+            {/* Temperature Control */}
+            <div className="space-y-3 mb-6 pb-6 border-b border-border">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Thermometer className="w-4 h-4 text-orange-500" />
+                  Temperature
+                </label>
+                <span className="text-sm font-bold">{selectedRoom.temperature}°C</span>
+              </div>
+              <input
+                type="range"
+                min="16"
+                max="30"
+                value={selectedRoom.temperature}
+                className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer"
+              />
+              <div className="flex gap-2">
+                <button className="flex-1 px-2 py-1 text-xs bg-secondary text-foreground rounded hover:bg-secondary/80 transition">
+                  Auto
+                </button>
+              </div>
+            </div>
+
+            {/* Lighting Control */}
+            <div className="space-y-3 mb-6 pb-6 border-b border-border">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-yellow-500" />
+                  Brightness
+                </label>
+                <span className="text-sm font-bold">{selectedRoom.brightness}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={selectedRoom.brightness}
+                className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer"
+              />
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {["Sleep", "Work", "Relax", "Bright"].map((preset) => (
+                  <button key={preset} className="px-2 py-1 bg-secondary text-foreground rounded hover:bg-secondary/80 transition">
+                    {preset}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Door Lock */}
+            <div className="space-y-3 mb-6 pb-6 border-b border-border">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-green-500" />
+                  Door Lock
+                </label>
+                <span className="text-sm font-bold capitalize">{selectedRoom.lockStatus}</span>
+              </div>
+              <button
+                className={cn(
+                  "w-full py-2 px-3 rounded-lg text-sm font-medium transition",
+                  selectedRoom.lockStatus === "locked"
+                    ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 hover:bg-green-200"
+                    : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 hover:bg-amber-200"
+                )}
+              >
+                {selectedRoom.lockStatus === "locked" ? "Unlock" : "Lock"}
+              </button>
+              <div className="text-xs text-muted-foreground space-y-1 mt-2">
+                <div>Last Access: Guest key, 14:32</div>
+              </div>
+            </div>
+
+            {/* Do Not Disturb */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <BellOff className="w-4 h-4 text-blue-500" />
+                  Do Not Disturb
+                </label>
+                <input type="checkbox" checked={selectedRoom.dnd} className="w-4 h-4" />
+              </div>
+              {selectedRoom.dnd && (
+                <div className="text-xs bg-blue-50 dark:bg-blue-900/20 p-2 rounded text-blue-700 dark:text-blue-300">
+                  Make-up room request pending
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ---------------------------------------------------------------------------
+// Energy Dashboard View
+// ---------------------------------------------------------------------------
+
+const energyDataHourly = [
+  { hour: "00:00", kW: 45 },
+  { hour: "01:00", kW: 38 },
+  { hour: "02:00", kW: 35 },
+  { hour: "03:00", kW: 32 },
+  { hour: "04:00", kW: 30 },
+  { hour: "05:00", kW: 28 },
+  { hour: "06:00", kW: 35 },
+  { hour: "07:00", kW: 52 },
+  { hour: "08:00", kW: 68 },
+  { hour: "09:00", kW: 75 },
+  { hour: "10:00", kW: 82 },
+  { hour: "11:00", kW: 88 },
+  { hour: "12:00", kW: 92 },
+  { hour: "13:00", kW: 95 },
+  { hour: "14:00", kW: 93 },
+  { hour: "15:00", kW: 89 },
+  { hour: "16:00", kW: 85 },
+  { hour: "17:00", kW: 91 },
+  { hour: "18:00", kW: 98 },
+  { hour: "19:00", kW: 102 },
+  { hour: "20:00", kW: 105 },
+  { hour: "21:00", kW: 98 },
+  { hour: "22:00", kW: 78 },
+  { hour: "23:00", kW: 58 },
+];
+
+const energyDepartments = [
+  { dept: "Guest Rooms", consumption: 1245, cost: 124.5, lastMonth: 1198, status: "normal" },
+  { dept: "F&B Kitchen", consumption: 562, cost: 56.2, lastMonth: 548, status: "high" },
+  { dept: "Laundry", consumption: 438, cost: 43.8, lastMonth: 425, status: "normal" },
+  { dept: "Pool & Spa", consumption: 856, cost: 85.6, lastMonth: 742, status: "high" },
+  { dept: "Common Areas", consumption: 342, cost: 34.2, lastMonth: 338, status: "normal" },
+  { dept: "Back Office", consumption: 125, cost: 12.5, lastMonth: 118, status: "normal" },
+];
+
+const energyAlerts = [
+  { msg: "Pool pump running 18h — check timer", severity: "high" },
+  { msg: "F&B Kitchen usage above baseline", severity: "medium" },
+  { msg: "HVAC in East Wing consuming 12% above average", severity: "medium" },
+];
+
+function EnergyDashboardView() {
+  return (
+    <div className="space-y-6">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-4 gap-4">
+        <StatCard
+          icon={<Zap className="w-5 h-5" />}
+          label="Total Draw (now)"
+          value="105 kW"
+          sub="Peak usage"
+          gradient="bg-gradient-to-r from-amber-400 to-orange-500"
+        />
+        <StatCard
+          icon={<TrendingUp className="w-5 h-5" />}
+          label="vs Yesterday"
+          value="+12%"
+          sub="Higher consumption"
+          gradient="bg-gradient-to-r from-red-400 to-orange-500"
+        />
+        <StatCard
+          icon={<Gauge className="w-5 h-5" />}
+          label="Monthly Cost"
+          value="2,847 BHD"
+          sub="On track vs budget"
+          gradient="bg-gradient-to-r from-blue-400 to-cyan-500"
+        />
+        <StatCard
+          icon={<CheckCircle2 className="w-5 h-5" />}
+          label="Efficiency Score"
+          value="78 / 100"
+          sub="Room for optimization"
+          gradient="bg-gradient-to-r from-emerald-400 to-teal-500"
+        />
+      </div>
+
+      {/* Energy Chart */}
+      <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+        <h3 className="text-sm font-semibold mb-4">24-Hour Consumption</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <AreaChart data={energyDataHourly}>
+            <defs>
+              <linearGradient id="colorKW" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis dataKey="hour" stroke="#6b7280" />
+            <YAxis stroke="#6b7280" />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "#1f2937",
+                border: "1px solid #374151",
+                borderRadius: "8px",
+              }}
+            />
+            <Area type="monotone" dataKey="kW" stroke="#f59e0b" fillOpacity={1} fill="url(#colorKW)" />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="grid grid-cols-3 gap-6">
+        {/* Energy Breakdown Table */}
+        <div className="col-span-2 space-y-4">
+          <h3 className="text-sm font-semibold">Department Consumption</h3>
+          <div className={tw.tableWrap}>
+            <table className="w-full">
+              <thead className={tw.thead}>
+                <tr>
+                  <th className={cn(tw.td, "text-left")}>Department</th>
+                  <th className={cn(tw.td, "text-right")}>Consumption (kWh)</th>
+                  <th className={cn(tw.td, "text-right")}>Cost (BHD)</th>
+                  <th className={cn(tw.td, "text-right")}>vs Last Month</th>
+                  <th className={cn(tw.td, "text-center")}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {energyDepartments.map((d) => (
+                  <tr key={d.dept} className={tw.tr}>
+                    <td className={cn(tw.td, "text-left font-medium")}>{d.dept}</td>
+                    <td className={cn(tw.td, "text-right")}>{d.consumption.toLocaleString()}</td>
+                    <td className={cn(tw.td, "text-right")}>{d.cost.toFixed(1)}</td>
+                    <td className={cn(tw.td, "text-right", d.consumption > d.lastMonth ? "text-red-600" : "text-green-600")}>
+                      {((d.consumption / d.lastMonth - 1) * 100).toFixed(0)}%
+                    </td>
+                    <td className={cn(tw.td, "text-center")}>
+                      {statusBadge(d.status === "high" ? "High" : "Normal")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Alerts & Actions */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold">Alerts</h3>
+          <div className="space-y-3">
+            {energyAlerts.map((alert, idx) => (
+              <div
+                key={idx}
+                className={cn(
+                  "p-3 rounded-lg text-xs border",
+                  alert.severity === "high"
+                    ? "bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-700 dark:text-red-300"
+                    : "bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-700 dark:text-yellow-300"
+                )}
+              >
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>{alert.msg}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <h3 className="text-sm font-semibold mt-6">Quick Actions</h3>
+          <div className="space-y-2">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full px-4 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary/90 transition"
+            >
+              Schedule Off-Peak Mode
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full px-4 py-2 bg-secondary text-foreground rounded-lg text-xs font-medium hover:bg-secondary/80 transition"
+            >
+              Generate Report
+            </motion.button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ---------------------------------------------------------------------------
+// Access Control View
+// ---------------------------------------------------------------------------
+
+interface Door {
+  name: string;
+  status: "locked" | "unlocked" | "propped" | "offline";
+  lastAccess: string;
+  person: string;
+}
+
+const doorsData: Door[] = [
+  { name: "Main Entrance", status: "locked", lastAccess: "15:32", person: "Guest (John Smith)" },
+  { name: "Staff Entrance", status: "locked", lastAccess: "15:28", person: "Staff (Maria Garcia)" },
+  { name: "Back Gate", status: "locked", lastAccess: "14:45", person: "Delivery (UPS)" },
+  { name: "Pool Area", status: "locked", lastAccess: "15:15", person: "Guest (Emily Chen)" },
+  { name: "Gym", status: "unlocked", lastAccess: "15:20", person: "Guest (Alex Johnson)" },
+  { name: "Spa", status: "locked", lastAccess: "14:30", person: "Staff (Fatima Ali)" },
+  { name: "Rooftop", status: "locked", lastAccess: "13:00", person: "Maintenance (Ahmed)" },
+  { name: "Parking", status: "propped", lastAccess: "15:35", person: "Valet (Unknown)" },
+  { name: "Server Room", status: "locked", lastAccess: "10:15", person: "IT (David Wilson)" },
+  { name: "Wine Cellar", status: "locked", lastAccess: "12:30", person: "F&B (Sophie)" },
+];
+
+const accessLog = [
+  { time: "15:35", door: "Parking", person: "Valet", type: "Card", result: "Granted" },
+  { time: "15:32", door: "Main Entrance", person: "John Smith", type: "Card", result: "Granted" },
+  { time: "15:28", door: "Staff Entrance", person: "Maria Garcia", type: "PIN", result: "Granted" },
+  { time: "15:20", door: "Gym", person: "Alex Johnson", type: "Card", result: "Granted" },
+  { time: "15:15", door: "Pool Area", person: "Emily Chen", type: "Card", result: "Granted" },
+  { time: "14:45", door: "Back Gate", person: "UPS Driver", type: "Master", result: "Granted" },
+  { time: "14:30", door: "Spa", person: "Fatima Ali", type: "PIN", result: "Granted" },
+  { time: "14:15", door: "Main Entrance", person: "Unknown", type: "Card", result: "Denied" },
+  { time: "14:05", door: "Server Room", person: "David Wilson", type: "Card", result: "Granted" },
+  { time: "13:45", door: "Back Gate", person: "Delivery", type: "Master", result: "Granted" },
+];
+
+function AccessControlView() {
+  const [lockedDoors, setLockedDoors] = React.useState(0);
+  const unlockedCount = doorsData.filter((d) => d.status !== "locked").length;
+  const alertCount = doorsData.filter((d) => d.status === "propped" || d.status === "offline").length;
+
+  React.useEffect(() => {
+    setLockedDoors(doorsData.filter((d) => d.status === "locked").length);
+  }, []);
+
+  const getDoorStatusColor = (status: string) => {
+    switch (status) {
+      case "locked":
+        return "bg-green-100 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-700 dark:text-green-300";
+      case "unlocked":
+        return "bg-amber-100 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-700 dark:text-amber-300";
+      case "propped":
+        return "bg-red-100 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-700 dark:text-red-300";
+      case "offline":
+        return "bg-gray-100 border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300";
+      default:
+        return "bg-secondary";
+    }
+  };
+
+  const getDoorStatusIcon = (status: string) => {
+    switch (status) {
+      case "locked":
+        return <Lock className="w-4 h-4" />;
+      case "unlocked":
+        return <Unlock className="w-4 h-4" />;
+      case "propped":
+        return <AlertCircle className="w-4 h-4" />;
+      case "offline":
+        return <AlertTriangle className="w-4 h-4" />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header with stats and controls */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Secure Doors</p>
+            <p className="text-2xl font-bold">{lockedDoors} / 10</p>
+          </div>
+          {alertCount > 0 && (
+            <div className="px-4 py-2 bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded-lg text-sm font-medium flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              {alertCount} Alert{alertCount !== 1 ? "s" : ""}
+            </div>
+          )}
+        </div>
+        <div className="flex gap-3">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="px-4 py-2 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 rounded-lg text-sm font-medium hover:bg-green-200 transition"
+          >
+            Lock All
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="px-4 py-2 bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded-lg text-sm font-medium hover:bg-red-200 transition"
+          >
+            Unlock All (Emergency)
+          </motion.button>
+        </div>
+      </div>
+
+      {/* Door Status Grid */}
+      <div className="grid grid-cols-5 gap-4">
+        {doorsData.map((door) => (
+          <div
+            key={door.name}
+            className={cn(
+              "p-4 rounded-xl border-2 transition",
+              getDoorStatusColor(door.status)
+            )}
+          >
+            <div className="flex items-start justify-between mb-2">
+              <h4 className="text-sm font-semibold">{door.name}</h4>
+              {getDoorStatusIcon(door.status)}
+            </div>
+            <p className="text-xs mb-2 capitalize font-medium">{door.status}</p>
+            <div className="space-y-1 text-xs">
+              <p className="text-opacity-80">Last: {door.lastAccess}</p>
+              <p className="text-opacity-70">{door.person}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Access Log */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold">Recent Access Events (Last 24h)</h3>
+        <div className={tw.tableWrap}>
+          <table className="w-full">
+            <thead className={tw.thead}>
+              <tr>
+                <th className={cn(tw.td, "text-left")}>Time</th>
+                <th className={cn(tw.td, "text-left")}>Door</th>
+                <th className={cn(tw.td, "text-left")}>Person</th>
+                <th className={cn(tw.td, "text-center")}>Access Type</th>
+                <th className={cn(tw.td, "text-center")}>Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              {accessLog.map((log, idx) => (
+                <tr key={idx} className={tw.tr}>
+                  <td className={cn(tw.td, "text-left")}>{log.time}</td>
+                  <td className={cn(tw.td, "text-left")}>{log.door}</td>
+                  <td className={cn(tw.td, "text-left")}>{log.person}</td>
+                  <td className={cn(tw.td, "text-center")}>
+                    <span className="px-2 py-1 bg-secondary rounded text-xs font-medium">{log.type}</span>
+                  </td>
+                  <td className={cn(tw.td, "text-center")}>
+                    {statusBadge(log.result === "Granted" ? "Approved" : "Rejected")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -291,125 +291,251 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
 }
 
 function FrontDeskRooms() {
-  const [floorFilter, setFloorFilter] = React.useState("All Floors");
-  const [statusFilter, setStatusFilter] = React.useState("All Statuses");
+  const [selectedFloor, setSelectedFloor] = React.useState("Ground");
+  const [selectedRoom, setSelectedRoom] = React.useState<string | null>(null);
 
-  const getStatusColor = (status: RoomStatus) => {
-    switch (status) {
-      case "Stay Over": return "bg-blue-100/60 border-blue-200 text-blue-900 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300";
-      case "Arrival": return "bg-emerald-100/60 border-emerald-200 text-emerald-900 dark:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-300";
-      case "Departure": return "bg-amber-100/60 border-amber-200 text-amber-900 dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-300";
-      case "OOS": return "bg-red-100/60 border-red-200 text-red-900 dark:bg-red-900/30 dark:border-red-800 dark:text-red-300";
-      case "Vacant": return "bg-card border-border text-foreground";
+  const floors = ["Ground", "Floor 1", "Floor 2", "Floor 3"];
+  
+  const getRoomStatusColor = (status: RoomStatus, hkStatus: HKStatus) => {
+    if (status === "Vacant" && hkStatus === "Clean") {
+      return "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800";
     }
+    if (status === "Vacant" && hkStatus === "Dirty") {
+      return "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800";
+    }
+    if (status === "Stay Over") {
+      return "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800";
+    }
+    if (status === "Arrival") {
+      return "bg-violet-50 border-violet-200 dark:bg-violet-900/20 dark:border-violet-800";
+    }
+    if (status === "Departure") {
+      return "bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800";
+    }
+    if (status === "OOS") {
+      return "bg-gray-100 border-gray-300 dark:bg-gray-900/20 dark:border-gray-800";
+    }
+    return "bg-card border-border";
   };
 
-  const getLegendColor = (status: RoomStatus) => {
-    switch (status) {
-      case "Stay Over": return "bg-blue-400";
-      case "Arrival": return "bg-emerald-400";
-      case "Departure": return "bg-amber-400";
-      case "OOS": return "bg-red-400";
-      case "Vacant": return "bg-gray-300 dark:bg-gray-600";
-    }
+  const getStatusLabel = (status: RoomStatus, hkStatus: HKStatus) => {
+    if (status === "Vacant" && hkStatus === "Clean") return "Available - Clean";
+    if (status === "Vacant" && hkStatus === "Dirty") return "Available - Dirty";
+    if (status === "Stay Over") return "Occupied";
+    if (status === "Arrival") return "Arriving Today";
+    if (status === "Departure") return "Departing Today";
+    if (status === "OOS") return "Out of Service";
+    return status;
   };
 
-  const filteredRooms = useMemo(() => {
+  const floorRooms = useMemo(() => {
+    const floorNum = floors.indexOf(selectedFloor);
     return mockRooms.filter(room => {
-      const floorMatch = floorFilter === "All Floors" || room.number.startsWith(floorFilter.replace("Floor ", ""));
-      const statusMatch = statusFilter === "All Statuses" || room.status === statusFilter;
-      return floorMatch && statusMatch;
+      const roomFloor = parseInt(room.number.charAt(0)) || 0;
+      return roomFloor === floorNum;
     });
-  }, [floorFilter, statusFilter]);
+  }, [selectedFloor]);
+
+  const stats = useMemo(() => {
+    const total = mockRooms.length;
+    const available = mockRooms.filter(r => r.status === "Vacant" && r.hkStatus === "Clean").length;
+    const occupied = mockRooms.filter(r => r.status === "Stay Over").length;
+    const arrivals = mockRooms.filter(r => r.status === "Arrival").length;
+    const departures = mockRooms.filter(r => r.status === "Departure").length;
+    return {
+      total,
+      available,
+      occupied,
+      availablePercent: Math.round((available / total) * 100),
+      arrivals,
+      departures,
+    };
+  }, []);
+
+  const selectedRoomData = selectedRoom ? mockRooms.find(r => r.number === selectedRoom) : null;
 
   return (
-    <div>
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold text-foreground">Room List</h1>
+    <div className="space-y-6">
+      {/* Header with stats */}
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-xl font-semibold text-foreground">Room Plan</h1>
         </div>
 
-        {/* Legend & Filters */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
-          <div className="flex flex-wrap items-center gap-6">
-            {(["Stay Over", "Arrival", "Departure", "Vacant", "OOS"] as RoomStatus[]).map((status) => (
-              <div key={status} className="flex items-center gap-2">
-                <div className={cn("w-3 h-3 rounded-full", getLegendColor(status))}></div>
-                <span className="text-sm font-medium text-muted-foreground">{status}</span>
-              </div>
-            ))}
+        {/* Summary stats bar */}
+        <div className="grid grid-cols-5 gap-3 mb-6">
+          <div className="bg-card rounded-xl p-3 border border-border">
+            <p className="text-xs text-muted-foreground mb-1">Total Rooms</p>
+            <p className="text-lg font-bold">{stats.total}</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <select 
-              className="bg-secondary border-none rounded-lg px-3 py-2 text-sm outline-none cursor-pointer"
-              value={floorFilter}
-              onChange={(e) => setFloorFilter(e.target.value)}
-            >
-              <option>All Floors</option>
-              <option>Floor 1</option>
-              <option>Floor 2</option>
-            </select>
-            <select 
-              className="bg-secondary border-none rounded-lg px-3 py-2 text-sm outline-none cursor-pointer"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option>All Statuses</option>
-              <option>Stay Over</option>
-              <option>Arrival</option>
-              <option>Departure</option>
-              <option>Vacant</option>
-              <option>OOS</option>
-            </select>
+          <div className="bg-card rounded-xl p-3 border border-border">
+            <p className="text-xs text-muted-foreground mb-1">Available</p>
+            <p className="text-lg font-bold">{stats.available}</p>
           </div>
+          <div className="bg-card rounded-xl p-3 border border-border">
+            <p className="text-xs text-muted-foreground mb-1">Occupied %</p>
+            <p className="text-lg font-bold">{stats.occupiedPercent || 0}%</p>
+          </div>
+          <div className="bg-card rounded-xl p-3 border border-border">
+            <p className="text-xs text-muted-foreground mb-1">Arriving Today</p>
+            <p className="text-lg font-bold text-violet-600">{stats.arrivals}</p>
+          </div>
+          <div className="bg-card rounded-xl p-3 border border-border">
+            <p className="text-xs text-muted-foreground mb-1">Departing Today</p>
+            <p className="text-lg font-bold text-orange-600">{stats.departures}</p>
+          </div>
+        </div>
+
+        {/* Floor tabs */}
+        <div className="flex gap-2">
+          {floors.map(floor => (
+            <button
+              key={floor}
+              onClick={() => setSelectedFloor(floor)}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                selectedFloor === floor
+                  ? "bg-violet-600 text-white"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              )}
+            >
+              {floor}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Rooms Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
-        {filteredRooms.map((room) => (
-          <div 
-            key={room.number} 
+      {/* Status legend */}
+      <div className="flex flex-wrap gap-4 items-center text-xs">
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded border-2 border-emerald-200 bg-emerald-50"></div>
+          <span className="text-muted-foreground">Available (Clean)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded border-2 border-amber-200 bg-amber-50"></div>
+          <span className="text-muted-foreground">Available (Dirty)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded border-2 border-blue-200 bg-blue-50"></div>
+          <span className="text-muted-foreground">Occupied</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded border-2 border-violet-200 bg-violet-50"></div>
+          <span className="text-muted-foreground">Arriving Today</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded border-2 border-orange-200 bg-orange-50"></div>
+          <span className="text-muted-foreground">Departing Today</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded border-2 border-gray-300 bg-gray-100"></div>
+          <span className="text-muted-foreground">Out of Service</span>
+        </div>
+      </div>
+
+      {/* Room grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+        {floorRooms.map(room => (
+          <motion.button
+            key={room.number}
+            onClick={() => setSelectedRoom(room.number)}
             className={cn(
-              "p-4 rounded-2xl border shadow-sm flex flex-col gap-3 transition-all hover:shadow-md cursor-pointer", 
-              getStatusColor(room.status)
+              "p-4 rounded-xl border-2 text-left transition-all hover:shadow-md",
+              getRoomStatusColor(room.status, room.hkStatus),
+              selectedRoom === room.number && "ring-2 ring-violet-500"
             )}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <div className="flex justify-between items-start">
-              <h3 className="text-2xl font-bold">{room.number}</h3>
-              <div className="flex gap-1" title={`Housekeeping: ${room.hkStatus}`}>
-                {room.hkStatus === 'Clean' || room.hkStatus === 'Inspected' ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                ) : (
-                  <AlertCircle className="w-4 h-4 text-red-500" />
-                )}
-              </div>
-            </div>
-            
-            <div className="flex-1">
-              <p className="text-sm font-semibold truncate" title={room.guest || room.notes || "Vacant"}>
-                {room.guest || room.notes || "Vacant"}
-              </p>
-              <p className="text-xs opacity-70 truncate" title={room.type}>{room.type}</p>
-            </div>
-            
-            <div className="mt-auto pt-2 flex justify-between items-center text-xs font-medium opacity-80 border-t border-current/10">
-              <span>{room.status}</span>
-            </div>
-          </div>
+            <div className="text-2xl font-bold mb-1">{room.number}</div>
+            <div className="text-xs text-muted-foreground mb-2 line-clamp-1">{room.type}</div>
+            {room.guest && <div className="text-xs font-medium mb-2 line-clamp-1">{room.guest}</div>}
+            <div className="text-xs font-medium text-muted-foreground">{getStatusLabel(room.status, room.hkStatus)}</div>
+          </motion.button>
         ))}
       </div>
+
+      {/* Room detail panel */}
+      <AnimatePresence>
+        {selectedRoomData && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedRoom(null)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+          >
+            <motion.div
+              initial={{ x: 400 }}
+              animate={{ x: 0 }}
+              exit={{ x: 400 }}
+              onClick={e => e.stopPropagation()}
+              className="fixed right-0 top-0 h-full w-full max-w-md bg-card rounded-l-3xl shadow-2xl border-l border-border overflow-y-auto"
+            >
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold">Room {selectedRoomData.number}</h2>
+                  <button
+                    onClick={() => setSelectedRoom(null)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <span className="text-2xl">×</span>
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="bg-secondary/30 rounded-xl p-4">
+                    <p className="text-xs text-muted-foreground mb-1">Room Type</p>
+                    <p className="font-semibold">{selectedRoomData.type}</p>
+                  </div>
+
+                  <div className="bg-secondary/30 rounded-xl p-4">
+                    <p className="text-xs text-muted-foreground mb-1">Status</p>
+                    <p className="font-semibold">{getStatusLabel(selectedRoomData.status, selectedRoomData.hkStatus)}</p>
+                  </div>
+
+                  {selectedRoomData.guest && (
+                    <div className="bg-secondary/30 rounded-xl p-4">
+                      <p className="text-xs text-muted-foreground mb-1">Guest Name</p>
+                      <p className="font-semibold">{selectedRoomData.guest}</p>
+                    </div>
+                  )}
+
+                  <div className="bg-secondary/30 rounded-xl p-4">
+                    <p className="text-xs text-muted-foreground mb-1">Housekeeping Status</p>
+                    <p className="font-semibold">{selectedRoomData.hkStatus}</p>
+                  </div>
+
+                  {selectedRoomData.notes && (
+                    <div className="bg-secondary/30 rounded-xl p-4">
+                      <p className="text-xs text-muted-foreground mb-1">Notes</p>
+                      <p className="font-semibold text-orange-600">{selectedRoomData.notes}</p>
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t border-border space-y-2">
+                    <button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 rounded-lg transition-colors">
+                      Check In
+                    </button>
+                    <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors">
+                      Check Out
+                    </button>
+                    <button className="w-full bg-secondary hover:bg-secondary/80 text-secondary-foreground font-medium py-2 rounded-lg transition-colors">
+                      Assign Guest
+                    </button>
+                    <button className="w-full bg-secondary hover:bg-secondary/80 text-secondary-foreground font-medium py-2 rounded-lg transition-colors">
+                      Raise Issue
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
-
-const mockArrivals = [
-  { id: "ARR-001", guest: "Alice Johnson", roomType: "Suite", roomNumber: "103", eta: "14:00", vip: true, status: "Pending", hkStatus: "Clean" },
-  { id: "ARR-002", guest: "Michael Wilson", roomType: "Standard Double", roomNumber: "108", eta: "15:30", vip: false, status: "Checked In", hkStatus: "Clean" },
-  { id: "ARR-003", guest: "James Rodriguez", roomType: "Suite", roomNumber: "203", eta: "16:00", vip: true, status: "Pending", hkStatus: "Clean" },
-  { id: "ARR-004", guest: "Richard Lopez", roomType: "Standard Double", roomNumber: "208", eta: "18:00", vip: false, status: "Pending", hkStatus: "Clean" },
-  { id: "ARR-005", guest: "Emma Thompson", roomType: "Standard King", roomNumber: "Unassigned", eta: "19:30", vip: false, status: "Pending", hkStatus: "N/A" },
-];
 
 function FrontDeskArrivals() {
   const [statusFilter, setStatusFilter] = React.useState("All Arrivals");
@@ -657,20 +783,96 @@ const mockReservations = [
 ];
 
 function FrontDeskReservations() {
+  const [showNewBooking, setShowNewBooking] = React.useState(false);
+  const [bookingStep, setBookingStep] = React.useState(1);
   const [statusFilter, setStatusFilter] = React.useState("All Reservations");
 
-  const filteredReservations = useMemo(() => {
+  const [searchParams, setSearchParams] = React.useState({
+    checkIn: "2024-10-12",
+    checkOut: "2024-10-15",
+    adults: 1,
+    children: 0,
+    roomType: "Suite",
+  });
+
+  const [selectedRoom, setSelectedRoom] = React.useState<string | null>(null);
+  const [guestDetails, setGuestDetails] = React.useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    nationality: "",
+    idType: "Passport",
+    idNumber: "",
+    specialRequests: "",
+  });
+
+  const [paymentMethod, setPaymentMethod] = React.useState("Room Account");
+  const [showSuccess, setShowSuccess] = React.useState(false);
+  const [bookingNumber, setBookingNumber] = React.useState("");
+
+  const mockAvailableRooms = [
+    { id: "suite-101", type: "Suite", amenities: ["WiFi", "Mini Bar", "Jacuzzi"], nightly: 250, total: 750, photos: "🏨" },
+    { id: "deluxe-102", type: "Deluxe Room", amenities: ["WiFi", "Mini Bar", "Balcony"], nightly: 180, total: 540, photos: "🏨" },
+    { id: "standard-103", type: "Standard Room", amenities: ["WiFi", "Air-Con"], nightly: 120, total: 360, photos: "🏨" },
+    { id: "family-104", type: "Family Suite", amenities: ["WiFi", "Kitchen", "2 Bathrooms"], nightly: 300, total: 900, photos: "🏨" },
+  ];
+
+  const filteredReservations = React.useMemo(() => {
     return mockReservations.filter(res => {
       if (statusFilter === "All Reservations") return true;
       return res.status === statusFilter;
     });
   }, [statusFilter]);
 
+  const handleNewBooking = () => {
+    setShowNewBooking(true);
+    setBookingStep(1);
+  };
+
+  const handleCheckAvailability = () => {
+    setBookingStep(2);
+  };
+
+  const handleSelectRoom = (roomId: string) => {
+    setSelectedRoom(roomId);
+    setBookingStep(3);
+  };
+
+  const handleGuestDetailsSubmit = () => {
+    setBookingStep(4);
+  };
+
+  const handleConfirmBooking = () => {
+    const newBookingNumber = `BK-2024-${Math.floor(Math.random() * 9000) + 1000}`;
+    setBookingNumber(newBookingNumber);
+    setShowSuccess(true);
+    setTimeout(() => {
+      setShowNewBooking(false);
+      setShowSuccess(false);
+      setBookingStep(1);
+    }, 2000);
+  };
+
+  const getSourceBadgeColor = (source: string) => {
+    switch (source) {
+      case "Direct": return "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300";
+      case "Booking.com": return "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300";
+      case "Expedia": return "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300";
+      default: return "bg-gray-100 text-gray-700 dark:bg-gray-500/20 dark:text-gray-300";
+    }
+  };
+
   return (
-    <div>
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
+    <div className="space-y-6">
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold text-foreground">Reservation List</h1>
+          <h1 className="text-xl font-semibold text-foreground">Reservations</h1>
+          <button
+            onClick={handleNewBooking}
+            className="bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white font-medium px-6 py-2 rounded-lg transition-all"
+          >
+            New Booking
+          </button>
         </div>
 
         {/* Legend & Filters */}
@@ -689,22 +891,20 @@ function FrontDeskReservations() {
               <span className="text-sm font-medium text-muted-foreground">Cancelled</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <select 
-              className="bg-secondary border-none rounded-lg px-3 py-2 text-sm outline-none cursor-pointer"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option>All Reservations</option>
-              <option>Confirmed</option>
-              <option>Pending</option>
-              <option>Cancelled</option>
-            </select>
-          </div>
+          <select 
+            className="bg-secondary border-none rounded-lg px-3 py-2 text-sm outline-none cursor-pointer"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option>All Reservations</option>
+            <option>Confirmed</option>
+            <option>Pending</option>
+            <option>Cancelled</option>
+          </select>
         </div>
       </div>
 
-      {/* Reservations List */}
+      {/* Reservations Table */}
       <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
@@ -713,11 +913,13 @@ function FrontDeskReservations() {
                 <th className="px-6 py-4 font-medium">Booking ID</th>
                 <th className="px-6 py-4 font-medium">Guest</th>
                 <th className="px-6 py-4 font-medium">Room Type</th>
+                <th className="px-6 py-4 font-medium">Nights</th>
                 <th className="px-6 py-4 font-medium">Check In</th>
                 <th className="px-6 py-4 font-medium">Check Out</th>
                 <th className="px-6 py-4 font-medium">Source</th>
                 <th className="px-6 py-4 font-medium">Status</th>
                 <th className="px-6 py-4 font-medium text-right">Amount</th>
+                <th className="px-6 py-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
@@ -726,24 +928,351 @@ function FrontDeskReservations() {
                   <td className="px-6 py-4 text-muted-foreground">{res.id}</td>
                   <td className="px-6 py-4 font-medium">{res.guest}</td>
                   <td className="px-6 py-4 text-muted-foreground">{res.roomType}</td>
+                  <td className="px-6 py-4 text-muted-foreground">3</td>
                   <td className="px-6 py-4">{res.checkIn}</td>
                   <td className="px-6 py-4">{res.checkOut}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{res.source}</td>
                   <td className="px-6 py-4">
-                    <span className={cn(
-                      "px-3 py-1 rounded-full text-xs font-medium",
-                      getBadgeColor(res.status)
-                    )}>
+                    <span className={cn("px-3 py-1 rounded-full text-xs font-medium", getSourceBadgeColor(res.source))}>
+                      {res.source}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={cn("px-3 py-1 rounded-full text-xs font-medium", getBadgeColor(res.status))}>
                       {res.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right font-medium">{res.amount}</td>
+                  <td className="px-6 py-4 text-right">
+                    <button className="text-violet-600 hover:text-violet-700 font-medium text-xs mr-3">Modify</button>
+                    <button className="text-red-600 hover:text-red-700 font-medium text-xs">Cancel</button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* New Booking Modal */}
+      <AnimatePresence>
+        {showNewBooking && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowNewBooking(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-card rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            >
+              <div className="p-8">
+                {!showSuccess ? (
+                  <>
+                    {/* Progress indicator */}
+                    <div className="mb-8">
+                      <div className="flex justify-between mb-4">
+                        {[1, 2, 3, 4].map(step => (
+                          <div
+                            key={step}
+                            className={cn(
+                              "h-2 flex-1 rounded-full mx-1 transition-colors",
+                              step <= bookingStep ? "bg-violet-600" : "bg-secondary"
+                            )}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Step {bookingStep} of 4: {
+                          bookingStep === 1 ? "Search" :
+                          bookingStep === 2 ? "Select Room" :
+                          bookingStep === 3 ? "Guest Details" :
+                          "Confirm Booking"
+                        }
+                      </p>
+                    </div>
+
+                    {/* Step 1: Search */}
+                    {bookingStep === 1 && (
+                      <div className="space-y-4">
+                        <h2 className="text-2xl font-bold mb-6">Search Availability</h2>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Check-In Date</label>
+                            <input
+                              type="date"
+                              value={searchParams.checkIn}
+                              onChange={(e) => setSearchParams({...searchParams, checkIn: e.target.value})}
+                              className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Check-Out Date</label>
+                            <input
+                              type="date"
+                              value={searchParams.checkOut}
+                              onChange={(e) => setSearchParams({...searchParams, checkOut: e.target.value})}
+                              className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Adults</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={searchParams.adults}
+                              onChange={(e) => setSearchParams({...searchParams, adults: parseInt(e.target.value)})}
+                              className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Children</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={searchParams.children}
+                              onChange={(e) => setSearchParams({...searchParams, children: parseInt(e.target.value)})}
+                              className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Room Type</label>
+                          <select
+                            value={searchParams.roomType}
+                            onChange={(e) => setSearchParams({...searchParams, roomType: e.target.value})}
+                            className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none cursor-pointer"
+                          >
+                            <option>Suite</option>
+                            <option>Deluxe Room</option>
+                            <option>Standard Room</option>
+                            <option>Family Suite</option>
+                          </select>
+                        </div>
+                        <button
+                          onClick={handleCheckAvailability}
+                          className="w-full bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white font-medium py-3 rounded-lg mt-6 transition-all"
+                        >
+                          Check Availability
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Step 2: Select Room */}
+                    {bookingStep === 2 && (
+                      <div className="space-y-4">
+                        <h2 className="text-2xl font-bold mb-6">Select Room</h2>
+                        <div className="space-y-3">
+                          {mockAvailableRooms.map(room => (
+                            <motion.div
+                              key={room.id}
+                              whileHover={{ scale: 1.02 }}
+                              onClick={() => handleSelectRoom(room.id)}
+                              className="bg-secondary/30 rounded-2xl p-4 border-2 border-border hover:border-violet-500 cursor-pointer transition-all"
+                            >
+                              <div className="flex justify-between items-start mb-3">
+                                <div>
+                                  <h3 className="font-bold text-lg">{room.type}</h3>
+                                  <div className="flex flex-wrap gap-2 mt-2">
+                                    {room.amenities.map(amenity => (
+                                      <span key={amenity} className="text-xs bg-card rounded-full px-2 py-1">{amenity}</span>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-2xl font-bold text-violet-600">${room.nightly}</p>
+                                  <p className="text-xs text-muted-foreground">per night</p>
+                                </div>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <p className="text-sm font-medium">Total: <span className="font-bold text-lg">${room.total}</span></p>
+                                <button className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-1 rounded-lg text-sm font-medium">
+                                  Select
+                                </button>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 3: Guest Details */}
+                    {bookingStep === 3 && (
+                      <div className="space-y-4">
+                        <h2 className="text-2xl font-bold mb-6">Guest Details</h2>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Full Name</label>
+                          <input
+                            type="text"
+                            value={guestDetails.fullName}
+                            onChange={(e) => setGuestDetails({...guestDetails, fullName: e.target.value})}
+                            className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none"
+                            placeholder="John Doe"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Email</label>
+                            <input
+                              type="email"
+                              value={guestDetails.email}
+                              onChange={(e) => setGuestDetails({...guestDetails, email: e.target.value})}
+                              className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Phone</label>
+                            <input
+                              type="tel"
+                              value={guestDetails.phone}
+                              onChange={(e) => setGuestDetails({...guestDetails, phone: e.target.value})}
+                              className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Nationality</label>
+                            <input
+                              type="text"
+                              value={guestDetails.nationality}
+                              onChange={(e) => setGuestDetails({...guestDetails, nationality: e.target.value})}
+                              className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-2">ID Type</label>
+                            <select
+                              value={guestDetails.idType}
+                              onChange={(e) => setGuestDetails({...guestDetails, idType: e.target.value})}
+                              className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none cursor-pointer"
+                            >
+                              <option>Passport</option>
+                              <option>Drivers License</option>
+                              <option>National ID</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">ID Number</label>
+                          <input
+                            type="text"
+                            value={guestDetails.idNumber}
+                            onChange={(e) => setGuestDetails({...guestDetails, idNumber: e.target.value})}
+                            className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Special Requests</label>
+                          <textarea
+                            value={guestDetails.specialRequests}
+                            onChange={(e) => setGuestDetails({...guestDetails, specialRequests: e.target.value})}
+                            className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none resize-none"
+                            rows={3}
+                            placeholder="Any special requests..."
+                          />
+                        </div>
+                        <button
+                          onClick={handleGuestDetailsSubmit}
+                          className="w-full bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white font-medium py-3 rounded-lg mt-6 transition-all"
+                        >
+                          Continue to Confirmation
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Step 4: Confirm */}
+                    {bookingStep === 4 && (
+                      <div className="space-y-6">
+                        <h2 className="text-2xl font-bold">Confirm Booking</h2>
+
+                        {/* Summary */}
+                        <div className="bg-secondary/30 rounded-2xl p-6 space-y-3">
+                          <h3 className="font-bold text-lg mb-4">Booking Summary</h3>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Guest:</span>
+                            <span className="font-medium">{guestDetails.fullName}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Check-In:</span>
+                            <span className="font-medium">{searchParams.checkIn}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Check-Out:</span>
+                            <span className="font-medium">{searchParams.checkOut}</span>
+                          </div>
+                          <div className="flex justify-between pt-3 border-t border-border">
+                            <span className="text-muted-foreground">Total:</span>
+                            <span className="font-bold text-lg">$750</span>
+                          </div>
+                        </div>
+
+                        {/* Payment Method */}
+                        <div>
+                          <label className="block text-sm font-medium mb-3">Payment Method</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {["Room Account", "Credit Card", "Corporate Account", "OTA Collect"].map(method => (
+                              <button
+                                key={method}
+                                onClick={() => setPaymentMethod(method)}
+                                className={cn(
+                                  "p-3 rounded-lg border-2 transition-all text-sm font-medium",
+                                  paymentMethod === method
+                                    ? "border-violet-600 bg-violet-50 dark:bg-violet-900/20 text-violet-600"
+                                    : "border-border bg-secondary/30 text-muted-foreground hover:border-violet-300"
+                                )}
+                              >
+                                {method}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={handleConfirmBooking}
+                          className="w-full bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white font-bold py-3 rounded-lg transition-all text-lg"
+                        >
+                          Confirm Booking
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center"
+                    >
+                      <svg className="w-8 h-8 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </motion.div>
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground mb-2">Booking Confirmed</p>
+                      <p className="text-2xl font-bold">{bookingNumber}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Close button */}
+                {!showSuccess && (
+                  <button
+                    onClick={() => setShowNewBooking(false)}
+                    className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+                  >
+                    <span className="text-2xl">×</span>
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

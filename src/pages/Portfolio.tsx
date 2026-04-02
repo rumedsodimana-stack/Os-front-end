@@ -712,7 +712,221 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
           </motion.div>
         )}
 
+        {/* ── BRAND STANDARDS ── */}
+        {activeSubmenu === "Brand Standards" && <BrandStandardsView />}
+
       </AnimatePresence>
     </div>
+  );
+}
+
+function BrandStandardsView() {
+  const [showUploadForm, setShowUploadForm] = useState(false);
+  const [uploadTitle, setUploadTitle] = useState("");
+  const [uploadCategory, setUploadCategory] = useState("");
+  const [uploadDesc, setUploadDesc] = useState("");
+
+  const brandColors = [
+    { name: "Primary Violet", hex: "#8B5CF6" },
+    { name: "Secondary Indigo", hex: "#6366F1" },
+    { name: "Accent Cyan", hex: "#0EA5E9" },
+    { name: "Success Emerald", hex: "#10B981" },
+    { name: "Warmth Amber", hex: "#F59E0B" }
+  ];
+
+  const sops = [
+    { id: 1, category: "Front Desk", name: "Front Desk Check-in Procedure", version: "2.1", updated: "2026-03-15", owner: "James Chen", status: "Approved" },
+    { id: 2, category: "F&B", name: "F&B Service Standards", version: "1.9", updated: "2026-02-28", owner: "Sarah Williams", status: "Approved" },
+    { id: 3, category: "Housekeeping", name: "Housekeeping Room Inspection", version: "3.2", updated: "2026-03-20", owner: "Maria Garcia", status: "Approved" },
+    { id: 4, category: "Safety", name: "Emergency Evacuation", version: "2.0", updated: "2026-01-10", owner: "Ahmed Hassan", status: "Approved" },
+    { id: 5, category: "Marketing", name: "Brand Voice Guidelines", version: "1.5", updated: "2026-03-01", owner: "Emma Johnson", status: "Draft" },
+    { id: 6, category: "Marketing", name: "Social Media Policy", version: "2.3", updated: "2026-03-18", owner: "Emma Johnson", status: "Approved" },
+    { id: 7, category: "Front Desk", name: "Complaint Handling", version: "1.7", updated: "2026-02-14", owner: "James Chen", status: "Under Review" },
+    { id: 8, category: "Concierge", name: "VIP Protocol", version: "2.4", updated: "2026-03-25", owner: "Sophie Martin", status: "Approved" },
+    { id: 9, category: "Sales", name: "Wedding Package Standards", version: "1.3", updated: "2026-03-10", owner: "Michael Brown", status: "Approved" },
+    { id: 10, category: "Facilities", name: "Pool Safety", version: "2.1", updated: "2026-03-22", owner: "David Lee", status: "Approved" },
+    { id: 11, category: "F&B", name: "F&B Menu Standards", version: "1.8", updated: "2026-03-08", owner: "Sarah Williams", status: "Approved" },
+    { id: 12, category: "Operations", name: "Uniform Policy", version: "1.6", updated: "2026-02-20", owner: "Ahmed Hassan", status: "Draft" }
+  ];
+
+  const changelog = [
+    { date: "2026-03-25", type: "Updated", desc: "VIP Protocol revised for new concierge training" },
+    { date: "2026-03-22", type: "Added", desc: "Pool Safety guidelines for summer season" },
+    { date: "2026-03-18", type: "Updated", desc: "Social Media Policy updated with Q2 guidelines" },
+    { date: "2026-03-15", type: "Approved", desc: "Front Desk Check-in Procedure v2.1 finalized" },
+    { date: "2026-03-10", type: "Added", desc: "Wedding Package Standards released" }
+  ];
+
+  const statusColor = (status: string) => {
+    if (status === "Approved") return "bg-emerald-100 text-emerald-800";
+    if (status === "Draft") return "bg-slate-100 text-slate-800";
+    return "bg-amber-100 text-amber-800";
+  };
+
+  return (
+    <motion.div key="brand-standards" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-foreground">Brand Standards</h2>
+          <p className="text-sm text-muted-foreground mt-1">Last updated: 2026-03-25</p>
+        </div>
+        <button onClick={() => setShowUploadForm(true)} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 flex items-center gap-2">
+          <Plus className="w-4 h-4" /> Upload Document
+        </button>
+      </div>
+
+      {/* Brand Identity */}
+      <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-6">Brand Identity</h3>
+
+        {/* Logo Versions */}
+        <div className="mb-8">
+          <h4 className="font-medium text-foreground mb-4">Logo Versions</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[{ name: "Primary", bg: "bg-gradient-to-br from-violet-400 to-violet-600" }, { name: "White", bg: "bg-slate-100 border border-border" }, { name: "Dark", bg: "bg-slate-900" }, { name: "Favicon", bg: "bg-gradient-to-br from-indigo-400 to-indigo-600" }].map(logo => (
+              <div key={logo.name} className="text-center">
+                <div className={cn("h-24 rounded-lg flex items-center justify-center mb-3", logo.bg)}>
+                  <span className="text-white text-xs font-semibold">{logo.name}</span>
+                </div>
+                <button className="w-full px-3 py-2 text-xs font-medium text-foreground border border-border rounded-lg hover:bg-secondary transition-colors">Download</button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Color Palette */}
+        <div className="mb-8">
+          <h4 className="font-medium text-foreground mb-4">Color Palette</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {brandColors.map(color => (
+              <div key={color.hex} className="text-center">
+                <div className="h-20 rounded-lg mb-2 border-2 border-border" style={{ backgroundColor: color.hex }} />
+                <p className="font-medium text-foreground text-sm">{color.name}</p>
+                <p className="text-xs text-muted-foreground font-mono">{color.hex}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Typography */}
+        <div>
+          <h4 className="font-medium text-foreground mb-4">Typography</h4>
+          <div className="space-y-4">
+            <div>
+              <p style={{ fontSize: "32px", fontWeight: "bold" }} className="text-foreground mb-1">Headings (Inter Bold, 32px)</p>
+              <p className="text-xs text-muted-foreground">Used for page titles and major sections</p>
+            </div>
+            <div>
+              <p style={{ fontSize: "16px", fontWeight: "500" }} className="text-foreground mb-1">Body (Inter Medium, 16px)</p>
+              <p className="text-xs text-muted-foreground">Standard text for paragraphs and content</p>
+            </div>
+            <div>
+              <p style={{ fontSize: "12px", fontWeight: "400", letterSpacing: "0.5px" }} className="text-muted-foreground mb-1">Labels (Inter Regular, 12px, uppercase)</p>
+              <p className="text-xs text-muted-foreground">Form labels and UI elements</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* SOP Table */}
+      <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Standard Operating Procedures</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Category</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Document Name</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Version</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Last Updated</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Owner</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wide">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {sops.map(sop => (
+                <tr key={sop.id} className="hover:bg-secondary/30 transition-colors">
+                  <td className="px-4 py-3 text-sm text-foreground font-medium">{sop.category}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{sop.name}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{sop.version}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{sop.updated}</td>
+                  <td className="px-4 py-3 text-sm text-foreground font-medium">{sop.owner}</td>
+                  <td className="px-4 py-3">
+                    <span className={cn("inline-block px-2 py-1 rounded text-xs font-medium", statusColor(sop.status))}>{sop.status}</span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button className="text-primary hover:underline text-xs font-medium">View</button>
+                    <span className="text-border mx-2">/</span>
+                    <button className="text-primary hover:underline text-xs font-medium">Download</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Changelog */}
+      <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-6">Brand Changelog</h3>
+        <div className="space-y-4">
+          {changelog.map((entry, i) => (
+            <div key={i} className="flex gap-4 pb-4" style={i < changelog.length - 1 ? { borderBottom: "1px solid var(--border)" } : {}}>
+              <div className="flex-shrink-0">
+                <div className="w-2 h-2 rounded-full bg-primary mt-2" />
+              </div>
+              <div className="flex-grow">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="font-medium text-foreground text-sm">{entry.type}</p>
+                  <p className="text-xs text-muted-foreground">{entry.date}</p>
+                </div>
+                <p className="text-sm text-foreground">{entry.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Upload Form Modal */}
+      <AnimatePresence>
+        {showUploadForm && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-card rounded-2xl shadow-lg border border-border p-6 max-w-md w-full">
+              <h3 className="text-lg font-semibold text-foreground mb-4">Upload New Standard</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Title</label>
+                  <input value={uploadTitle} onChange={e => setUploadTitle(e.target.value)} type="text" className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Category</label>
+                  <select value={uploadCategory} onChange={e => setUploadCategory(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option value="">Select category...</option>
+                    <option>Front Desk</option>
+                    <option>Housekeeping</option>
+                    <option>F&B</option>
+                    <option>Operations</option>
+                    <option>Safety</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Description</label>
+                  <textarea value={uploadDesc} onChange={e => setUploadDesc(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none h-20" />
+                </div>
+                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                  <p className="text-sm text-muted-foreground">Drag and drop file here or click to upload</p>
+                  <p className="text-xs text-muted-foreground mt-1">PDF, DOC, DOCX accepted</p>
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button onClick={() => setShowUploadForm(false)} className="flex-1 px-4 py-2 border border-border rounded-lg font-medium text-foreground hover:bg-secondary transition-colors">Cancel</button>
+                  <button className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90">Upload</button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
