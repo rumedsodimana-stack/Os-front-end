@@ -1,535 +1,1449 @@
 import React, { useMemo, useState } from "react";
-import { Sparkles, Bed, Brush, AlertTriangle, CheckCircle, Thermometer, Droplets, Search, Filter, Plus, Package, Search as SearchIcon, MapPin, Calendar, Clock, User, Wrench, Bell } from "lucide-react";
+import {
+  Home,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  User,
+  Layers,
+  Package,
+  ClipboardList,
+  Star,
+  Coffee,
+  Wind,
+  Wrench,
+  Bell,
+  BarChart2,
+} from "lucide-react";
 import { cn } from "../lib/utils";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+  PieChart,
+  Pie,
+} from "recharts";
 import { motion, AnimatePresence } from "motion/react";
 
 interface HousekeepingProps {
   aiEnabled: boolean;
-  activeSubmenu: string;
+  activeSubmenu?: string;
 }
 
-export function Housekeeping({ aiEnabled, activeSubmenu }: HousekeepingProps) {
-  const renderContent = () => {
-    switch (activeSubmenu) {
-      case "Overview":
-        return <HousekeepingOverview aiEnabled={aiEnabled} />;
-      case "Room Status":
-        return <RoomStatus />;
-      case "Task List":
-        return <TaskList />;
-      case "Lost & Found":
-        return <LostAndFound />;
-      case "Inventory":
-        return <Inventory />;
-      default:
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type RoomStatus = "Dirty" | "Clean" | "Inspected" | "In Progress" | "OOS";
+type TaskStatus = "Pending" | "In Progress" | "Completed" | "Skipped";
+type TaskType = "Checkout" | "Stayover" | "Deep Clean" | "Turndown" | "Inspection";
+type Priority = "High" | "Medium" | "Low";
+type StaffStatus = "Active" | "Break" | "Off";
+type FoundStatus = "Unclaimed" | "Claimed" | "Donated" | "Disposed";
+type SupplyStatus = "Adequate" | "Low" | "Critical";
+type CheckResult = "Pass" | "Fail" | "N/A" | "";
+
+// ─── Mock Data ─────────────────────────────────────────────────────────────────
+
+const ROOMS: Array<{
+  id: string;
+  floor: number;
+  type: string;
+  status: RoomStatus;
+  housekeeper: string;
+  updatedMins: number;
+  checkIn: boolean;
+  checkOut: boolean;
+  priority: Priority;
+  vip: boolean;
+}> = [
+  { id: "101", floor: 1, type: "Standard", status: "Dirty", housekeeper: "Maria L.", updatedMins: 45, checkIn: false, checkOut: true, priority: "High", vip: false },
+  { id: "102", floor: 1, type: "Standard", status: "In Progress", housekeeper: "Clara V.", updatedMins: 12, checkIn: false, checkOut: false, priority: "Medium", vip: false },
+  { id: "103", floor: 1, type: "Deluxe", status: "Clean", housekeeper: "Maria L.", updatedMins: 60, checkIn: true, checkOut: false, priority: "Low", vip: false },
+  { id: "104", floor: 1, type: "Standard", status: "Inspected", housekeeper: "Supervisor", updatedMins: 90, checkIn: true, checkOut: false, priority: "Low", vip: false },
+  { id: "105", floor: 1, type: "Suite", status: "Dirty", housekeeper: "Unassigned", updatedMins: 120, checkIn: false, checkOut: true, priority: "High", vip: true },
+  { id: "106", floor: 1, type: "Standard", status: "OOS", housekeeper: "Maintenance", updatedMins: 240, checkIn: false, checkOut: false, priority: "High", vip: false },
+  { id: "107", floor: 1, type: "Deluxe", status: "Dirty", housekeeper: "Unassigned", updatedMins: 80, checkIn: false, checkOut: true, priority: "Medium", vip: false },
+  { id: "108", floor: 1, type: "Standard", status: "Clean", housekeeper: "Clara V.", updatedMins: 30, checkIn: true, checkOut: false, priority: "Low", vip: false },
+  { id: "109", floor: 1, type: "Standard", status: "Inspected", housekeeper: "Supervisor", updatedMins: 110, checkIn: true, checkOut: false, priority: "Low", vip: false },
+  { id: "110", floor: 1, type: "Deluxe", status: "In Progress", housekeeper: "Emma R.", updatedMins: 8, checkIn: false, checkOut: false, priority: "Medium", vip: false },
+  { id: "201", floor: 2, type: "Suite", status: "Dirty", housekeeper: "Unassigned", updatedMins: 50, checkIn: false, checkOut: true, priority: "High", vip: true },
+  { id: "202", floor: 2, type: "Standard", status: "Clean", housekeeper: "Maria L.", updatedMins: 40, checkIn: true, checkOut: false, priority: "Low", vip: false },
+  { id: "203", floor: 2, type: "Standard", status: "Inspected", housekeeper: "Supervisor", updatedMins: 95, checkIn: true, checkOut: false, priority: "Low", vip: false },
+  { id: "204", floor: 2, type: "Deluxe", status: "In Progress", housekeeper: "Emma R.", updatedMins: 18, checkIn: false, checkOut: false, priority: "Medium", vip: false },
+  { id: "205", floor: 2, type: "Standard", status: "Dirty", housekeeper: "Unassigned", updatedMins: 65, checkIn: false, checkOut: true, priority: "Medium", vip: false },
+  { id: "206", floor: 2, type: "Standard", status: "Clean", housekeeper: "Clara V.", updatedMins: 55, checkIn: true, checkOut: false, priority: "Low", vip: false },
+  { id: "207", floor: 2, type: "Deluxe", status: "Dirty", housekeeper: "Unassigned", updatedMins: 100, checkIn: false, checkOut: true, priority: "High", vip: false },
+  { id: "208", floor: 2, type: "Standard", status: "Inspected", housekeeper: "Supervisor", updatedMins: 130, checkIn: true, checkOut: false, priority: "Low", vip: false },
+  { id: "209", floor: 2, type: "Suite", status: "OOS", housekeeper: "Maintenance", updatedMins: 360, checkIn: false, checkOut: false, priority: "High", vip: false },
+  { id: "210", floor: 2, type: "Standard", status: "In Progress", housekeeper: "Maria L.", updatedMins: 22, checkIn: false, checkOut: false, priority: "Medium", vip: false },
+  { id: "301", floor: 3, type: "Deluxe", status: "Dirty", housekeeper: "Unassigned", updatedMins: 70, checkIn: false, checkOut: true, priority: "High", vip: false },
+  { id: "302", floor: 3, type: "Standard", status: "Clean", housekeeper: "Emma R.", updatedMins: 35, checkIn: true, checkOut: false, priority: "Low", vip: false },
+  { id: "303", floor: 3, type: "Standard", status: "Inspected", housekeeper: "Supervisor", updatedMins: 105, checkIn: true, checkOut: false, priority: "Low", vip: false },
+  { id: "304", floor: 3, type: "Suite", status: "Dirty", housekeeper: "Unassigned", updatedMins: 55, checkIn: false, checkOut: true, priority: "High", vip: true },
+  { id: "305", floor: 3, type: "Standard", status: "In Progress", housekeeper: "Clara V.", updatedMins: 14, checkIn: false, checkOut: false, priority: "Medium", vip: false },
+  { id: "306", floor: 3, type: "Deluxe", status: "Clean", housekeeper: "Maria L.", updatedMins: 48, checkIn: true, checkOut: false, priority: "Low", vip: false },
+  { id: "307", floor: 3, type: "Standard", status: "Dirty", housekeeper: "Unassigned", updatedMins: 88, checkIn: false, checkOut: true, priority: "Medium", vip: false },
+  { id: "308", floor: 3, type: "Standard", status: "Inspected", housekeeper: "Supervisor", updatedMins: 115, checkIn: true, checkOut: false, priority: "Low", vip: false },
+  { id: "309", floor: 3, type: "Deluxe", status: "Clean", housekeeper: "Emma R.", updatedMins: 28, checkIn: true, checkOut: false, priority: "Low", vip: false },
+  { id: "310", floor: 3, type: "Standard", status: "In Progress", housekeeper: "Clara V.", updatedMins: 5, checkIn: false, checkOut: false, priority: "Low", vip: false },
+  { id: "401", floor: 4, type: "Presidential Suite", status: "Dirty", housekeeper: "Maria L.", updatedMins: 60, checkIn: false, checkOut: true, priority: "High", vip: true },
+  { id: "402", floor: 4, type: "Suite", status: "In Progress", housekeeper: "Emma R.", updatedMins: 25, checkIn: false, checkOut: false, priority: "High", vip: true },
+  { id: "403", floor: 4, type: "Deluxe", status: "Clean", housekeeper: "Clara V.", updatedMins: 45, checkIn: true, checkOut: false, priority: "Low", vip: false },
+  { id: "404", floor: 4, type: "Standard", status: "Inspected", housekeeper: "Supervisor", updatedMins: 125, checkIn: true, checkOut: false, priority: "Low", vip: false },
+  { id: "405", floor: 4, type: "Suite", status: "Dirty", housekeeper: "Unassigned", updatedMins: 75, checkIn: false, checkOut: true, priority: "High", vip: false },
+  { id: "406", floor: 4, type: "Deluxe", status: "OOS", housekeeper: "Maintenance", updatedMins: 480, checkIn: false, checkOut: false, priority: "High", vip: false },
+  { id: "407", floor: 4, type: "Standard", status: "Clean", housekeeper: "Maria L.", updatedMins: 38, checkIn: true, checkOut: false, priority: "Low", vip: false },
+  { id: "408", floor: 4, type: "Deluxe", status: "Dirty", housekeeper: "Unassigned", updatedMins: 92, checkIn: false, checkOut: true, priority: "Medium", vip: false },
+  { id: "409", floor: 4, type: "Standard", status: "Inspected", housekeeper: "Supervisor", updatedMins: 140, checkIn: true, checkOut: false, priority: "Low", vip: false },
+  { id: "410", floor: 4, type: "Presidential Suite", status: "In Progress", housekeeper: "Emma R.", updatedMins: 32, checkIn: false, checkOut: false, priority: "High", vip: true },
+];
+
+const TASKS: Array<{
+  id: string;
+  room: string;
+  type: TaskType;
+  assignedTo: string;
+  priority: Priority;
+  status: TaskStatus;
+  notes: string;
+  dueTime: string;
+}> = [
+  { id: "HK-001", room: "101", type: "Checkout", assignedTo: "Maria L.", priority: "High", status: "Completed", notes: "Extra towels left", dueTime: "10:00" },
+  { id: "HK-002", room: "105", type: "Checkout", assignedTo: "Unassigned", priority: "High", status: "Pending", notes: "VIP arrival at 14:00", dueTime: "12:00" },
+  { id: "HK-003", room: "201", type: "Checkout", assignedTo: "Clara V.", priority: "High", status: "In Progress", notes: "VIP — extra amenities", dueTime: "11:00" },
+  { id: "HK-004", room: "304", type: "Checkout", assignedTo: "Unassigned", priority: "High", status: "Pending", notes: "VIP suite — thorough clean", dueTime: "11:30" },
+  { id: "HK-005", room: "401", type: "Checkout", assignedTo: "Maria L.", priority: "High", status: "In Progress", notes: "Presidential — full refresh", dueTime: "12:00" },
+  { id: "HK-006", room: "102", type: "Stayover", assignedTo: "Clara V.", priority: "Medium", status: "In Progress", notes: "DND until 10am", dueTime: "13:00" },
+  { id: "HK-007", room: "204", type: "Stayover", assignedTo: "Emma R.", priority: "Medium", status: "In Progress", notes: "Guest requested extra coffee", dueTime: "13:00" },
+  { id: "HK-008", room: "305", type: "Stayover", assignedTo: "Clara V.", priority: "Low", status: "In Progress", notes: "", dueTime: "14:00" },
+  { id: "HK-009", room: "402", type: "Stayover", assignedTo: "Emma R.", priority: "High", status: "In Progress", notes: "VIP — white gloves standard", dueTime: "12:30" },
+  { id: "HK-010", room: "106", type: "Deep Clean", assignedTo: "Maintenance", priority: "High", status: "Pending", notes: "Pipe leak — OOS since yesterday", dueTime: "16:00" },
+  { id: "HK-011", room: "209", type: "Deep Clean", assignedTo: "Maintenance", priority: "High", status: "Pending", notes: "Carpet replacement", dueTime: "17:00" },
+  { id: "HK-012", room: "406", type: "Deep Clean", assignedTo: "Maintenance", priority: "High", status: "Pending", notes: "AC servicing required", dueTime: "18:00" },
+  { id: "HK-013", room: "103", type: "Inspection", assignedTo: "Supervisor", priority: "Low", status: "Completed", notes: "Passed all checks", dueTime: "11:00" },
+  { id: "HK-014", room: "104", type: "Inspection", assignedTo: "Supervisor", priority: "Low", status: "Completed", notes: "Minor — replaced amenities", dueTime: "11:15" },
+  { id: "HK-015", room: "203", type: "Inspection", assignedTo: "Supervisor", priority: "Medium", status: "Pending", notes: "Post clean-up check", dueTime: "14:00" },
+  { id: "HK-016", room: "303", type: "Inspection", assignedTo: "Supervisor", priority: "Low", status: "Completed", notes: "All clear", dueTime: "12:00" },
+  { id: "HK-017", room: "404", type: "Inspection", assignedTo: "Supervisor", priority: "Low", status: "Pending", notes: "", dueTime: "15:00" },
+  { id: "HK-018", room: "301", type: "Turndown", assignedTo: "Unassigned", priority: "Medium", status: "Pending", notes: "Guest requested 20:00", dueTime: "20:00" },
+  { id: "HK-019", room: "402", type: "Turndown", assignedTo: "Emma R.", priority: "High", status: "Pending", notes: "VIP — chocolates + robe", dueTime: "19:30" },
+  { id: "HK-020", room: "405", type: "Turndown", assignedTo: "Unassigned", priority: "Medium", status: "Pending", notes: "Extra pillow requested", dueTime: "20:30" },
+];
+
+const STAFF: Array<{
+  name: string;
+  assigned: number;
+  completed: number;
+  rate: number;
+  status: StaffStatus;
+  shiftStart: string;
+  currentRoom: string;
+}> = [
+  { name: "Maria L.", assigned: 12, completed: 8, rate: 2.4, status: "Active", shiftStart: "07:00", currentRoom: "401" },
+  { name: "Clara V.", assigned: 10, completed: 7, rate: 2.1, status: "Active", shiftStart: "07:00", currentRoom: "305" },
+  { name: "Emma R.", assigned: 11, completed: 6, rate: 1.9, status: "Break", shiftStart: "07:00", currentRoom: "—" },
+  { name: "James K.", assigned: 9, completed: 9, rate: 2.8, status: "Active", shiftStart: "08:00", currentRoom: "202" },
+  { name: "Sofia P.", assigned: 8, completed: 5, rate: 1.7, status: "Active", shiftStart: "08:00", currentRoom: "107" },
+  { name: "Aiden T.", assigned: 0, completed: 0, rate: 0, status: "Off", shiftStart: "—", currentRoom: "—" },
+];
+
+const TURNDOWN: Array<{
+  room: string;
+  guest: string;
+  vip: boolean;
+  requests: string;
+  assigned: string;
+  status: string;
+  timeCompleted: string;
+}> = [
+  { room: "101", guest: "Mr. Johnson", vip: false, requests: "Extra pillow", assigned: "Maria L.", status: "Completed", timeCompleted: "19:45" },
+  { room: "201", guest: "Ms. Al-Rashid", vip: true, requests: "Champagne, roses, robe fold", assigned: "Clara V.", status: "Completed", timeCompleted: "19:20" },
+  { room: "301", guest: "Dr. Chen", vip: false, requests: "None", assigned: "Unassigned", status: "Pending", timeCompleted: "—" },
+  { room: "402", guest: "Lord Ashworth", vip: true, requests: "Chocolates, pillow menu, aromatherapy", assigned: "Emma R.", status: "In Progress", timeCompleted: "—" },
+  { room: "405", guest: "Ms. Torres", vip: false, requests: "Extra blanket", assigned: "Unassigned", status: "Pending", timeCompleted: "—" },
+  { room: "103", guest: "Mr. & Mrs. Patel", vip: false, requests: "None", assigned: "Maria L.", status: "Completed", timeCompleted: "20:00" },
+  { room: "208", guest: "Mr. Williams", vip: false, requests: "Extra hangers", assigned: "Clara V.", status: "Completed", timeCompleted: "20:10" },
+  { room: "304", guest: "Ms. Nakamura", vip: true, requests: "Yukata, hot tea, sleep spray", assigned: "Emma R.", status: "Pending", timeCompleted: "—" },
+];
+
+const LOST_FOUND: Array<{
+  id: string;
+  description: string;
+  category: string;
+  location: string;
+  foundBy: string;
+  dateFound: string;
+  guest: string;
+  contact: string;
+  status: FoundStatus;
+  claimDate: string;
+}> = [
+  { id: "LF-001", description: "Apple AirPods Pro (white case)", category: "Electronics", location: "Room 205", foundBy: "Clara V.", dateFound: "2026-03-28", guest: "Mr. Davis", contact: "+1 555-0192", status: "Claimed", claimDate: "2026-03-29" },
+  { id: "LF-002", description: "Blue silk scarf (Hermes)", category: "Clothing", location: "Room 401", foundBy: "Maria L.", dateFound: "2026-03-30", guest: "Ms. Laurent", contact: "+33 6 12 34 56 78", status: "Unclaimed", claimDate: "—" },
+  { id: "LF-003", description: "Gold bracelet with diamond clasp", category: "Jewelry", location: "Pool area", foundBy: "James K.", dateFound: "2026-03-31", guest: "Unknown", contact: "—", status: "Unclaimed", claimDate: "—" },
+  { id: "LF-004", description: "UK passport (surname: Morrison)", category: "Documents", location: "Room 102", foundBy: "Clara V.", dateFound: "2026-03-29", guest: "Mr. Morrison", contact: "+44 7700 900123", status: "Claimed", claimDate: "2026-03-29" },
+  { id: "LF-005", description: "Samsung Galaxy S24 (black)", category: "Electronics", location: "Restaurant", foundBy: "Staff", dateFound: "2026-04-01", guest: "Unknown", contact: "—", status: "Unclaimed", claimDate: "—" },
+  { id: "LF-006", description: "Grey wool blazer (Hugo Boss, L)", category: "Clothing", location: "Room 307", foundBy: "Emma R.", dateFound: "2026-03-27", guest: "Mr. Schneider", contact: "+49 171 1234567", status: "Donated", claimDate: "2026-04-01" },
+  { id: "LF-007", description: "Ray-Ban Aviator sunglasses", category: "Other", location: "Lobby", foundBy: "Concierge", dateFound: "2026-03-30", guest: "Unknown", contact: "—", status: "Unclaimed", claimDate: "—" },
+  { id: "LF-008", description: "Kindle Paperwhite (pink case)", category: "Electronics", location: "Room 304", foundBy: "Maria L.", dateFound: "2026-04-01", guest: "Ms. Nakamura", contact: "+81 90-1234-5678", status: "Claimed", claimDate: "2026-04-02" },
+  { id: "LF-009", description: "Child's stuffed bear (blue)", category: "Other", location: "Room 109", foundBy: "Clara V.", dateFound: "2026-03-26", guest: "Patel family", contact: "+91 98765 43210", status: "Claimed", claimDate: "2026-03-26" },
+  { id: "LF-010", description: "Stethoscope in black pouch", category: "Other", location: "Room 202", foundBy: "James K.", dateFound: "2026-03-31", guest: "Dr. Okonkwo", contact: "+234 803 123 4567", status: "Unclaimed", claimDate: "—" },
+  { id: "LF-011", description: "Leather wallet (brown, Louis Vuitton)", category: "Other", location: "Room 201", foundBy: "Clara V.", dateFound: "2026-04-02", guest: "Ms. Al-Rashid", contact: "+971 50 123 4567", status: "Unclaimed", claimDate: "—" },
+  { id: "LF-012", description: "Business documents (Acme Corp)", category: "Documents", location: "Meeting Room B", foundBy: "Staff", dateFound: "2026-03-28", guest: "Unknown", contact: "—", status: "Disposed", claimDate: "2026-04-01" },
+  { id: "LF-013", description: "Pearl necklace (white)", category: "Jewelry", location: "Spa", foundBy: "Spa staff", dateFound: "2026-03-25", guest: "Unknown", contact: "—", status: "Unclaimed", claimDate: "—" },
+  { id: "LF-014", description: "Black laptop bag (empty)", category: "Other", location: "Bar", foundBy: "Bartender", dateFound: "2026-03-29", guest: "Unknown", contact: "—", status: "Donated", claimDate: "2026-04-01" },
+  { id: "LF-015", description: "Prescription glasses (tortoise shell)", category: "Other", location: "Room 106", foundBy: "Maintenance", dateFound: "2026-04-01", guest: "Unknown", contact: "—", status: "Unclaimed", claimDate: "—" },
+];
+
+const LINENS: Array<{
+  item: string;
+  par: number;
+  current: number;
+  inLaundry: number;
+  condemned: number;
+}> = [
+  { item: "King Bed Sheets", par: 120, current: 98, inLaundry: 34, condemned: 4 },
+  { item: "Queen Bed Sheets", par: 80, current: 72, inLaundry: 20, condemned: 2 },
+  { item: "Twin Bed Sheets", par: 60, current: 55, inLaundry: 12, condemned: 1 },
+  { item: "Pillow Cases (Standard)", par: 200, current: 165, inLaundry: 48, condemned: 6 },
+  { item: "Pillow Cases (King)", par: 100, current: 88, inLaundry: 22, condemned: 3 },
+  { item: "Bath Towels (Large)", par: 300, current: 210, inLaundry: 88, condemned: 12 },
+  { item: "Hand Towels", par: 200, current: 175, inLaundry: 55, condemned: 8 },
+  { item: "Face Cloths", par: 160, current: 140, inLaundry: 40, condemned: 5 },
+  { item: "Bath Robes", par: 100, current: 82, inLaundry: 24, condemned: 6 },
+  { item: "Pool Towels", par: 150, current: 118, inLaundry: 45, condemned: 9 },
+  { item: "Duvet Covers (King)", par: 80, current: 62, inLaundry: 28, condemned: 3 },
+  { item: "Duvet Covers (Queen)", par: 60, current: 52, inLaundry: 14, condemned: 2 },
+];
+
+const SUPPLIES: Array<{
+  item: string;
+  category: string;
+  current: number;
+  min: number;
+  unit: string;
+  lastRestocked: string;
+  status: SupplyStatus;
+}> = [
+  { item: "Shampoo (50ml)", category: "Amenities", current: 480, min: 200, unit: "units", lastRestocked: "2026-04-01", status: "Adequate" },
+  { item: "Conditioner (50ml)", category: "Amenities", current: 440, min: 200, unit: "units", lastRestocked: "2026-04-01", status: "Adequate" },
+  { item: "Body Wash (50ml)", category: "Amenities", current: 510, min: 200, unit: "units", lastRestocked: "2026-04-01", status: "Adequate" },
+  { item: "Hand Lotion (30ml)", category: "Amenities", current: 160, min: 150, unit: "units", lastRestocked: "2026-03-28", status: "Low" },
+  { item: "Dental Kit", category: "Amenities", current: 220, min: 150, unit: "units", lastRestocked: "2026-03-30", status: "Adequate" },
+  { item: "Shaving Kit", category: "Amenities", current: 180, min: 100, unit: "units", lastRestocked: "2026-03-29", status: "Adequate" },
+  { item: "Toilet Paper (rolls)", category: "Paper", current: 320, min: 200, unit: "rolls", lastRestocked: "2026-04-01", status: "Adequate" },
+  { item: "Facial Tissues (boxes)", category: "Paper", current: 140, min: 120, unit: "boxes", lastRestocked: "2026-03-28", status: "Low" },
+  { item: "Notepad & Pen Sets", category: "Guest", current: 85, min: 80, unit: "sets", lastRestocked: "2026-03-25", status: "Low" },
+  { item: "Coffee Pods (assorted)", category: "Guest", current: 610, min: 300, unit: "pods", lastRestocked: "2026-04-01", status: "Adequate" },
+  { item: "Tea Bags (assorted)", category: "Guest", current: 420, min: 200, unit: "bags", lastRestocked: "2026-04-01", status: "Adequate" },
+  { item: "Bottled Water (500ml)", category: "Guest", current: 180, min: 200, unit: "bottles", lastRestocked: "2026-03-30", status: "Critical" },
+  { item: "All-Purpose Cleaner (L)", category: "Cleaning", current: 22, min: 15, unit: "litres", lastRestocked: "2026-03-27", status: "Adequate" },
+  { item: "Disinfectant Spray (L)", category: "Cleaning", current: 18, min: 20, unit: "litres", lastRestocked: "2026-03-22", status: "Critical" },
+  { item: "Toilet Cleaner (L)", category: "Cleaning", current: 12, min: 10, unit: "litres", lastRestocked: "2026-03-28", status: "Adequate" },
+  { item: "Glass Cleaner (L)", category: "Cleaning", current: 9, min: 8, unit: "litres", lastRestocked: "2026-03-25", status: "Adequate" },
+  { item: "Microfibre Cloths", category: "Cleaning", current: 45, min: 40, unit: "units", lastRestocked: "2026-03-20", status: "Adequate" },
+  { item: "Mop Heads", category: "Cleaning", current: 8, min: 10, unit: "units", lastRestocked: "2026-03-15", status: "Critical" },
+  { item: "Bin Liners (large)", category: "Cleaning", current: 280, min: 200, unit: "units", lastRestocked: "2026-04-01", status: "Adequate" },
+  { item: "Shoe Shine Kits", category: "Guest", current: 55, min: 50, unit: "kits", lastRestocked: "2026-03-28", status: "Adequate" },
+];
+
+const MINIBAR: Array<{
+  room: string;
+  lastRestocked: string;
+  missing: string;
+  added: string;
+  revenue: number;
+  restockedBy: string;
+  date: string;
+  status: string;
+}> = [
+  { room: "101", lastRestocked: "2026-04-01", missing: "2x Beer, 1x Pringles", added: "2x Beer, 1x Pringles", revenue: 18.50, restockedBy: "Maria L.", date: "2026-04-02", status: "Completed" },
+  { room: "103", lastRestocked: "2026-04-01", missing: "None", added: "None", revenue: 0, restockedBy: "Maria L.", date: "2026-04-02", status: "No Charge" },
+  { room: "201", lastRestocked: "2026-03-31", missing: "1x Champagne, 3x Water", added: "1x Champagne, 3x Water", revenue: 52.00, restockedBy: "Clara V.", date: "2026-04-01", status: "Completed" },
+  { room: "202", lastRestocked: "2026-04-01", missing: "2x Whisky mini", added: "2x Whisky mini", revenue: 22.00, restockedBy: "James K.", date: "2026-04-02", status: "Completed" },
+  { room: "304", lastRestocked: "2026-03-31", missing: "Full bar consumed", added: "Full restock", revenue: 148.75, restockedBy: "Emma R.", date: "2026-04-01", status: "Completed" },
+  { room: "305", lastRestocked: "2026-04-02", missing: "None", added: "None", revenue: 0, restockedBy: "Clara V.", date: "2026-04-02", status: "No Charge" },
+  { room: "401", lastRestocked: "2026-03-30", missing: "1x Cognac, 2x Wine, 4x Water", added: "Full restock", revenue: 210.00, restockedBy: "Maria L.", date: "2026-04-01", status: "Completed" },
+  { room: "402", lastRestocked: "2026-04-01", missing: "Pending check", added: "—", revenue: 0, restockedBy: "Emma R.", date: "—", status: "Pending" },
+  { room: "405", lastRestocked: "2026-04-01", missing: "1x Gin mini, 1x Tonic", added: "1x Gin mini, 1x Tonic", revenue: 14.00, restockedBy: "Clara V.", date: "2026-04-02", status: "Completed" },
+  { room: "204", lastRestocked: "2026-04-02", missing: "Pending check", added: "—", revenue: 0, restockedBy: "Unassigned", date: "—", status: "Pending" },
+  { room: "208", lastRestocked: "2026-03-31", missing: "None", added: "None", revenue: 0, restockedBy: "Clara V.", date: "2026-04-01", status: "No Charge" },
+  { room: "410", lastRestocked: "2026-03-29", missing: "Full bar + snacks", added: "Full restock", revenue: 285.50, restockedBy: "Emma R.", date: "2026-04-01", status: "Completed" },
+];
+
+const CHECKLIST_CATEGORIES = [
+  {
+    name: "Bathroom",
+    icon: "🚿",
+    items: [
+      "Toilet clean and sanitised",
+      "Basin and taps clean",
+      "Shower/bath cleaned and grout checked",
+      "Tiles wiped and spot-free",
+      "Towels fresh, folded, and stocked",
+      "Amenities restocked (shampoo, soap etc.)",
+      "Mirror streak-free",
+      "Floor mopped and dry",
+    ],
+  },
+  {
+    name: "Bedroom",
+    icon: "🛏",
+    items: [
+      "Bed made to standard (hospital corners)",
+      "Linens fresh and crease-free",
+      "Duvet evenly spread",
+      "Pillows plumped and correctly placed",
+      "Carpet/floor vacuumed",
+      "Furniture dusted and polished",
+      "Windows and sills clean",
+      "Wardrobe tidy — hangers spaced",
+      "Minibar stocked and checked",
+      "Lighting functional (all bulbs)",
+    ],
+  },
+  {
+    name: "General",
+    icon: "🏨",
+    items: [
+      "Room temperature set (20°C default)",
+      "No odours (fresh scent)",
+      "No noise issues reported",
+      "Door locks functional",
+      "In-room safe functional",
+      "TV and remotes functional",
+    ],
+  },
+];
+
+const PIE_DATA = [
+  { name: "Dirty", value: 12, color: "#f87171" },
+  { name: "In Progress", value: 7, color: "#fb923c" },
+  { name: "Clean", value: 10, color: "#34d399" },
+  { name: "Inspected", value: 8, color: "#60a5fa" },
+  { name: "OOS", value: 3, color: "#a78bfa" },
+];
+
+const HOURLY_DATA = [
+  { hour: "07:00", completed: 0 },
+  { hour: "08:00", completed: 3 },
+  { hour: "09:00", completed: 6 },
+  { hour: "10:00", completed: 9 },
+  { hour: "11:00", completed: 7 },
+  { hour: "12:00", completed: 5 },
+  { hour: "13:00", completed: 4 },
+  { hour: "14:00", completed: 3 },
+  { hour: "15:00", completed: 2 },
+  { hour: "16:00", completed: 1 },
+];
+
+const PRIORITY_ROOMS = [
+  { room: "105", type: "Suite", reason: "VIP Check-in 14:00", assigned: "Unassigned", deadline: "12:00" },
+  { room: "201", type: "Suite", reason: "VIP Checkout — Ambassador", assigned: "Clara V.", deadline: "11:00" },
+  { room: "304", type: "Suite", reason: "VIP Arrival 13:30", assigned: "Unassigned", deadline: "11:30" },
+  { room: "401", type: "Presidential", reason: "Checkout — full refresh", assigned: "Maria L.", deadline: "12:00" },
+  { room: "402", type: "Suite", reason: "VIP in-house — daily clean", assigned: "Emma R.", deadline: "12:30" },
+];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const formatMins = (mins: number) => {
+  if (mins < 60) return `${mins}m ago`;
+  return `${Math.floor(mins / 60)}h ${mins % 60}m ago`;
+};
+
+const statusColors: Record<RoomStatus, string> = {
+  Dirty: "bg-red-100 text-red-700 border-red-200",
+  "In Progress": "bg-orange-100 text-orange-700 border-orange-200",
+  Clean: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  Inspected: "bg-blue-100 text-blue-700 border-blue-200",
+  OOS: "bg-purple-100 text-purple-700 border-purple-200",
+};
+
+const statusCardBorders: Record<RoomStatus, string> = {
+  Dirty: "border-l-4 border-l-red-400",
+  "In Progress": "border-l-4 border-l-orange-400",
+  Clean: "border-l-4 border-l-emerald-400",
+  Inspected: "border-l-4 border-l-blue-400",
+  OOS: "border-l-4 border-l-purple-400",
+};
+
+const priorityColors: Record<Priority, string> = {
+  High: "bg-red-100 text-red-700",
+  Medium: "bg-yellow-100 text-yellow-700",
+  Low: "bg-green-100 text-green-700",
+};
+
+const taskStatusColors: Record<TaskStatus, string> = {
+  Pending: "bg-slate-100 text-slate-600",
+  "In Progress": "bg-orange-100 text-orange-700",
+  Completed: "bg-emerald-100 text-emerald-700",
+  Skipped: "bg-gray-100 text-gray-500",
+};
+
+const supplyStatusColors: Record<SupplyStatus, string> = {
+  Adequate: "bg-emerald-100 text-emerald-700",
+  Low: "bg-yellow-100 text-yellow-700",
+  Critical: "bg-red-100 text-red-700",
+};
+
+const staffStatusColors: Record<StaffStatus, string> = {
+  Active: "bg-emerald-100 text-emerald-700",
+  Break: "bg-yellow-100 text-yellow-700",
+  Off: "bg-gray-100 text-gray-500",
+};
+
+const foundStatusColors: Record<FoundStatus, string> = {
+  Unclaimed: "bg-orange-100 text-orange-700",
+  Claimed: "bg-emerald-100 text-emerald-700",
+  Donated: "bg-blue-100 text-blue-700",
+  Disposed: "bg-gray-100 text-gray-500",
+};
+
+// ─── Stat Card ────────────────────────────────────────────────────────────────
+
+function StatCard({
+  title,
+  value,
+  sub,
+  icon: Icon,
+  gradient,
+}: {
+  title: string;
+  value: string | number;
+  sub?: string;
+  icon: React.ElementType;
+  gradient: string;
+}) {
+  return (
+    <div className={cn("rounded-2xl p-5 text-white shadow-sm", gradient)}>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm font-medium text-white/80">{title}</p>
+          <p className="mt-1 text-3xl font-bold">{value}</p>
+          {sub && <p className="mt-1 text-xs text-white/70">{sub}</p>}
+        </div>
+        <div className="rounded-xl bg-white/20 p-3">
+          <Icon className="h-5 w-5 text-white" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Overview ─────────────────────────────────────────────────────────────────
+
+function Overview() {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard title="Rooms to Clean" value={12} sub="8 checkout · 4 stayover" icon={Home} gradient="bg-gradient-to-br from-red-400 to-red-500" />
+        <StatCard title="In Progress" value={7} sub="4 attendants active" icon={Clock} gradient="bg-gradient-to-br from-orange-400 to-orange-500" />
+        <StatCard title="Completed" value={10} sub="Since 07:00" icon={CheckCircle2} gradient="bg-gradient-to-br from-emerald-400 to-emerald-500" />
+        <StatCard title="Inspected & Ready" value={8} sub="Awaiting arrivals" icon={Star} gradient="bg-gradient-to-br from-blue-400 to-blue-500" />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <h3 className="mb-4 text-sm font-semibold text-foreground">Room Status Breakdown</h3>
+          <ResponsiveContainer width="100%" height={240}>
+            <PieChart>
+              <Pie data={PIE_DATA} cx="50%" cy="50%" innerRadius={60} outerRadius={95} paddingAngle={3} dataKey="value">
+                {PIE_DATA.map((entry, i) => (
+                  <Cell key={i} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="mt-2 flex flex-wrap gap-3 justify-center">
+            {PIE_DATA.map((d) => (
+              <div key={d.name} className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full" style={{ background: d.color }} />
+                <span className="text-xs text-muted-foreground">{d.name} ({d.value})</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <h3 className="mb-4 text-sm font-semibold text-foreground">Rooms Completed by Hour</h3>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={HOURLY_DATA} barSize={20}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="hour" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} />
+              <Tooltip />
+              <Bar dataKey="completed" radius={[4, 4, 0, 0]}>
+                {HOURLY_DATA.map((_, i) => (
+                  <Cell key={i} fill={i < 5 ? "#34d399" : "#60a5fa"} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card shadow-sm">
+        <div className="flex items-center gap-2 border-b border-border px-5 py-4">
+          <AlertCircle className="h-4 w-4 text-red-500" />
+          <h3 className="text-sm font-semibold text-foreground">Priority Rooms</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/40">
+              <tr>
+                {["Room", "Type", "Priority Reason", "Assigned To", "Deadline"].map((h) => (
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {PRIORITY_ROOMS.map((r) => (
+                <tr key={r.room} className="transition-colors hover:bg-muted/30">
+                  <td className="px-4 py-3 font-semibold text-foreground">{r.room}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{r.type}</td>
+                  <td className="px-4 py-3 text-foreground">{r.reason}</td>
+                  <td className="px-4 py-3">
+                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium",
+                      r.assigned === "Unassigned" ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-700"
+                    )}>{r.assigned}</span>
+                  </td>
+                  <td className="px-4 py-3 font-semibold text-red-600">{r.deadline}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Room Status ──────────────────────────────────────────────────────────────
+
+function RoomStatusView() {
+  const [floorFilter, setFloorFilter] = useState<number | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<RoomStatus | "all">("all");
+
+  const filtered = useMemo(() =>
+    ROOMS.filter((r) =>
+      (floorFilter === "all" || r.floor === floorFilter) &&
+      (statusFilter === "all" || r.status === statusFilter)
+    ), [floorFilter, statusFilter]);
+
+  const counts = useMemo(() =>
+    (["Dirty", "In Progress", "Clean", "Inspected", "OOS"] as RoomStatus[]).map((s) => ({
+      status: s,
+      count: ROOMS.filter((r) => r.status === s).length,
+    })), []);
+
+  const floors = [1, 2, 3, 4];
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap gap-3">
+        {counts.map(({ status, count }) => (
+          <button
+            key={status}
+            onClick={() => setStatusFilter(statusFilter === status ? "all" : status)}
+            className={cn(
+              "flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium transition-all",
+              statusFilter === status
+                ? cn(statusColors[status], "border-current")
+                : "border-border bg-card text-muted-foreground hover:bg-muted/40"
+            )}
+          >
+            <span>{status}</span>
+            <span className="rounded-full bg-black/10 px-1.5 py-0.5 font-bold">{count}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <Layers className="h-4 w-4 text-muted-foreground" />
+        <span className="text-xs font-medium text-muted-foreground">Floor:</span>
+        <button onClick={() => setFloorFilter("all")} className={cn("rounded-lg px-3 py-1 text-xs font-medium transition-colors", floorFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>All</button>
+        {floors.map((f) => (
+          <button key={f} onClick={() => setFloorFilter(f)} className={cn("rounded-lg px-3 py-1 text-xs font-medium transition-colors", floorFilter === f ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>Floor {f}</button>
+        ))}
+        <span className="ml-auto text-xs text-muted-foreground">{filtered.length} rooms</span>
+      </div>
+
+      {floors.filter((f) => floorFilter === "all" || f === floorFilter).map((floor) => {
+        const floorRooms = filtered.filter((r) => r.floor === floor);
+        if (!floorRooms.length) return null;
         return (
-          <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-            <div className="w-24 h-24 bg-secondary rounded-full flex items-center justify-center mb-6">
-              <span className="text-4xl">🚧</span>
+          <div key={floor}>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Floor {floor}</p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              {floorRooms.map((room) => (
+                <div key={room.id} className={cn("rounded-xl border border-border bg-card p-3 shadow-sm transition-shadow hover:shadow-md", statusCardBorders[room.status])}>
+                  <div className="flex items-start justify-between">
+                    <span className="text-lg font-bold text-foreground">{room.id}</span>
+                    {room.vip && <Star className="h-3.5 w-3.5 text-amber-500" fill="currentColor" />}
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{room.type}</p>
+                  <span className={cn("mt-2 inline-block rounded-full border px-2 py-0.5 text-[10px] font-semibold", statusColors[room.status])}>
+                    {room.status}
+                  </span>
+                  <div className="mt-2 space-y-0.5">
+                    <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <User className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{room.housekeeper}</span>
+                    </p>
+                    <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <Clock className="h-3 w-3 shrink-0" />
+                      {formatMins(room.updatedMins)}
+                    </p>
+                  </div>
+                  {(room.checkIn || room.checkOut) && (
+                    <div className="mt-2 flex gap-1">
+                      {room.checkOut && <span className="rounded bg-orange-100 px-1.5 py-0.5 text-[9px] font-semibold text-orange-700">CO</span>}
+                      {room.checkIn && <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[9px] font-semibold text-blue-700">CI</span>}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">Housekeeping - {activeSubmenu}</h2>
-            <p className="text-muted-foreground max-w-md">
-              The {activeSubmenu} view is currently under construction.
-            </p>
           </div>
         );
-    }
+      })}
+    </div>
+  );
+}
+
+// ─── Task List ────────────────────────────────────────────────────────────────
+
+function TaskListView() {
+  const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">("all");
+  const [priorityFilter, setPriorityFilter] = useState<Priority | "all">("all");
+  const [typeFilter, setTypeFilter] = useState<TaskType | "all">("all");
+
+  const filtered = useMemo(() =>
+    TASKS.filter((t) =>
+      (statusFilter === "all" || t.status === statusFilter) &&
+      (priorityFilter === "all" || t.priority === priorityFilter) &&
+      (typeFilter === "all" || t.type === typeFilter)
+    ), [statusFilter, priorityFilter, typeFilter]);
+
+  const statCounts = useMemo(() => ({
+    total: TASKS.length,
+    pending: TASKS.filter((t) => t.status === "Pending").length,
+    inProgress: TASKS.filter((t) => t.status === "In Progress").length,
+    completed: TASKS.filter((t) => t.status === "Completed").length,
+  }), []);
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-4 gap-3">
+        {[
+          { label: "Total Tasks", val: statCounts.total, color: "text-foreground" },
+          { label: "Pending", val: statCounts.pending, color: "text-slate-600" },
+          { label: "In Progress", val: statCounts.inProgress, color: "text-orange-600" },
+          { label: "Completed", val: statCounts.completed, color: "text-emerald-600" },
+        ].map((s) => (
+          <div key={s.label} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+            <p className="text-xs text-muted-foreground">{s.label}</p>
+            <p className={cn("mt-1 text-2xl font-bold", s.color)}>{s.val}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-medium text-muted-foreground">Status:</span>
+          {(["all", "Pending", "In Progress", "Completed"] as const).map((s) => (
+            <button key={s} onClick={() => setStatusFilter(s as TaskStatus | "all")}
+              className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-colors", statusFilter === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>
+              {s === "all" ? "All" : s}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-medium text-muted-foreground">Priority:</span>
+          {(["all", "High", "Medium", "Low"] as const).map((p) => (
+            <button key={p} onClick={() => setPriorityFilter(p as Priority | "all")}
+              className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-colors", priorityFilter === p ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>
+              {p === "all" ? "All" : p}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-medium text-muted-foreground">Type:</span>
+          {(["all", "Checkout", "Stayover", "Deep Clean", "Turndown", "Inspection"] as const).map((t) => (
+            <button key={t} onClick={() => setTypeFilter(t as TaskType | "all")}
+              className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-colors", typeFilter === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>
+              {t === "all" ? "All" : t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/40">
+              <tr>
+                {["Task ID", "Room", "Type", "Assigned To", "Priority", "Status", "Notes", "Due Time", "Action"].map((h) => (
+                  <th key={h} className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {filtered.map((task) => (
+                <tr key={task.id} className="transition-colors hover:bg-muted/30">
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{task.id}</td>
+                  <td className="px-4 py-3 font-semibold text-foreground">{task.room}</td>
+                  <td className="px-4 py-3">
+                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", {
+                      "bg-red-100 text-red-700": task.type === "Checkout",
+                      "bg-blue-100 text-blue-700": task.type === "Stayover",
+                      "bg-purple-100 text-purple-700": task.type === "Deep Clean",
+                      "bg-amber-100 text-amber-700": task.type === "Turndown",
+                      "bg-teal-100 text-teal-700": task.type === "Inspection",
+                    })}>{task.type}</span>
+                  </td>
+                  <td className="px-4 py-3 text-foreground">{task.assignedTo}</td>
+                  <td className="px-4 py-3">
+                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", priorityColors[task.priority])}>{task.priority}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", taskStatusColors[task.status])}>{task.status}</span>
+                  </td>
+                  <td className="max-w-[160px] px-4 py-3 text-xs text-muted-foreground truncate">{task.notes || "—"}</td>
+                  <td className="px-4 py-3 font-medium text-foreground">{task.dueTime}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-1">
+                      {task.status === "Pending" && (
+                        <>
+                          <button className="rounded-lg bg-blue-100 px-2 py-1 text-[10px] font-semibold text-blue-700 hover:bg-blue-200 transition-colors">Assign</button>
+                          <button className="rounded-lg bg-orange-100 px-2 py-1 text-[10px] font-semibold text-orange-700 hover:bg-orange-200 transition-colors">Start</button>
+                        </>
+                      )}
+                      {task.status === "In Progress" && (
+                        <button className="rounded-lg bg-emerald-100 px-2 py-1 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-200 transition-colors">Complete</button>
+                      )}
+                      {task.status === "Completed" && (
+                        <span className="text-[10px] text-muted-foreground">Done</span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Supervisor Dashboard ─────────────────────────────────────────────────────
+
+function SupervisorDashboard() {
+  const inspectionQueue = useMemo(() =>
+    ROOMS.filter((r) => r.status === "Clean").map((r) => ({
+      room: r.id,
+      type: r.type,
+      housekeeper: r.housekeeper,
+      waitMins: r.updatedMins,
+      urgency: r.checkIn ? "High" : "Normal",
+    })).sort((a, b) => (a.urgency === "High" ? -1 : 1)), []);
+
+  const unassignedRooms = ROOMS.filter((r) => r.housekeeper === "Unassigned" && (r.status === "Dirty" || r.status === "Clean"));
+  const availableStaff = STAFF.filter((s) => s.status === "Active");
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-border px-5 py-4">
+          <User className="h-4 w-4 text-blue-500" />
+          <h3 className="text-sm font-semibold text-foreground">Attendant Performance — Today</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/40">
+              <tr>
+                {["Attendant", "Assigned", "Completed", "Rooms/Hr", "Current Room", "Shift Start", "Status"].map((h) => (
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {STAFF.map((s) => (
+                <tr key={s.name} className="transition-colors hover:bg-muted/30">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="h-7 w-7 rounded-full bg-gradient-to-br from-violet-400 to-violet-500 flex items-center justify-center text-xs font-bold text-white shrink-0">
+                        {s.name.charAt(0)}
+                      </div>
+                      <span className="font-medium text-foreground">{s.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-center font-semibold text-foreground">{s.assigned}</td>
+                  <td className="px-4 py-3 text-center">
+                    <span className="font-semibold text-emerald-600">{s.completed}</span>
+                    <span className="text-muted-foreground"> / {s.assigned}</span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {s.rate > 0 ? (
+                      <span className={cn("font-semibold", s.rate >= 2.5 ? "text-emerald-600" : s.rate >= 2.0 ? "text-yellow-600" : "text-red-600")}>
+                        {s.rate.toFixed(1)}
+                      </span>
+                    ) : "—"}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-sm text-foreground">{s.currentRoom}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{s.shiftStart}</td>
+                  <td className="px-4 py-3">
+                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", staffStatusColors[s.status])}>{s.status}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-border px-5 py-4">
+            <ClipboardList className="h-4 w-4 text-teal-500" />
+            <h3 className="text-sm font-semibold text-foreground">Inspection Queue</h3>
+            <span className="ml-auto rounded-full bg-teal-100 px-2.5 py-0.5 text-xs font-semibold text-teal-700">{inspectionQueue.length} rooms</span>
+          </div>
+          <div className="divide-y divide-border">
+            {inspectionQueue.slice(0, 8).map((r) => (
+              <div key={r.room} className="flex items-center gap-3 px-5 py-3 hover:bg-muted/30 transition-colors">
+                <div className="h-9 w-9 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-bold text-teal-700">{r.room}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">{r.type} — Room {r.room}</p>
+                  <p className="text-xs text-muted-foreground">Cleaned by {r.housekeeper} · {formatMins(r.waitMins)}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                    r.urgency === "High" ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-600"
+                  )}>{r.urgency}</span>
+                  <button className="rounded-lg bg-teal-100 px-2.5 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-200 transition-colors">Inspect</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-border px-5 py-4">
+            <Wrench className="h-4 w-4 text-violet-500" />
+            <h3 className="text-sm font-semibold text-foreground">Room Reassignment</h3>
+          </div>
+          <div className="p-4 space-y-3">
+            <p className="text-xs text-muted-foreground">Assign unassigned rooms to available attendants.</p>
+            <div className="space-y-2">
+              {unassignedRooms.slice(0, 6).map((r) => (
+                <div key={r.id} className="flex items-center gap-3 rounded-xl border border-dashed border-border bg-muted/30 px-4 py-2.5">
+                  <div className="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+                    <span className="text-xs font-bold text-red-600">{r.id}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-foreground">{r.type} · {r.priority} priority</p>
+                    <p className="text-[10px] text-muted-foreground">{r.status} · {formatMins(r.updatedMins)}</p>
+                  </div>
+                  <select className="rounded-lg border border-border bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shrink-0">
+                    <option value="">Assign to...</option>
+                    {availableStaff.map((s) => (
+                      <option key={s.name} value={s.name}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+            {unassignedRooms.length > 6 && (
+              <p className="text-center text-xs text-muted-foreground">+{unassignedRooms.length - 6} more unassigned rooms</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Turndown Service ─────────────────────────────────────────────────────────
+
+function TurndownService() {
+  const amenityChecklist = [
+    "Bed turned down (60° fold)",
+    "Pillow menu card placed",
+    "Chocolates on nightstand",
+    "Slippers positioned bedside",
+    "Robe laid on bed (if requested)",
+    "Blackout curtains closed",
+    "Bedside lamp set to low",
+    "TV guide / newspaper left",
+    "Bathroom towels refreshed",
+    "Bath mat replaced",
+    "Turndown card left",
+    "Do Not Disturb sign checked",
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-3 gap-4">
+        <StatCard title="Pending" value={TURNDOWN.filter((t) => t.status === "Pending").length} icon={Clock} gradient="bg-gradient-to-br from-slate-400 to-slate-500" />
+        <StatCard title="In Progress" value={TURNDOWN.filter((t) => t.status === "In Progress").length} icon={Wind} gradient="bg-gradient-to-br from-amber-400 to-amber-500" />
+        <StatCard title="Completed" value={TURNDOWN.filter((t) => t.status === "Completed").length} icon={CheckCircle2} gradient="bg-gradient-to-br from-emerald-400 to-emerald-500" />
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-border px-5 py-4">
+          <Coffee className="h-4 w-4 text-amber-500" />
+          <h3 className="text-sm font-semibold text-foreground">Evening Turndown Service</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/40">
+              <tr>
+                {["Room", "Guest", "VIP", "Requests", "Assigned", "Status", "Completed"].map((h) => (
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {TURNDOWN.map((t) => (
+                <tr key={t.room} className="transition-colors hover:bg-muted/30">
+                  <td className="px-4 py-3 font-semibold text-foreground">{t.room}</td>
+                  <td className="px-4 py-3 text-foreground">{t.guest}</td>
+                  <td className="px-4 py-3">
+                    {t.vip ? <Star className="h-4 w-4 text-amber-500" fill="currentColor" /> : <span className="text-muted-foreground">—</span>}
+                  </td>
+                  <td className="max-w-[200px] px-4 py-3 text-xs text-muted-foreground truncate">{t.requests}</td>
+                  <td className="px-4 py-3">
+                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium",
+                      t.assigned === "Unassigned" ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-700"
+                    )}>{t.assigned}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium",
+                      t.status === "Completed" ? "bg-emerald-100 text-emerald-700" :
+                      t.status === "In Progress" ? "bg-orange-100 text-orange-700" :
+                      "bg-slate-100 text-slate-600"
+                    )}>{t.status}</span>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{t.timeCompleted}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-border px-5 py-4">
+          <ClipboardList className="h-4 w-4 text-violet-500" />
+          <h3 className="text-sm font-semibold text-foreground">Standard Turndown Amenity Placement</h3>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-5">
+          {amenityChecklist.map((item, i) => (
+            <label key={i} className="flex items-center gap-3 rounded-xl border border-border bg-muted/20 px-4 py-2.5 cursor-pointer hover:bg-muted/40 transition-colors">
+              <input type="checkbox" defaultChecked={i < 7} className="h-4 w-4 rounded accent-violet-500" />
+              <span className="text-sm text-foreground">{item}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Lost & Found ─────────────────────────────────────────────────────────────
+
+function LostAndFound() {
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<FoundStatus | "all">("all");
+
+  const filtered = useMemo(() =>
+    LOST_FOUND.filter((i) =>
+      (categoryFilter === "all" || i.category === categoryFilter) &&
+      (statusFilter === "all" || i.status === statusFilter)
+    ), [categoryFilter, statusFilter]);
+
+  const categories = [...new Set(LOST_FOUND.map((i) => i.category))];
+
+  const stats = {
+    total: LOST_FOUND.length,
+    claimed: LOST_FOUND.filter((i) => i.status === "Claimed").length,
+    unclaimed: LOST_FOUND.filter((i) => i.status === "Unclaimed").length,
+    disposed: LOST_FOUND.filter((i) => i.status === "Disposed" || i.status === "Donated").length,
   };
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-4 gap-3">
+        <StatCard title="Total Items" value={stats.total} icon={Package} gradient="bg-gradient-to-br from-slate-400 to-slate-500" />
+        <StatCard title="Claimed" value={stats.claimed} icon={CheckCircle2} gradient="bg-gradient-to-br from-emerald-400 to-emerald-500" />
+        <StatCard title="Unclaimed" value={stats.unclaimed} icon={AlertCircle} gradient="bg-gradient-to-br from-orange-400 to-orange-500" />
+        <StatCard title="Disposed / Donated" value={stats.disposed} icon={Wind} gradient="bg-gradient-to-br from-gray-400 to-gray-500" />
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-xs font-medium text-muted-foreground">Category:</span>
+          <button onClick={() => setCategoryFilter("all")} className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-colors", categoryFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>All</button>
+          {categories.map((c) => (
+            <button key={c} onClick={() => setCategoryFilter(c)} className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-colors", categoryFilter === c ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>{c}</button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap ml-2">
+          <span className="text-xs font-medium text-muted-foreground">Status:</span>
+          {(["all", "Unclaimed", "Claimed", "Donated", "Disposed"] as const).map((s) => (
+            <button key={s} onClick={() => setStatusFilter(s as FoundStatus | "all")} className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-colors", statusFilter === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>
+              {s === "all" ? "All" : s}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/40">
+              <tr>
+                {["Item ID", "Description", "Category", "Found Location", "Found By", "Date", "Guest", "Contact", "Status", "Claim Date"].map((h) => (
+                  <th key={h} className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {filtered.map((item) => (
+                <tr key={item.id} className="transition-colors hover:bg-muted/30">
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{item.id}</td>
+                  <td className="max-w-[180px] px-4 py-3 font-medium text-foreground truncate">{item.description}</td>
+                  <td className="px-4 py-3">
+                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", {
+                      "bg-blue-100 text-blue-700": item.category === "Electronics",
+                      "bg-purple-100 text-purple-700": item.category === "Clothing",
+                      "bg-amber-100 text-amber-700": item.category === "Jewelry",
+                      "bg-teal-100 text-teal-700": item.category === "Documents",
+                      "bg-slate-100 text-slate-700": item.category === "Other",
+                    })}>{item.category}</span>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{item.location}</td>
+                  <td className="px-4 py-3 text-foreground">{item.foundBy}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{item.dateFound}</td>
+                  <td className="px-4 py-3 text-foreground">{item.guest}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">{item.contact}</td>
+                  <td className="px-4 py-3">
+                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", foundStatusColors[item.status])}>{item.status}</span>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{item.claimDate}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Inventory & Supplies ─────────────────────────────────────────────────────
+
+function InventorySupplies() {
+  const [activeTab, setActiveTab] = useState<"linen" | "supplies">("linen");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+
+  const filteredSupplies = useMemo(() =>
+    SUPPLIES.filter((s) => categoryFilter === "all" || s.category === categoryFilter),
+    [categoryFilter]);
+
+  const supplyCategories = [...new Set(SUPPLIES.map((s) => s.category))];
+
+  return (
+    <div className="space-y-5">
+      <div className="flex gap-2 rounded-2xl border border-border bg-card p-1.5 w-fit">
+        <button onClick={() => setActiveTab("linen")} className={cn("rounded-xl px-5 py-2 text-sm font-medium transition-all", activeTab === "linen" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Linen Par Levels</button>
+        <button onClick={() => setActiveTab("supplies")} className={cn("rounded-xl px-5 py-2 text-sm font-medium transition-all", activeTab === "supplies" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Supplies</button>
+      </div>
+
+      {activeTab === "linen" && (
+        <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-border px-5 py-4">
+            <Layers className="h-4 w-4 text-blue-500" />
+            <h3 className="text-sm font-semibold text-foreground">Linen Par Levels</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/40">
+                <tr>
+                  {["Item", "Par Stock", "Current Stock", "In Laundry", "Condemned", "Available", "Status"].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {LINENS.map((l) => {
+                  const available = l.current - l.inLaundry - l.condemned;
+                  const pct = Math.round((available / l.par) * 100);
+                  const status: SupplyStatus = pct >= 60 ? "Adequate" : pct >= 35 ? "Low" : "Critical";
+                  const surplus = available - l.par;
+                  return (
+                    <tr key={l.item} className="transition-colors hover:bg-muted/30">
+                      <td className="px-4 py-3 font-medium text-foreground">{l.item}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{l.par}</td>
+                      <td className="px-4 py-3 font-semibold text-foreground">{l.current}</td>
+                      <td className="px-4 py-3 text-blue-600">{l.inLaundry}</td>
+                      <td className="px-4 py-3 text-red-500">{l.condemned}</td>
+                      <td className="px-4 py-3 font-semibold text-foreground">{available}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", supplyStatusColors[status])}>{status}</span>
+                          <span className={cn("text-xs font-semibold", surplus >= 0 ? "text-emerald-600" : "text-red-600")}>
+                            {surplus >= 0 ? `+${surplus}` : surplus}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "supplies" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+              <p className="text-xs font-medium text-emerald-700">Adequate</p>
+              <p className="mt-1 text-2xl font-bold text-emerald-700">{SUPPLIES.filter((s) => s.status === "Adequate").length}</p>
+            </div>
+            <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4">
+              <p className="text-xs font-medium text-yellow-700">Low Stock</p>
+              <p className="mt-1 text-2xl font-bold text-yellow-700">{SUPPLIES.filter((s) => s.status === "Low").length}</p>
+            </div>
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+              <p className="text-xs font-medium text-red-700">Critical</p>
+              <p className="mt-1 text-2xl font-bold text-red-700">{SUPPLIES.filter((s) => s.status === "Critical").length}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs font-medium text-muted-foreground">Category:</span>
+            <button onClick={() => setCategoryFilter("all")} className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-colors", categoryFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>All</button>
+            {supplyCategories.map((c) => (
+              <button key={c} onClick={() => setCategoryFilter(c)} className={cn("rounded-lg px-2.5 py-1 text-xs font-medium transition-colors", categoryFilter === c ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>{c}</button>
+            ))}
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/40">
+                  <tr>
+                    {["Item", "Category", "Current", "Min Required", "Unit", "Last Restocked", "Status"].map((h) => (
+                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredSupplies.map((s) => (
+                    <tr key={s.item} className="transition-colors hover:bg-muted/30">
+                      <td className="px-4 py-3 font-medium text-foreground">{s.item}</td>
+                      <td className="px-4 py-3">
+                        <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", {
+                          "bg-violet-100 text-violet-700": s.category === "Amenities",
+                          "bg-blue-100 text-blue-700": s.category === "Cleaning",
+                          "bg-teal-100 text-teal-700": s.category === "Paper",
+                          "bg-amber-100 text-amber-700": s.category === "Guest",
+                        })}>{s.category}</span>
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-foreground">{s.current}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{s.min}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{s.unit}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{s.lastRestocked}</td>
+                      <td className="px-4 py-3">
+                        <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", supplyStatusColors[s.status])}>{s.status}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Inspection Checklist ─────────────────────────────────────────────────────
+
+function InspectionChecklist() {
+  const [selectedRoom, setSelectedRoom] = useState("103");
+  const [checks, setChecks] = useState<Record<string, CheckResult>>(() => {
+    const initial: Record<string, CheckResult> = {};
+    CHECKLIST_CATEGORIES.forEach((cat) => {
+      cat.items.forEach((item) => {
+        initial[`${cat.name}::${item}`] = "";
+      });
+    });
+    return initial;
+  });
+
+  const setCheck = (cat: string, item: string, val: CheckResult) => {
+    setChecks((prev) => ({ ...prev, [`${cat}::${item}`]: val }));
+  };
+
+  const inspectableRooms = ROOMS.filter((r) => r.status === "Clean" || r.status === "Inspected");
+
+  const counts = useMemo(() => ({
+    pass: Object.values(checks).filter((v) => v === "Pass").length,
+    fail: Object.values(checks).filter((v) => v === "Fail").length,
+    na: Object.values(checks).filter((v) => v === "N/A").length,
+    total: Object.values(checks).length,
+  }), [checks]);
+
+  const fillAll = (result: CheckResult) => {
+    setChecks((prev) => {
+      const next = { ...prev };
+      Object.keys(next).forEach((k) => { next[k] = result; });
+      return next;
+    });
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
+          <ClipboardList className="h-4 w-4 text-teal-600" />
+          <span className="text-sm font-semibold text-foreground">Inspection Room:</span>
+          <select
+            value={selectedRoom}
+            onChange={(e) => setSelectedRoom(e.target.value)}
+            className="rounded-xl border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            {inspectableRooms.map((r) => (
+              <option key={r.id} value={r.id}>Room {r.id} — {r.type} ({r.status})</option>
+            ))}
+          </select>
+        </div>
+        <div className="ml-auto flex gap-2">
+          <button onClick={() => fillAll("Pass")} className="rounded-xl bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-200 transition-colors">Mark All Pass</button>
+          <button onClick={() => fillAll("")} className="rounded-xl bg-muted px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted/70 transition-colors">Clear</button>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <div className="flex-1">
+          <div className="flex justify-between text-xs mb-1">
+            <span className="text-muted-foreground">Inspection progress</span>
+            <span className="font-semibold text-foreground">{counts.pass + counts.fail + counts.na} / {counts.total}</span>
+          </div>
+          <div className="h-2 rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 transition-all duration-300"
+              style={{ width: `${((counts.pass + counts.fail + counts.na) / counts.total) * 100}%` }}
+            />
+          </div>
+        </div>
+        <div className="flex gap-4 text-center shrink-0">
+          <div><p className="text-xs text-muted-foreground">Pass</p><p className="text-lg font-bold text-emerald-600">{counts.pass}</p></div>
+          <div><p className="text-xs text-muted-foreground">Fail</p><p className="text-lg font-bold text-red-500">{counts.fail}</p></div>
+          <div><p className="text-xs text-muted-foreground">N/A</p><p className="text-lg font-bold text-gray-400">{counts.na}</p></div>
+        </div>
+      </div>
+
+      {CHECKLIST_CATEGORIES.map((cat) => (
+        <div key={cat.name} className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-border px-5 py-3 bg-muted/30">
+            <span className="text-base">{cat.icon}</span>
+            <h3 className="text-sm font-semibold text-foreground">{cat.name}</h3>
+            <span className="ml-auto text-xs text-muted-foreground">{cat.items.length} checkpoints</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/20">
+                <tr>
+                  <th className="px-5 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground w-full">Checkpoint</th>
+                  {(["Pass", "Fail", "N/A"] as CheckResult[]).map((v) => (
+                    <th key={v} className={cn("px-6 py-2 text-center text-xs font-semibold uppercase tracking-wide whitespace-nowrap",
+                      v === "Pass" ? "text-emerald-600" : v === "Fail" ? "text-red-500" : "text-gray-400"
+                    )}>{v}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {cat.items.map((item) => {
+                  const key = `${cat.name}::${item}`;
+                  const current = checks[key];
+                  return (
+                    <tr key={item} className={cn("transition-colors hover:bg-muted/20",
+                      current === "Pass" ? "bg-emerald-50/40" :
+                      current === "Fail" ? "bg-red-50/40" :
+                      current === "N/A" ? "bg-gray-50/40" : ""
+                    )}>
+                      <td className="px-5 py-2.5 text-foreground">{item}</td>
+                      {(["Pass", "Fail", "N/A"] as CheckResult[]).map((v) => (
+                        <td key={v} className="px-6 py-2.5 text-center">
+                          <input
+                            type="radio"
+                            name={key}
+                            value={v}
+                            checked={current === v}
+                            onChange={() => setCheck(cat.name, item, v)}
+                            className={cn("h-4 w-4 cursor-pointer",
+                              v === "Pass" ? "accent-emerald-500" : v === "Fail" ? "accent-red-500" : "accent-gray-400"
+                            )}
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+
+      <div className="flex justify-end gap-3">
+        <button className="rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground hover:bg-muted/50 transition-colors">Save Draft</button>
+        <button
+          disabled={counts.fail > 0}
+          className={cn("rounded-xl px-5 py-2.5 text-sm font-semibold transition-colors",
+            counts.fail === 0 && counts.pass > 0
+              ? "bg-emerald-500 text-white hover:bg-emerald-600"
+              : "bg-muted text-muted-foreground cursor-not-allowed"
+          )}
+        >
+          {counts.fail > 0 ? `${counts.fail} Fail(s) — Cannot Approve` : "Approve Room"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Minibar Restocking ───────────────────────────────────────────────────────
+
+function MinibarRestocking() {
+  const totalRevenue = MINIBAR.reduce((sum, m) => sum + m.revenue, 0);
+  const pending = MINIBAR.filter((m) => m.status === "Pending").length;
+  const completed = MINIBAR.filter((m) => m.status === "Completed").length;
+  const noCharge = MINIBAR.filter((m) => m.status === "No Charge").length;
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard title="Total Revenue" value={`$${totalRevenue.toFixed(2)}`} sub="Today's minibar charges" icon={BarChart2} gradient="bg-gradient-to-br from-violet-400 to-violet-500" />
+        <StatCard title="Restocked" value={completed} sub="Completed today" icon={CheckCircle2} gradient="bg-gradient-to-br from-emerald-400 to-emerald-500" />
+        <StatCard title="Pending Check" value={pending} sub="Awaiting inventory" icon={Clock} gradient="bg-gradient-to-br from-orange-400 to-orange-500" />
+        <StatCard title="No Charge" value={noCharge} sub="Nothing consumed" icon={Home} gradient="bg-gradient-to-br from-blue-400 to-blue-500" />
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-border px-5 py-4">
+          <Coffee className="h-4 w-4 text-violet-500" />
+          <h3 className="text-sm font-semibold text-foreground">Minibar Restocking Log</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/40">
+              <tr>
+                {["Room", "Last Restocked", "Items Missing", "Items Added", "Revenue", "Restocked By", "Date", "Status"].map((h) => (
+                  <th key={h} className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {MINIBAR.map((m) => (
+                <tr key={m.room} className="transition-colors hover:bg-muted/30">
+                  <td className="px-4 py-3 font-semibold text-foreground">{m.room}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{m.lastRestocked}</td>
+                  <td className="max-w-[200px] px-4 py-3 text-xs text-foreground truncate">{m.missing}</td>
+                  <td className="max-w-[200px] px-4 py-3 text-xs text-muted-foreground truncate">{m.added}</td>
+                  <td className="px-4 py-3 font-semibold text-emerald-600">{m.revenue > 0 ? `$${m.revenue.toFixed(2)}` : "—"}</td>
+                  <td className="px-4 py-3 text-foreground">{m.restockedBy}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{m.date}</td>
+                  <td className="px-4 py-3">
+                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium",
+                      m.status === "Completed" ? "bg-emerald-100 text-emerald-700" :
+                      m.status === "Pending" ? "bg-orange-100 text-orange-700" :
+                      "bg-slate-100 text-slate-600"
+                    )}>{m.status}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="border-t border-border bg-muted/20 px-5 py-3 flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">Total minibar revenue today</span>
+          <span className="text-lg font-bold text-emerald-600">${totalRevenue.toFixed(2)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+export function Housekeeping({ aiEnabled, activeSubmenu }: HousekeepingProps) {
+  const view = activeSubmenu || "overview";
+
+  const subviewMap: Record<string, { label: string; icon: React.ElementType; component: React.ReactNode }> = {
+    overview: { label: "Overview", icon: BarChart2, component: <Overview /> },
+    "room-status": { label: "Room Status", icon: Home, component: <RoomStatusView /> },
+    "task-list": { label: "Task List", icon: ClipboardList, component: <TaskListView /> },
+    supervisor: { label: "Supervisor Dashboard", icon: User, component: <SupervisorDashboard /> },
+    turndown: { label: "Turndown Service", icon: Coffee, component: <TurndownService /> },
+    "lost-found": { label: "Lost & Found", icon: Package, component: <LostAndFound /> },
+    inventory: { label: "Inventory & Supplies", icon: Layers, component: <InventorySupplies /> },
+    inspection: { label: "Inspection Checklist", icon: CheckCircle2, component: <InspectionChecklist /> },
+    minibar: { label: "Minibar Restocking", icon: Bell, component: <MinibarRestocking /> },
+  };
+
+  const current = subviewMap[view] ?? subviewMap["overview"];
+  const Icon = current.icon;
 
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key={activeSubmenu}
-        initial={{ opacity: 0, y: 10 }}
+        key={view}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.2 }}
-        className="h-full"
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+        className="space-y-6"
       >
-        {renderContent()}
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-400 to-teal-500 shadow-sm">
+              <Icon className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-foreground">{current.label}</h1>
+              <p className="text-xs text-muted-foreground">
+                Housekeeping &rsaquo; {current.label} &mdash;{" "}
+                {new Date().toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
+              </p>
+            </div>
+          </div>
+          {aiEnabled && (
+            <div className="flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5">
+              <Star className="h-3.5 w-3.5 text-violet-500" fill="currentColor" />
+              <span className="text-xs font-medium text-violet-700">AI Optimised</span>
+            </div>
+          )}
+        </div>
+
+        {current.component}
       </motion.div>
     </AnimatePresence>
   );
 }
-
-function HousekeepingOverview({ aiEnabled }: { aiEnabled: boolean }) {
-  return (
-    <div>
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-foreground">Housekeeping Overview</h1>
-          <div className="flex gap-2">
-            <button className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
-              Assign Rooms
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        {/* AI Suggestions Panel */}
-        {aiEnabled && (
-          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 sm:p-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <Sparkles className="w-24 h-24 text-primary" />
-            </div>
-            <div className="flex items-start gap-4 relative z-10">
-              <div className="bg-primary/20 p-2 rounded-full mt-1">
-                <Sparkles className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg text-foreground">Agentic AI Insights</h3>
-                <p className="text-muted-foreground mt-1 mb-4">
-                  I've analyzed IoT sensors and PMS data. Here are automated actions ready for your approval.
-                </p>
-                
-                <div className="space-y-3">
-                  <div className="bg-card border border-border rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <p className="font-medium text-sm flex items-center gap-2">
-                        <Thermometer className="w-4 h-4 text-amber-500" />
-                        Energy Waste Detected
-                      </p>
-                      <p className="text-xs text-muted-foreground">AC is running in 5 vacant rooms (301, 305, 412, 415, 501).</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button className="text-xs px-3 py-1.5 bg-primary text-primary-foreground rounded hover:bg-primary/90">
-                        Auto-Shutoff
-                      </button>
-                      <button className="text-xs px-3 py-1.5 border border-border rounded hover:bg-secondary">
-                        Ignore
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="bg-card border border-border rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <p className="font-medium text-sm flex items-center gap-2">
-                        <Droplets className="w-4 h-4 text-blue-500" />
-                        Predictive Maintenance
-                      </p>
-                      <p className="text-xs text-muted-foreground">Room 210 shower flow rate dropped 15%. Likely mineral buildup.</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button className="text-xs px-3 py-1.5 bg-primary text-primary-foreground rounded hover:bg-primary/90">
-                        Create Work Order
-                      </button>
-                      <button className="text-xs px-3 py-1.5 border border-border rounded hover:bg-secondary">
-                        Review Manually
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { label: "Dirty Rooms", value: "42", sub: "15 priority (Arrivals)", icon: Brush, color: "text-red-500" },
-            { label: "Clean / Inspected", value: "86", sub: "Ready for guests", icon: CheckCircle, color: "text-green-500" },
-            { label: "Out of Order", value: "3", sub: "Maintenance required", icon: AlertTriangle, color: "text-amber-500" },
-            { label: "Occupied", value: "115", sub: "Do not disturb: 12", icon: Bed, color: "text-blue-500" },
-          ].map((stat, i) => (
-            <div key={i} className="bg-card border border-border rounded-xl p-5 shadow-sm">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-                  <h3 className="text-3xl font-bold mt-2">{stat.value}</h3>
-                </div>
-                <div className={cn("p-2 rounded-lg bg-secondary", stat.color)}>
-                  <stat.icon className="w-5 h-5" />
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">{stat.sub}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function RoomStatus() {
-  const [filterFloor, setFilterFloor] = useState("All Floors");
-  const [filterStatus, setFilterStatus] = useState("All Statuses");
-
-  const rooms = useMemo(() => [
-    { room: "101", type: "Standard", condition: "Dirty", occ: "Vacant", iot: "Normal", assignee: "Maria G." },
-    { room: "102", type: "Suite", condition: "Clean", occ: "Occupied", iot: "DND Active", assignee: "Unassigned" },
-    { room: "103", type: "Standard", condition: "Inspected", occ: "Vacant", iot: "Normal", assignee: "Unassigned" },
-    { room: "104", type: "Deluxe", condition: "Dirty", occ: "Occupied", iot: "AC Left On", assignee: "John D." },
-    { room: "105", type: "Out of Order", condition: "Maintenance", occ: "Vacant", iot: "Water Leak", assignee: "Engineering" },
-    { room: "201", type: "Standard", condition: "Clean", occ: "Vacant", iot: "Normal", assignee: "Maria G." },
-    { room: "202", type: "Suite", condition: "Dirty", occ: "Occupied", iot: "Normal", assignee: "John D." },
-    { room: "203", type: "Standard", condition: "Inspected", occ: "Vacant", iot: "Normal", assignee: "Unassigned" },
-  ], []);
-
-  const filteredRooms = useMemo(() => {
-    return rooms.filter(room => {
-      if (filterFloor !== "All Floors" && !room.room.startsWith(filterFloor.replace("Floor ", ""))) return false;
-      if (filterStatus !== "All Statuses" && room.condition !== filterStatus) return false;
-      return true;
-    });
-  }, [rooms, filterFloor, filterStatus]);
-
-  return (
-    <div>
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold text-foreground">Room Status Board</h1>
-        </div>
-
-        {/* Legend & Filters */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
-          <div className="flex flex-wrap items-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Clean / Inspected</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Dirty</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-amber-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Out of Order</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <select 
-              className="bg-secondary border-none rounded-lg px-3 py-2 text-sm outline-none cursor-pointer"
-              value={filterFloor}
-              onChange={(e) => setFilterFloor(e.target.value)}
-            >
-              <option>All Floors</option>
-              <option>Floor 1</option>
-              <option>Floor 2</option>
-              <option>Floor 3</option>
-            </select>
-            <select 
-              className="bg-secondary border-none rounded-lg px-3 py-2 text-sm outline-none cursor-pointer"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <option>All Statuses</option>
-              <option>Dirty</option>
-              <option>Clean</option>
-              <option>Inspected</option>
-              <option>Out of Order</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Rooms Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
-        {filteredRooms.map((room) => (
-          <div 
-            key={room.room} 
-            className={cn(
-              "p-4 rounded-2xl border shadow-sm flex flex-col gap-3 transition-all hover:shadow-md cursor-pointer", 
-              room.condition === "Clean" || room.condition === "Inspected" ? "bg-emerald-100/60 border-emerald-200 text-emerald-900 dark:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-300" :
-              room.condition === "Dirty" ? "bg-red-100/60 border-red-200 text-red-900 dark:bg-red-900/30 dark:border-red-800 dark:text-red-300" :
-              "bg-amber-100/60 border-amber-200 text-amber-900 dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-300"
-            )}
-          >
-            <div className="flex justify-between items-start">
-              <h3 className="text-2xl font-bold">{room.room}</h3>
-              <div className="flex gap-1" title={`IoT: ${room.iot}`}>
-                {room.iot !== 'Normal' ? (
-                  <AlertTriangle className="w-4 h-4 text-amber-500" />
-                ) : (
-                  <CheckCircle className="w-4 h-4 opacity-50" />
-                )}
-              </div>
-            </div>
-            
-            <div className="flex-1">
-              <p className="text-sm font-semibold truncate" title={room.assignee}>
-                {room.assignee}
-              </p>
-              <p className="text-xs opacity-70 truncate" title={room.type}>{room.type} • {room.occ}</p>
-            </div>
-            
-            <div className="mt-auto pt-2 flex justify-between items-center text-xs font-medium opacity-80 border-t border-current/10">
-              <span>{room.condition}</span>
-              {room.iot !== 'Normal' && <span className="truncate max-w-[80px] text-right">{room.iot}</span>}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function TaskList() {
-  const tasks = [
-    { id: "TSK-001", room: "104", type: "Cleaning", priority: "High", status: "In Progress", assignee: "John D.", time: "10:30 AM" },
-    { id: "TSK-002", room: "210", type: "Maintenance", priority: "Medium", status: "Pending", assignee: "Engineering", time: "11:00 AM" },
-    { id: "TSK-003", room: "305", type: "Guest Request", priority: "High", status: "Pending", assignee: "Maria G.", time: "11:15 AM", notes: "Extra towels" },
-    { id: "TSK-004", room: "101", type: "Cleaning", priority: "Normal", status: "Completed", assignee: "Maria G.", time: "09:00 AM" },
-  ];
-
-  return (
-    <div>
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold text-foreground">Task List</h1>
-        </div>
-
-        {/* Legend & Filters */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
-          <div className="flex flex-wrap items-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-blue-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Cleaning</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-amber-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Maintenance</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-purple-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Guest Request</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
-              <Plus className="w-4 h-4" /> New Task
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
-        <div className="p-5 grid gap-4">
-          {tasks.map((task) => (
-            <div key={task.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border rounded-lg hover:bg-secondary/20 transition-colors gap-4">
-              <div className="flex items-start gap-4">
-                <div className={cn(
-                  "p-2 rounded-full mt-1",
-                  task.type === "Cleaning" ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" :
-                  task.type === "Maintenance" ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" :
-                  "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
-                )}>
-                  {task.type === "Cleaning" && <Brush className="w-5 h-5" />}
-                  {task.type === "Maintenance" && <Wrench className="w-5 h-5" />}
-                  {task.type === "Guest Request" && <Bell className="w-5 h-5" />}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium">Room {task.room} - {task.type}</h3>
-                    <span className={cn(
-                      "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
-                      task.priority === "High" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
-                      task.priority === "Medium" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
-                      "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                    )}>
-                      {task.priority}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    <span className="inline-flex items-center gap-1 mr-3"><Clock className="w-3 h-3" /> {task.time}</span>
-                    <span className="inline-flex items-center gap-1"><User className="w-3 h-3" /> {task.assignee}</span>
-                  </p>
-                  {task.notes && <p className="text-sm mt-2 text-foreground/80 bg-secondary/50 p-2 rounded">{task.notes}</p>}
-                </div>
-              </div>
-              <div className="flex items-center gap-3 self-start sm:self-center">
-                 <span className={cn(
-                    "px-2.5 py-1 rounded-full text-xs font-medium border",
-                    task.status === "Completed" ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-900/50 dark:text-green-400" :
-                    task.status === "In Progress" ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-900/50 dark:text-blue-400" :
-                    "bg-secondary border-border text-muted-foreground"
-                  )}>
-                    {task.status}
-                  </span>
-                  <button className="text-sm font-medium text-primary hover:underline">Edit</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function LostAndFound() {
-  const items = [
-    { id: "LF-1029", item: "Gold Watch", location: "Room 305", date: "2023-10-25", status: "Stored", finder: "Maria G." },
-    { id: "LF-1030", item: "Laptop Charger", location: "Lobby", date: "2023-10-26", status: "Claimed", finder: "John D." },
-    { id: "LF-1031", item: "Sunglasses", location: "Pool Area", date: "2023-10-26", status: "Stored", finder: "Security" },
-  ];
-
-  return (
-    <div>
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold text-foreground">Lost & Found</h1>
-        </div>
-
-        {/* Legend & Filters */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
-          <div className="flex flex-wrap items-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-amber-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Stored</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Claimed</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <SearchIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input 
-                type="text" 
-                placeholder="Search items..." 
-                className="pl-9 pr-4 py-2 text-sm bg-secondary border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-            </div>
-            <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
-              <Plus className="w-4 h-4" /> Log Item
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-secondary/50 text-muted-foreground">
-              <tr>
-                <th className="px-5 py-3 font-medium">ID</th>
-                <th className="px-5 py-3 font-medium">Item Description</th>
-                <th className="px-5 py-3 font-medium">Location Found</th>
-                <th className="px-5 py-3 font-medium">Date</th>
-                <th className="px-5 py-3 font-medium">Finder</th>
-                <th className="px-5 py-3 font-medium">Status</th>
-                <th className="px-5 py-3 font-medium text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {items.map((item, i) => (
-                <tr key={i} className="hover:bg-secondary/20 transition-colors">
-                  <td className="px-5 py-4 font-medium text-muted-foreground">{item.id}</td>
-                  <td className="px-5 py-4 font-medium text-foreground">{item.item}</td>
-                  <td className="px-5 py-4 text-muted-foreground">
-                    <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {item.location}</span>
-                  </td>
-                  <td className="px-5 py-4 text-muted-foreground">
-                    <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {item.date}</span>
-                  </td>
-                  <td className="px-5 py-4 text-muted-foreground">{item.finder}</td>
-                  <td className="px-5 py-4">
-                    <span className={cn(
-                      "px-2 py-1 rounded-full text-xs font-medium",
-                      item.status === "Claimed" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" :
-                      "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
-                    )}>
-                      {item.status}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 text-right">
-                    <button className="text-primary hover:underline font-medium">View</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Inventory() {
-  const inventory = [
-    { item: "Bath Towels", category: "Linens", stock: 450, par: 500, status: "Low Stock" },
-    { item: "Hand Towels", category: "Linens", stock: 600, par: 600, status: "Optimal" },
-    { item: "Shampoo (Mini)", category: "Amenities", stock: 1200, par: 1000, status: "Optimal" },
-    { item: "Soap Bars", category: "Amenities", stock: 150, par: 800, status: "Critical" },
-    { item: "Glass Cleaner", category: "Cleaning", stock: 25, par: 30, status: "Low Stock" },
-  ];
-
-  return (
-    <div>
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold text-foreground">Housekeeping Inventory</h1>
-        </div>
-
-        {/* Legend & Filters */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
-          <div className="flex flex-wrap items-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Optimal</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-amber-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Low Stock</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Critical</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">
-              <Filter className="w-4 h-4" /> Filter
-            </button>
-            <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
-              <Package className="w-4 h-4" /> Order Supplies
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-secondary/50 text-muted-foreground">
-              <tr>
-                <th className="px-5 py-3 font-medium">Item</th>
-                <th className="px-5 py-3 font-medium">Category</th>
-                <th className="px-5 py-3 font-medium text-right">Current Stock</th>
-                <th className="px-5 py-3 font-medium text-right">Par Level</th>
-                <th className="px-5 py-3 font-medium">Status</th>
-                <th className="px-5 py-3 font-medium text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {inventory.map((item, i) => (
-                <tr key={i} className="hover:bg-secondary/20 transition-colors">
-                  <td className="px-5 py-4 font-medium text-foreground">{item.item}</td>
-                  <td className="px-5 py-4 text-muted-foreground">{item.category}</td>
-                  <td className="px-5 py-4 text-right font-medium">{item.stock}</td>
-                  <td className="px-5 py-4 text-right text-muted-foreground">{item.par}</td>
-                  <td className="px-5 py-4">
-                    <span className={cn(
-                      "px-2 py-1 rounded-full text-xs font-medium",
-                      item.status === "Optimal" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" :
-                      item.status === "Low Stock" ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" :
-                      "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                    )}>
-                      {item.status}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 text-right">
-                    <button className="text-primary hover:underline font-medium">Update</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-}
-
