@@ -21,7 +21,8 @@ import {
   User,
   Printer,
   Send,
-  BedDouble
+  BedDouble,
+  BarChart2
 } from "lucide-react";
 
 interface FoodAndBeverageProps {
@@ -37,17 +38,13 @@ export function FoodAndBeverage({ aiEnabled, activeSubmenu = "Overview" }: FoodA
       case "Smart Menu (4D)":
         return <SmartMenu4D />;
       case "POS":
-        return <POSSystem />;
+        return <POSHub />;
       case "Table Management":
         return <TableManagement />;
       case "Room Service":
         return <RoomService />;
       case "Inventory":
         return <FAndBInventory />;
-      case "KDS":
-        return <KitchenDisplay />;
-      case "Bar":
-        return <BarManagement />;
       default:
         return null;
     }
@@ -324,6 +321,136 @@ function MenuCard4D({ item, onAdd }: { item: any, onAdd: () => void }) {
         </div>
       </motion.div>
     </motion.div>
+  );
+}
+
+// POS Hub — wraps Terminal, KDS, Bar, Reports as internal tabs
+type POSTab = "terminal" | "kds" | "bar" | "reports";
+
+function POSHub() {
+  const [activeTab, setActiveTab] = useState<POSTab>("terminal");
+
+  const tabs: { key: POSTab; label: string; icon: React.ReactNode }[] = [
+    { key: "terminal", label: "Order Terminal", icon: <ShoppingCart className="w-4 h-4" /> },
+    { key: "kds",      label: "Kitchen Display", icon: <ChefHat className="w-4 h-4" /> },
+    { key: "bar",      label: "Bar",             icon: <UtensilsCrossed className="w-4 h-4" /> },
+    { key: "reports",  label: "F&B Reports",     icon: <BarChart2 className="w-4 h-4" /> },
+  ];
+
+  return (
+    <div>
+      {/* Internal tab bar */}
+      <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-2xl mb-6 w-fit">
+        {tabs.map(t => (
+          <button
+            key={t.key}
+            onClick={() => setActiveTab(t.key)}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
+              activeTab === t.key
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {t.icon}
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.18 }}
+        >
+          {activeTab === "terminal" && <POSSystem />}
+          {activeTab === "kds"      && <KitchenDisplay />}
+          {activeTab === "bar"      && <BarManagement />}
+          {activeTab === "reports"  && <FNBReports />}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// F&B Reports (within POS hub)
+function FNBReports() {
+  const dailyData = [
+    { outlet: "Main Restaurant", covers: 148, revenue: 4820, avgSpend: 32.6, voids: 3 },
+    { outlet: "Room Service",    covers: 64,  revenue: 2310, avgSpend: 36.1, voids: 1 },
+    { outlet: "Bar & Lounge",    covers: 92,  revenue: 1740, avgSpend: 18.9, voids: 2 },
+    { outlet: "Pool Café",       covers: 57,  revenue: 980,  avgSpend: 17.2, voids: 0 },
+    { outlet: "Private Dining",  covers: 24,  revenue: 2160, avgSpend: 90.0, voids: 0 },
+  ];
+  const totals = dailyData.reduce((acc, r) => ({
+    covers: acc.covers + r.covers,
+    revenue: acc.revenue + r.revenue,
+    voids: acc.voids + r.voids,
+  }), { covers: 0, revenue: 0, voids: 0 });
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-foreground">F&B Reports</h2>
+        <span className="text-sm text-muted-foreground">Today · {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</span>
+      </div>
+      {/* KPI cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: "Total Revenue",  value: `BHD ${totals.revenue.toLocaleString()}`, sub: "+14% vs yesterday", color: "from-violet-400 to-violet-500" },
+          { label: "Total Covers",   value: totals.covers,    sub: "Across all outlets",      color: "from-blue-400 to-blue-500" },
+          { label: "Avg Spend/Cover",value: `BHD ${(totals.revenue/totals.covers).toFixed(1)}`, sub: "Per guest",  color: "from-emerald-400 to-emerald-500" },
+          { label: "Voided Items",   value: totals.voids,     sub: "Requires manager review",  color: "from-amber-400 to-amber-500" },
+        ].map(c => (
+          <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-5 text-white relative overflow-hidden`}>
+            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+            <p className="text-white/80 text-xs font-medium mb-1">{c.label}</p>
+            <p className="text-2xl font-bold">{c.value}</p>
+            <p className="text-white/70 text-xs mt-1">{c.sub}</p>
+          </div>
+        ))}
+      </div>
+      {/* Outlet breakdown */}
+      <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
+        <div className="px-6 py-4 border-b border-border font-semibold text-foreground">Outlet Breakdown</div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-secondary/50 text-muted-foreground">
+              <tr>
+                {["Outlet", "Covers", "Revenue (BHD)", "Avg Spend", "Voids"].map(h => (
+                  <th key={h} className="px-6 py-3 text-left font-medium">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {dailyData.map(r => (
+                <tr key={r.outlet} className="hover:bg-secondary/30 transition-colors">
+                  <td className="px-6 py-4 font-medium">{r.outlet}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{r.covers}</td>
+                  <td className="px-6 py-4 font-semibold">{r.revenue.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{r.avgSpend.toFixed(1)}</td>
+                  <td className="px-6 py-4">
+                    <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", r.voids > 0 ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")}>
+                      {r.voids}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              <tr className="bg-secondary/30 font-semibold">
+                <td className="px-6 py-4">Total</td>
+                <td className="px-6 py-4">{totals.covers}</td>
+                <td className="px-6 py-4">{totals.revenue.toLocaleString()}</td>
+                <td className="px-6 py-4">{(totals.revenue/totals.covers).toFixed(1)}</td>
+                <td className="px-6 py-4">{totals.voids}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }
 

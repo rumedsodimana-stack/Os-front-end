@@ -49,7 +49,7 @@ const DEPARTMENTS: { name: Department; icon: React.ElementType; submenus: string
   { name: "Dashboard", icon: Hotel, submenus: ["Overview", "Reports", "Analytics"] },
   { name: "Front Desk", icon: ConciergeBell, submenus: ["Overview", "Rooms", "Arrivals", "Departures", "Reservations", "Timeline"] },
   { name: "Housekeeping", icon: Brush, submenus: ["Overview", "Room Status", "Tasks", "My Team", "Turndown Service", "Lost & Found", "Linen & Inventory", "Inspections", "Minibar", "Reports"] },
-  { name: "Food & Beverage", icon: UtensilsCrossed, submenus: ["Overview", "Smart Menu (4D)", "POS", "KDS", "Bar", "Table Management", "Room Service", "Inventory"] },
+  { name: "Food & Beverage", icon: UtensilsCrossed, submenus: ["Overview", "Smart Menu (4D)", "POS", "Table Management", "Room Service", "Inventory"] },
   { name: "Sales & Revenue", icon: TrendingUp, submenus: ["Overview", "Rate Management", "Channel Manager", "Comp Set", "Sales Pipeline", "Group Quotes", "Group Management", "Forecast"] },
   { name: "Team", icon: Users, submenus: ["Overview", "Employees", "Scheduling", "Leave Management", "Training & Certifications", "Performance Reviews", "Payroll", "Grievances", "Hiring", "Offboarding", "Time & Attendance", "Staff Transfers"] },
   { name: "Maintenance", icon: Wrench, submenus: ["Overview", "Work Orders", "Preventive Maintenance", "Asset Management", "Smart Rooms", "Energy & Utilities", "Access Control"] },
