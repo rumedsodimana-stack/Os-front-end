@@ -2547,26 +2547,26 @@ function SmartRoomsView() {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition"
+          className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
         >
           Apply to All
         </motion.button>
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="px-4 py-2 bg-secondary text-foreground rounded-lg text-sm font-medium hover:bg-secondary/80 transition"
+          className="bg-secondary hover:bg-secondary/80 text-foreground px-4 py-2 rounded-xl text-sm font-medium transition-colors"
         >
           Night Mode (all rooms)
         </motion.button>
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="px-4 py-2 bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded-lg text-sm font-medium hover:bg-red-200 transition"
+          className="px-4 py-2 bg-rose-100 text-rose-700 rounded-xl text-sm font-medium hover:bg-rose-200 transition-colors"
         >
           Emergency Unlock (all)
         </motion.button>
         {alertCount > 0 && (
-          <div className="px-4 py-2 bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded-lg text-sm font-medium">
+          <div className="px-4 py-2 bg-rose-100 text-rose-700 rounded-xl text-sm font-medium">
             {alertCount} Alert{alertCount !== 1 ? "s" : ""}
           </div>
         )}
@@ -2603,8 +2603,8 @@ function SmartRoomsView() {
 
         {/* Selected room panel */}
         <div className="space-y-4">
-          <div className="bg-card rounded-2xl p-6 border border-border">
-            <h3 className="text-lg font-bold mb-1">Room {selectedRoom.roomNumber}</h3>
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-1">Room {selectedRoom.roomNumber}</h3>
             <p className="text-xs text-muted-foreground mb-6 capitalize">Status: {selectedRoom.status}</p>
 
             {/* Temperature Control */}
@@ -2666,10 +2666,10 @@ function SmartRoomsView() {
               </div>
               <button
                 className={cn(
-                  "w-full py-2 px-3 rounded-lg text-sm font-medium transition",
+                  "w-full py-2 px-3 rounded-xl text-sm font-medium transition-colors",
                   selectedRoom.lockStatus === "locked"
-                    ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 hover:bg-green-200"
-                    : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 hover:bg-amber-200"
+                    ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                    : "bg-amber-100 text-amber-700 hover:bg-amber-200"
                 )}
               >
                 {selectedRoom.lockStatus === "locked" ? "Unlock" : "Lock"}
@@ -2689,7 +2689,7 @@ function SmartRoomsView() {
                 <input type="checkbox" checked={selectedRoom.dnd} className="w-4 h-4" />
               </div>
               {selectedRoom.dnd && (
-                <div className="text-xs bg-blue-50 dark:bg-blue-900/20 p-2 rounded text-blue-700 dark:text-blue-300">
+                <div className="text-xs bg-blue-50 p-2 rounded-lg text-blue-700">
                   Make-up room request pending
                 </div>
               )}
@@ -2799,9 +2799,10 @@ function EnergyDashboardView() {
             <YAxis stroke="#6b7280" />
             <Tooltip
               contentStyle={{
-                backgroundColor: "#1f2937",
-                border: "1px solid #374151",
-                borderRadius: "8px",
+                backgroundColor: "hsl(var(--card))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: "12px",
+                color: "hsl(var(--foreground))",
               }}
             />
             <Area type="monotone" dataKey="kW" stroke="#f59e0b" fillOpacity={1} fill="url(#colorKW)" />
@@ -2851,10 +2852,10 @@ function EnergyDashboardView() {
               <div
                 key={idx}
                 className={cn(
-                  "p-3 rounded-lg text-xs border",
+                  "p-3 rounded-xl text-xs border",
                   alert.severity === "high"
-                    ? "bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-700 dark:text-red-300"
-                    : "bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-700 dark:text-yellow-300"
+                    ? "bg-rose-50 border-rose-200 text-rose-800"
+                    : "bg-amber-50 border-amber-200 text-amber-800"
                 )}
               >
                 <div className="flex items-start gap-2">
@@ -2870,14 +2871,14 @@ function EnergyDashboardView() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full px-4 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary/90 transition"
+              className="w-full bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-xs font-medium transition-colors"
             >
               Schedule Off-Peak Mode
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full px-4 py-2 bg-secondary text-foreground rounded-lg text-xs font-medium hover:bg-secondary/80 transition"
+              className="w-full bg-secondary hover:bg-secondary/80 text-foreground px-4 py-2 rounded-xl text-xs font-medium transition-colors"
             >
               Generate Report
             </motion.button>
@@ -2938,15 +2939,15 @@ function AccessControlView() {
   const getDoorStatusColor = (status: string) => {
     switch (status) {
       case "locked":
-        return "bg-green-100 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-700 dark:text-green-300";
+        return "bg-emerald-50 border-emerald-200 text-emerald-700";
       case "unlocked":
-        return "bg-amber-100 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-700 dark:text-amber-300";
+        return "bg-amber-50 border-amber-200 text-amber-700";
       case "propped":
-        return "bg-red-100 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-700 dark:text-red-300";
+        return "bg-rose-50 border-rose-200 text-rose-700";
       case "offline":
-        return "bg-gray-100 border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300";
+        return "bg-secondary border-border text-muted-foreground";
       default:
-        return "bg-secondary";
+        return "bg-secondary border-border";
     }
   };
 
@@ -2975,7 +2976,7 @@ function AccessControlView() {
             <p className="text-2xl font-bold">{lockedDoors} / 10</p>
           </div>
           {alertCount > 0 && (
-            <div className="px-4 py-2 bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded-lg text-sm font-medium flex items-center gap-2">
+            <div className="px-4 py-2 bg-rose-100 text-rose-700 rounded-xl text-sm font-medium flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
               {alertCount} Alert{alertCount !== 1 ? "s" : ""}
             </div>
@@ -2985,14 +2986,14 @@ function AccessControlView() {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="px-4 py-2 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 rounded-lg text-sm font-medium hover:bg-green-200 transition"
+            className="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-xl text-sm font-medium hover:bg-emerald-200 transition-colors"
           >
             Lock All
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="px-4 py-2 bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded-lg text-sm font-medium hover:bg-red-200 transition"
+            className="px-4 py-2 bg-rose-100 text-rose-700 rounded-xl text-sm font-medium hover:bg-rose-200 transition-colors"
           >
             Unlock All (Emergency)
           </motion.button>

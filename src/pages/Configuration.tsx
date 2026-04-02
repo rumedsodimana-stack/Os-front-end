@@ -17,6 +17,8 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { useThemeStore } from "../store/themeStore";
 
@@ -115,6 +117,15 @@ export function Configuration({ aiEnabled, activeSubmenu = "Appearance" }: Confi
 
 // ─── Appearance ─────────────────────────────────────────────────────────────
 
+const ACCENT_PRESETS = [
+  { name: "Violet", primary: "#7c3aed", accent: "#06b6d4" },
+  { name: "Blue", primary: "#2563eb", accent: "#7c3aed" },
+  { name: "Emerald", primary: "#059669", accent: "#0284c7" },
+  { name: "Rose", primary: "#e11d48", accent: "#f59e0b" },
+  { name: "Amber", primary: "#d97706", accent: "#059669" },
+  { name: "Indigo", primary: "#4338ca", accent: "#06b6d4" },
+];
+
 function ColorSwatch({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <div className="flex items-center justify-between py-3 border-b border-border last:border-0">
@@ -158,7 +169,7 @@ function RadioGroup<T extends string>({
             key={opt.value}
             onClick={() => onChange(opt.value)}
             className={cn(
-              "px-4 py-2 rounded-lg text-sm border transition-all",
+              "px-4 py-2 rounded-xl text-sm border transition-all",
               value === opt.value
                 ? "border-primary bg-primary/10 text-primary font-medium"
                 : "border-border text-muted-foreground hover:border-foreground/30"
@@ -177,9 +188,64 @@ function AppearanceTab() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
+
+      {/* Dark Mode Toggle */}
+      <div className="lg:col-span-2 bg-card rounded-2xl border border-border p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-secondary rounded-xl p-2.5">
+              {theme.darkMode ? <Moon className="w-5 h-5 text-violet-500" /> : <Sun className="w-5 h-5 text-amber-500" />}
+            </div>
+            <div>
+              <p className="text-sm font-semibold">Dark Mode</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Switch between light and dark interface</p>
+            </div>
+          </div>
+          <button
+            onClick={() => theme.set({ darkMode: !theme.darkMode })}
+            className={cn(
+              "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+              theme.darkMode ? "bg-violet-600" : "bg-input"
+            )}
+          >
+            <span
+              className={cn(
+                "inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform",
+                theme.darkMode ? "translate-x-6" : "translate-x-1"
+              )}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Accent Presets */}
+      <div className="lg:col-span-2 bg-card rounded-2xl border border-border p-6 shadow-sm">
+        <h2 className="text-base font-semibold mb-4">Colour Presets</h2>
+        <div className="grid grid-cols-6 gap-3">
+          {ACCENT_PRESETS.map(preset => (
+            <button
+              key={preset.name}
+              onClick={() => theme.set({ primaryColor: preset.primary, accentColor: preset.accent })}
+              className={cn(
+                "flex flex-col items-center gap-2 p-3 rounded-xl border transition-all",
+                theme.primaryColor === preset.primary
+                  ? "border-primary bg-primary/10"
+                  : "border-border hover:border-foreground/30"
+              )}
+            >
+              <div
+                className="w-8 h-8 rounded-full shadow-sm"
+                style={{ background: `linear-gradient(135deg, ${preset.primary}, ${preset.accent})` }}
+              />
+              <span className="text-xs font-medium text-muted-foreground">{preset.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Colors */}
       <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-        <h2 className="text-base font-semibold mb-4">Theme Colors</h2>
+        <h2 className="text-base font-semibold mb-4">Custom Colors</h2>
         <ColorSwatch label="Primary Color" value={theme.primaryColor} onChange={v => theme.set({ primaryColor: v })} />
         <ColorSwatch label="Accent Color" value={theme.accentColor} onChange={v => theme.set({ accentColor: v })} />
         <ColorSwatch label="Background Color" value={theme.bgColor} onChange={v => theme.set({ bgColor: v })} />
@@ -276,7 +342,7 @@ function AppearanceTab() {
               {["Occupancy", "Revenue", "Guests"].map((label, i) => (
                 <div
                   key={label}
-                  className="rounded-lg p-3 border"
+                  className="rounded-xl p-3 border"
                   style={{ backgroundColor: theme.surfaceColor, borderColor: "#e2e8f0" }}
                 >
                   <p className="text-xs" style={{ color: theme.textColor, opacity: 0.6 }}>{label}</p>

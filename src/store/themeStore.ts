@@ -72,7 +72,7 @@ function setState(partial: Partial<ThemeState>) {
 
 function subscribe(fn: () => void) {
   _listeners.add(fn);
-  return () => _listeners.delete(fn);
+  return () => { _listeners.delete(fn); };
 }
 
 export function useThemeStore() {

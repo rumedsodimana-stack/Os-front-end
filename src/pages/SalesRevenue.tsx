@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import {
   DollarSign, TrendingUp, BarChart2, Percent, Building2,
   Download, Filter, Search, ArrowUpRight, ArrowDownRight, Calendar,
@@ -1508,15 +1508,17 @@ export function SalesRevenue({ aiEnabled, activeSubmenu = "Overview" }: SalesRev
 
 // ─── Group Management View ──────────────────────────────────────────────────
 
+// ─── Group Management View ──────────────────────────────────────────────────
+
 function GroupManagementView() {
   const [expandedGroup, setExpandedGroup] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"blocks" | "rooming">("blocks");
 
   const statCards = [
-    { label: "Active Groups", value: "8", trend: 12, icon: "📊" },
-    { label: "Rooms Blocked", value: "142", trend: 8, icon: "🛏️" },
-    { label: "Pick-up Rate", value: "73%", trend: 5, icon: "📈" },
-    { label: "Group Revenue MTD", value: "BHD 48,200", trend: 18, icon: "💰" },
+    { label: "Active Groups", value: "8", trend: "+12%", icon: Building2, gradient: "from-violet-400 to-violet-500" },
+    { label: "Rooms Blocked", value: "142", trend: "+8%", icon: BarChart2, gradient: "from-blue-400 to-blue-500" },
+    { label: "Pick-up Rate", value: "73%", trend: "+5%", icon: TrendingUp, gradient: "from-emerald-400 to-emerald-500" },
+    { label: "Group Revenue MTD", value: "BHD 48,200", trend: "+18%", icon: DollarSign, gradient: "from-amber-400 to-amber-500" },
   ];
 
   const groupBlocks = [
@@ -1620,16 +1622,15 @@ function GroupManagementView() {
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
-      case "Confirmed": return "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300";
-      case "Tentative": return "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300";
-      case "Cancelled": return "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300 line-through";
+      case "Confirmed": return "bg-green-100 text-green-700";
+      case "Tentative": return "bg-amber-100 text-amber-700";
+      case "Cancelled": return "bg-red-100 text-red-700 line-through";
       default: return "bg-gray-100 text-gray-700";
     }
   };
 
-  const pickupPercentage = (picked: number, blocked: number) => {
-    return Math.round((picked / blocked) * 100);
-  };
+  const pickupPercentage = (picked: number, blocked: number) =>
+    Math.round((picked / blocked) * 100);
 
   return (
     <div className="space-y-6">
@@ -1639,85 +1640,76 @@ function GroupManagementView() {
           <h2 className="text-2xl font-bold text-foreground">Group Management</h2>
           <p className="text-sm text-muted-foreground mt-0.5">Manage group bookings and block allocations</p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 text-sm font-medium text-white hover:shadow-lg transition-shadow"
-        >
-          <span className="text-base">+</span>
-          New Group Block
-        </motion.button>
+        <button className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors inline-flex items-center gap-2">
+          <span>+</span> New Group Block
+        </button>
       </div>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-4 gap-4">
-        {statCards.map((card) => (
-          <motion.div
-            key={card.label}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl bg-card border border-border p-6"
-          >
-            <p className="text-sm text-muted-foreground">{card.label}</p>
-            <div className="flex items-end justify-between mt-3">
-              <p className="text-3xl font-bold text-foreground">{card.value}</p>
-              <span className="text-xs font-semibold text-green-600 dark:text-green-400">+{card.trend}%</span>
+        {statCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <div key={card.label} className={`bg-gradient-to-r ${card.gradient} rounded-2xl p-6 text-white relative overflow-hidden`}>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="bg-white/20 rounded-xl p-3">
+                    <Icon className="w-6 h-6 text-white" />
+                  </div>
+                  <span className="text-sm text-white/70">{card.trend}</span>
+                </div>
+                <div className="text-3xl font-bold">{card.value}</div>
+                <div className="text-sm text-white/80 mt-1">{card.label}</div>
+              </div>
+              <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
             </div>
-          </motion.div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Group Blocks Table */}
-      <div className="rounded-2xl bg-card border border-border overflow-hidden">
-        <div className="bg-secondary/50 px-6 py-3 border-b border-border">
+      <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
           <h3 className="font-semibold text-foreground">Group Blocks</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
-              <tr>
-                <th className="text-left px-6 py-3 font-semibold">Group Name</th>
-                <th className="text-left px-6 py-3 font-semibold">Organization</th>
-                <th className="text-left px-6 py-3 font-semibold">Arrival</th>
-                <th className="text-left px-6 py-3 font-semibold">Departure</th>
-                <th className="text-left px-6 py-3 font-semibold">Blocked</th>
-                <th className="text-left px-6 py-3 font-semibold">Picked</th>
-                <th className="text-left px-6 py-3 font-semibold">Rate</th>
-                <th className="text-left px-6 py-3 font-semibold">Status</th>
-                <th className="text-left px-6 py-3 font-semibold">Actions</th>
+          <table className="w-full">
+            <thead>
+              <tr className="bg-secondary/50">
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Group Name</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Organization</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Arrival</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Departure</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Blocked</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Picked</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Rate</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Status</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-border/50">
               {groupBlocks.map((group) => (
                 <React.Fragment key={group.id}>
                   <motion.tr
-                    className="hover:bg-secondary/30 cursor-pointer"
+                    className="hover:bg-secondary/30 transition-colors cursor-pointer"
                     onClick={() => setExpandedGroup(expandedGroup === group.id ? null : group.id)}
                   >
-                    <td className="px-6 py-3 font-medium text-foreground">{group.name}</td>
-                    <td className="px-6 py-3 text-muted-foreground">{group.org}</td>
-                    <td className="px-6 py-3 text-muted-foreground">{group.arrival}</td>
-                    <td className="px-6 py-3 text-muted-foreground">{group.departure}</td>
-                    <td className="px-6 py-3 text-foreground font-semibold">{group.blocked}</td>
-                    <td className="px-6 py-3 text-foreground font-semibold">{group.picked}</td>
-                    <td className="px-6 py-3 text-foreground font-semibold">BHD {group.rate}</td>
-                    <td className="px-6 py-3">
+                    <td className="px-4 py-3 text-sm font-medium text-foreground">{group.name}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{group.org}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{group.arrival}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{group.departure}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-foreground">{group.blocked}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-foreground">{group.picked}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-foreground">BHD {group.rate}</td>
+                    <td className="px-4 py-3 text-sm">
                       <span className={cn("inline-block px-2 py-1 rounded-full text-xs font-medium", getStatusBadgeColor(group.status))}>
                         {group.status}
                       </span>
                     </td>
-                    <td className="px-6 py-3 text-sm">
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="text-blue-600 dark:text-blue-400 hover:underline"
-                      >
-                        View
-                      </motion.button>
+                    <td className="px-4 py-3 text-sm">
+                      <button className="text-violet-600 hover:text-violet-700 font-medium">View</button>
                     </td>
                   </motion.tr>
-
-                  {/* Expanded Row */}
                   <AnimatePresence>
                     {expandedGroup === group.id && (
                       <motion.tr
@@ -1742,58 +1734,49 @@ function GroupManagementView() {
                                 <p className="font-medium text-foreground">{pickupPercentage(group.picked, group.blocked)}%</p>
                               </div>
                             </div>
-
                             <div>
                               <p className="text-xs text-muted-foreground mb-2">Room Types Blocked</p>
                               <div className="flex flex-wrap gap-2">
                                 {group.roomTypes.map((type) => (
-                                  <span key={type} className="inline-block px-2 py-1 rounded bg-secondary/50 text-xs text-foreground">
+                                  <span key={type} className="inline-block px-2 py-1 rounded-lg bg-secondary/50 text-xs text-foreground">
                                     {type}
                                   </span>
                                 ))}
                               </div>
                             </div>
-
                             <div>
                               <p className="text-xs text-muted-foreground mb-2">Notes</p>
                               <p className="text-sm text-foreground">{group.notes}</p>
                             </div>
-
-                            {/* Tab Toggle */}
                             <div className="flex gap-2 pt-2 border-t border-border/50">
                               <button
-                                onClick={() => setActiveTab("blocks")}
+                                onClick={(e) => { e.stopPropagation(); setActiveTab("blocks"); }}
                                 className={cn(
-                                  "px-3 py-1.5 text-xs font-medium rounded transition-colors",
+                                  "px-3 py-1.5 text-xs font-medium rounded-xl transition-colors",
                                   activeTab === "blocks"
-                                    ? "bg-blue-500 text-white"
+                                    ? "bg-violet-600 text-white"
                                     : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
                                 )}
                               >
                                 Block Details
                               </button>
                               <button
-                                onClick={() => setActiveTab("rooming")}
+                                onClick={(e) => { e.stopPropagation(); setActiveTab("rooming"); }}
                                 className={cn(
-                                  "px-3 py-1.5 text-xs font-medium rounded transition-colors",
+                                  "px-3 py-1.5 text-xs font-medium rounded-xl transition-colors",
                                   activeTab === "rooming"
-                                    ? "bg-blue-500 text-white"
+                                    ? "bg-violet-600 text-white"
                                     : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
                                 )}
                               >
                                 Rooming List
                               </button>
-                              <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className="ml-auto px-3 py-1.5 text-xs font-medium rounded bg-green-500 text-white hover:shadow-lg transition-shadow"
-                              >
+                              <button className="ml-auto bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-medium rounded-xl transition-colors">
                                 Group Invoice
-                              </motion.button>
+                              </button>
                             </div>
-
                             {activeTab === "rooming" && (
-                              <div className="text-sm text-muted-foreground text-center py-4 bg-secondary/30 rounded">
+                              <div className="text-sm text-muted-foreground text-center py-4 bg-secondary/30 rounded-xl">
                                 Rooming list details for {group.name}
                               </div>
                             )}
@@ -1811,5 +1794,6 @@ function GroupManagementView() {
     </div>
   );
 }
+
 
 export default SalesRevenue;

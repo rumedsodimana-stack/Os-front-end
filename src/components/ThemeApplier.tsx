@@ -36,15 +36,38 @@ export function ThemeApplier() {
 
   useEffect(() => {
     const root = document.documentElement;
-    root.style.setProperty("--theme-primary", theme.primaryColor);
-    root.style.setProperty("--theme-accent", theme.accentColor);
-    root.style.setProperty("--theme-bg", theme.bgColor);
-    root.style.setProperty("--theme-surface", theme.surfaceColor);
-    root.style.setProperty("--theme-text", theme.textColor);
+
+    // Apply dark mode class
+    if (theme.darkMode) {
+      root.classList.add("dark");
+      localStorage.setItem("omnistay-theme", "dark");
+    } else {
+      root.classList.remove("dark");
+      localStorage.setItem("omnistay-theme", "light");
+    }
+
+    // Apply primary color to the actual CSS variable the UI uses
+    root.style.setProperty("--primary", theme.primaryColor);
+    root.style.setProperty("--ring", theme.primaryColor);
+
+    // Apply background & surface
+    root.style.setProperty("--background", theme.bgColor);
+    root.style.setProperty("--card", theme.surfaceColor);
+    root.style.setProperty("--popover", theme.surfaceColor);
+
+    // Apply text color
+    root.style.setProperty("--foreground", theme.textColor);
+    root.style.setProperty("--card-foreground", theme.textColor);
+
+    // Typography & layout
     root.style.setProperty("--theme-font-family", fontFamilyMap[theme.fontFamily] ?? fontFamilyMap.Inter);
     root.style.setProperty("--theme-font-size", fontSizeMap[theme.fontSize] ?? "14px");
     root.style.setProperty("--theme-border-radius", borderRadiusMap[theme.borderRadius] ?? "8px");
     root.style.setProperty("--theme-shadow", shadowMap[theme.shadowIntensity] ?? shadowMap.md);
+
+    // Apply font size to body
+    document.body.style.fontSize = fontSizeMap[theme.fontSize] ?? "14px";
+    document.body.style.fontFamily = fontFamilyMap[theme.fontFamily] ?? fontFamilyMap.Inter;
   }, [
     theme.primaryColor,
     theme.accentColor,
@@ -55,6 +78,7 @@ export function ThemeApplier() {
     theme.fontSize,
     theme.borderRadius,
     theme.shadowIntensity,
+    theme.darkMode,
   ]);
 
   return null;

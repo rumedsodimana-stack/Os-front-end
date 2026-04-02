@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Users, DoorOpen, Key, DollarSign, TrendingUp, TrendingDown, Bed, CheckCircle2, AlertCircle } from "lucide-react";
+import { Users, DoorOpen, Key, DollarSign, TrendingUp, TrendingDown, Bed, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { cn } from "../lib/utils";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
@@ -295,25 +295,25 @@ function FrontDeskRooms() {
   const [selectedRoom, setSelectedRoom] = React.useState<string | null>(null);
 
   const floors = ["Ground", "Floor 1", "Floor 2", "Floor 3"];
-  
+
   const getRoomStatusColor = (status: RoomStatus, hkStatus: HKStatus) => {
     if (status === "Vacant" && hkStatus === "Clean") {
-      return "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800";
+      return "bg-emerald-100 border-emerald-200 text-emerald-800";
     }
     if (status === "Vacant" && hkStatus === "Dirty") {
-      return "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800";
+      return "bg-amber-100 border-amber-200 text-amber-800";
     }
     if (status === "Stay Over") {
-      return "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800";
+      return "bg-rose-100 border-rose-200 text-rose-800";
     }
     if (status === "Arrival") {
-      return "bg-violet-50 border-violet-200 dark:bg-violet-900/20 dark:border-violet-800";
+      return "bg-violet-100 border-violet-200 text-violet-800";
     }
     if (status === "Departure") {
-      return "bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800";
+      return "bg-blue-100 border-blue-200 text-blue-800";
     }
     if (status === "OOS") {
-      return "bg-gray-100 border-gray-300 dark:bg-gray-900/20 dark:border-gray-800";
+      return "bg-slate-100 border-slate-200 text-slate-800";
     }
     return "bg-card border-border";
   };
@@ -356,44 +356,79 @@ function FrontDeskRooms() {
 
   return (
     <div className="space-y-6">
-      {/* Header with stats */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-semibold text-foreground">Room Plan</h1>
+      {/* KPI Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="bg-gradient-to-r from-violet-400 to-violet-500 rounded-2xl p-6 text-white relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-white/20 rounded-xl p-3"><Bed className="w-6 h-6 text-white" /></div>
+              <span className="text-sm text-white/70">Total</span>
+            </div>
+            <div className="text-3xl font-bold">{stats.total}</div>
+            <div className="text-sm text-white/80 mt-1">Total Rooms</div>
+          </div>
+          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
         </div>
+        <div className="bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-2xl p-6 text-white relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-white/20 rounded-xl p-3"><DoorOpen className="w-6 h-6 text-white" /></div>
+              <span className="text-sm text-white/70">Clean</span>
+            </div>
+            <div className="text-3xl font-bold">{stats.available}</div>
+            <div className="text-sm text-white/80 mt-1">Available</div>
+          </div>
+          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+        </div>
+        <div className="bg-gradient-to-r from-blue-400 to-blue-500 rounded-2xl p-6 text-white relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-white/20 rounded-xl p-3"><Users className="w-6 h-6 text-white" /></div>
+              <span className="text-sm text-white/70">Rate</span>
+            </div>
+            <div className="text-3xl font-bold">{Math.round((stats.occupied / stats.total) * 100)}%</div>
+            <div className="text-sm text-white/80 mt-1">Occupancy</div>
+          </div>
+          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+        </div>
+        <div className="bg-gradient-to-r from-amber-400 to-amber-500 rounded-2xl p-6 text-white relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-white/20 rounded-xl p-3"><Key className="w-6 h-6 text-white" /></div>
+              <span className="text-sm text-white/70">Today</span>
+            </div>
+            <div className="text-3xl font-bold">{stats.arrivals}</div>
+            <div className="text-sm text-white/80 mt-1">Arrivals</div>
+          </div>
+          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+        </div>
+        <div className="bg-gradient-to-r from-rose-400 to-rose-500 rounded-2xl p-6 text-white relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-white/20 rounded-xl p-3"><TrendingDown className="w-6 h-6 text-white" /></div>
+              <span className="text-sm text-white/70">Today</span>
+            </div>
+            <div className="text-3xl font-bold">{stats.departures}</div>
+            <div className="text-sm text-white/80 mt-1">Departures</div>
+          </div>
+          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+        </div>
+      </div>
 
-        {/* Summary stats bar */}
-        <div className="grid grid-cols-5 gap-3 mb-6">
-          <div className="bg-card rounded-xl p-3 border border-border">
-            <p className="text-xs text-muted-foreground mb-1">Total Rooms</p>
-            <p className="text-lg font-bold">{stats.total}</p>
-          </div>
-          <div className="bg-card rounded-xl p-3 border border-border">
-            <p className="text-xs text-muted-foreground mb-1">Available</p>
-            <p className="text-lg font-bold">{stats.available}</p>
-          </div>
-          <div className="bg-card rounded-xl p-3 border border-border">
-            <p className="text-xs text-muted-foreground mb-1">Occupied %</p>
-            <p className="text-lg font-bold">{stats.occupiedPercent || 0}%</p>
-          </div>
-          <div className="bg-card rounded-xl p-3 border border-border">
-            <p className="text-xs text-muted-foreground mb-1">Arriving Today</p>
-            <p className="text-lg font-bold text-violet-600">{stats.arrivals}</p>
-          </div>
-          <div className="bg-card rounded-xl p-3 border border-border">
-            <p className="text-xs text-muted-foreground mb-1">Departing Today</p>
-            <p className="text-lg font-bold text-orange-600">{stats.departures}</p>
-          </div>
+      {/* Floor plan card */}
+      <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold">Room Plan</h2>
         </div>
 
         {/* Floor tabs */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 mb-5">
           {floors.map(floor => (
             <button
               key={floor}
               onClick={() => setSelectedFloor(floor)}
               className={cn(
-                "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                "px-4 py-2 rounded-xl text-sm font-medium transition-colors",
                 selectedFloor === floor
                   ? "bg-violet-600 text-white"
                   : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
@@ -403,139 +438,138 @@ function FrontDeskRooms() {
             </button>
           ))}
         </div>
+
+        {/* Status legend */}
+        <div className="flex flex-wrap gap-4 items-center text-xs mb-5">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-emerald-200 bg-emerald-100"></div>
+            <span className="text-muted-foreground">Available (Clean)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-amber-200 bg-amber-100"></div>
+            <span className="text-muted-foreground">Available (Dirty)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-rose-200 bg-rose-100"></div>
+            <span className="text-muted-foreground">Occupied</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-violet-200 bg-violet-100"></div>
+            <span className="text-muted-foreground">Arriving Today</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-blue-200 bg-blue-100"></div>
+            <span className="text-muted-foreground">Departing Today</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-slate-200 bg-slate-100"></div>
+            <span className="text-muted-foreground">Out of Service</span>
+          </div>
+        </div>
+
+        {/* Room grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+          {floorRooms.map(room => (
+            <motion.button
+              key={room.number}
+              onClick={() => setSelectedRoom(room.number)}
+              className={cn(
+                "rounded-xl border p-3 cursor-pointer hover:shadow-md transition-all text-left",
+                getRoomStatusColor(room.status, room.hkStatus),
+                selectedRoom === room.number && "ring-2 ring-violet-500"
+              )}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="text-xl font-bold mb-1">{room.number}</div>
+              <div className="text-xs opacity-70 mb-1 line-clamp-1">{room.type}</div>
+              {room.guest && <div className="text-xs font-medium mb-1 line-clamp-1">{room.guest}</div>}
+              <div className="text-xs font-medium opacity-80">{getStatusLabel(room.status, room.hkStatus)}</div>
+            </motion.button>
+          ))}
+        </div>
       </div>
 
-      {/* Status legend */}
-      <div className="flex flex-wrap gap-4 items-center text-xs">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded border-2 border-emerald-200 bg-emerald-50"></div>
-          <span className="text-muted-foreground">Available (Clean)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded border-2 border-amber-200 bg-amber-50"></div>
-          <span className="text-muted-foreground">Available (Dirty)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded border-2 border-blue-200 bg-blue-50"></div>
-          <span className="text-muted-foreground">Occupied</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded border-2 border-violet-200 bg-violet-50"></div>
-          <span className="text-muted-foreground">Arriving Today</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded border-2 border-orange-200 bg-orange-50"></div>
-          <span className="text-muted-foreground">Departing Today</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded border-2 border-gray-300 bg-gray-100"></div>
-          <span className="text-muted-foreground">Out of Service</span>
-        </div>
-      </div>
-
-      {/* Room grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-        {floorRooms.map(room => (
-          <motion.button
-            key={room.number}
-            onClick={() => setSelectedRoom(room.number)}
-            className={cn(
-              "p-4 rounded-xl border-2 text-left transition-all hover:shadow-md",
-              getRoomStatusColor(room.status, room.hkStatus),
-              selectedRoom === room.number && "ring-2 ring-violet-500"
-            )}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <div className="text-2xl font-bold mb-1">{room.number}</div>
-            <div className="text-xs text-muted-foreground mb-2 line-clamp-1">{room.type}</div>
-            {room.guest && <div className="text-xs font-medium mb-2 line-clamp-1">{room.guest}</div>}
-            <div className="text-xs font-medium text-muted-foreground">{getStatusLabel(room.status, room.hkStatus)}</div>
-          </motion.button>
-        ))}
-      </div>
-
-      {/* Room detail panel */}
+      {/* Room detail slide-out panel */}
       <AnimatePresence>
         {selectedRoomData && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setSelectedRoom(null)}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
-          >
+          <>
             <motion.div
-              initial={{ x: 400 }}
-              animate={{ x: 0 }}
-              exit={{ x: 400 }}
-              onClick={e => e.stopPropagation()}
-              className="fixed right-0 top-0 h-full w-full max-w-md bg-card rounded-l-3xl shadow-2xl border-l border-border overflow-y-auto"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedRoom(null)}
+              className="fixed inset-0 bg-black/50 z-40"
+            />
+            <motion.div
+              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+              className="fixed right-0 top-0 h-full w-96 bg-card border-l border-border shadow-2xl z-40 overflow-y-auto"
             >
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold">Room {selectedRoomData.number}</h2>
-                  <button
-                    onClick={() => setSelectedRoom(null)}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <span className="text-2xl">×</span>
-                  </button>
+              <div className="p-6 border-b border-border flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Room {selectedRoomData.number}</h2>
+                <button onClick={() => setSelectedRoom(null)} className="p-2 hover:bg-secondary rounded-xl transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="bg-secondary/30 rounded-xl p-4">
+                  <p className="text-xs text-muted-foreground mb-1">Room Type</p>
+                  <p className="font-semibold">{selectedRoomData.type}</p>
                 </div>
-
-                <div className="space-y-4">
+                <div className="bg-secondary/30 rounded-xl p-4">
+                  <p className="text-xs text-muted-foreground mb-1">Status</p>
+                  <p className="font-semibold">{getStatusLabel(selectedRoomData.status, selectedRoomData.hkStatus)}</p>
+                </div>
+                {selectedRoomData.guest && (
                   <div className="bg-secondary/30 rounded-xl p-4">
-                    <p className="text-xs text-muted-foreground mb-1">Room Type</p>
-                    <p className="font-semibold">{selectedRoomData.type}</p>
+                    <p className="text-xs text-muted-foreground mb-1">Guest Name</p>
+                    <p className="font-semibold">{selectedRoomData.guest}</p>
                   </div>
-
+                )}
+                <div className="bg-secondary/30 rounded-xl p-4">
+                  <p className="text-xs text-muted-foreground mb-1">Housekeeping Status</p>
+                  <p className="font-semibold">{selectedRoomData.hkStatus}</p>
+                </div>
+                {selectedRoomData.notes && (
                   <div className="bg-secondary/30 rounded-xl p-4">
-                    <p className="text-xs text-muted-foreground mb-1">Status</p>
-                    <p className="font-semibold">{getStatusLabel(selectedRoomData.status, selectedRoomData.hkStatus)}</p>
+                    <p className="text-xs text-muted-foreground mb-1">Notes</p>
+                    <p className="font-semibold text-orange-600">{selectedRoomData.notes}</p>
                   </div>
-
-                  {selectedRoomData.guest && (
-                    <div className="bg-secondary/30 rounded-xl p-4">
-                      <p className="text-xs text-muted-foreground mb-1">Guest Name</p>
-                      <p className="font-semibold">{selectedRoomData.guest}</p>
-                    </div>
-                  )}
-
-                  <div className="bg-secondary/30 rounded-xl p-4">
-                    <p className="text-xs text-muted-foreground mb-1">Housekeeping Status</p>
-                    <p className="font-semibold">{selectedRoomData.hkStatus}</p>
-                  </div>
-
-                  {selectedRoomData.notes && (
-                    <div className="bg-secondary/30 rounded-xl p-4">
-                      <p className="text-xs text-muted-foreground mb-1">Notes</p>
-                      <p className="font-semibold text-orange-600">{selectedRoomData.notes}</p>
-                    </div>
-                  )}
-
-                  <div className="pt-4 border-t border-border space-y-2">
-                    <button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 rounded-lg transition-colors">
-                      Check In
-                    </button>
-                    <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors">
-                      Check Out
-                    </button>
-                    <button className="w-full bg-secondary hover:bg-secondary/80 text-secondary-foreground font-medium py-2 rounded-lg transition-colors">
-                      Assign Guest
-                    </button>
-                    <button className="w-full bg-secondary hover:bg-secondary/80 text-secondary-foreground font-medium py-2 rounded-lg transition-colors">
-                      Raise Issue
-                    </button>
-                  </div>
+                )}
+                <div className="pt-4 border-t border-border space-y-2">
+                  <button className="w-full bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors">
+                    Check In
+                  </button>
+                  <button className="w-full bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors">
+                    Check Out
+                  </button>
+                  <button className="w-full bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 rounded-xl text-sm font-medium transition-colors">
+                    Assign Guest
+                  </button>
+                  <button className="w-full bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 rounded-xl text-sm font-medium transition-colors">
+                    Raise Issue
+                  </button>
                 </div>
               </div>
             </motion.div>
-          </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>
   );
 }
+
+
+const mockArrivals = [
+  { guest: "Ahmed Al-Mansouri", roomNumber: "301", roomType: "Deluxe Suite", eta: "14:00", hkStatus: "Clean", status: "Confirmed", vip: true },
+  { guest: "Sarah Johnson", roomNumber: "204", roomType: "Superior Room", eta: "15:30", hkStatus: "Clean", status: "Confirmed", vip: false },
+  { guest: "Mohammed Al-Hassan", roomNumber: "512", roomType: "Ocean View Suite", eta: "13:00", hkStatus: "Dirty", status: "Arriving Soon", vip: true },
+  { guest: "Emily Chen", roomNumber: "118", roomType: "Standard Twin", eta: "16:00", hkStatus: "Clean", status: "Confirmed", vip: false },
+  { guest: "James Wilson", roomNumber: "405", roomType: "Junior Suite", eta: "12:45", hkStatus: "Clean", status: "Checked In", vip: false },
+  { guest: "Fatima Al-Zahrawi", roomNumber: "607", roomType: "Presidential Suite", eta: "11:00", hkStatus: "Clean", status: "Checked In", vip: true },
+  { guest: "Carlos Mendez", roomNumber: "223", roomType: "Superior Double", eta: "17:00", hkStatus: "Clean", status: "Confirmed", vip: false },
+  { guest: "Aisha Rahman", roomNumber: "315", roomType: "Deluxe Room", eta: "18:30", hkStatus: "Dirty", status: "Arriving Soon", vip: false },
+];
 
 function FrontDeskArrivals() {
   const [statusFilter, setStatusFilter] = React.useState("All Arrivals");
@@ -853,104 +887,102 @@ function FrontDeskReservations() {
     }, 2000);
   };
 
+  const stepTitles = ["Search Availability", "Select Room", "Guest Details", "Confirm Booking"];
+
   const getSourceBadgeColor = (source: string) => {
     switch (source) {
-      case "Direct": return "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300";
-      case "Booking.com": return "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300";
-      case "Expedia": return "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300";
-      default: return "bg-gray-100 text-gray-700 dark:bg-gray-500/20 dark:text-gray-300";
+      case "Direct": return "bg-blue-100 text-blue-700";
+      case "Booking.com": return "bg-amber-100 text-amber-700";
+      case "Expedia": return "bg-violet-100 text-violet-700";
+      default: return "bg-secondary text-secondary-foreground";
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold text-foreground">Reservations</h1>
-          <button
-            onClick={handleNewBooking}
-            className="bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white font-medium px-6 py-2 rounded-lg transition-all"
-          >
-            New Booking
-          </button>
-        </div>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-foreground">Reservations</h1>
+        <button
+          onClick={handleNewBooking}
+          className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+        >
+          New Booking
+        </button>
+      </div>
 
-        {/* Legend & Filters */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
-          <div className="flex flex-wrap items-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Confirmed</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-amber-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Pending</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Cancelled</span>
-            </div>
+      {/* Legend & Filters */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
+        <div className="flex flex-wrap items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
+            <span className="text-sm font-medium text-muted-foreground">Confirmed</span>
           </div>
-          <select 
-            className="bg-secondary border-none rounded-lg px-3 py-2 text-sm outline-none cursor-pointer"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option>All Reservations</option>
-            <option>Confirmed</option>
-            <option>Pending</option>
-            <option>Cancelled</option>
-          </select>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-amber-400"></div>
+            <span className="text-sm font-medium text-muted-foreground">Pending</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-400"></div>
+            <span className="text-sm font-medium text-muted-foreground">Cancelled</span>
+          </div>
         </div>
+        <select
+          className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option>All Reservations</option>
+          <option>Confirmed</option>
+          <option>Pending</option>
+          <option>Cancelled</option>
+        </select>
       </div>
 
       {/* Reservations Table */}
       <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
-              <tr>
-                <th className="px-6 py-4 font-medium">Booking ID</th>
-                <th className="px-6 py-4 font-medium">Guest</th>
-                <th className="px-6 py-4 font-medium">Room Type</th>
-                <th className="px-6 py-4 font-medium">Nights</th>
-                <th className="px-6 py-4 font-medium">Check In</th>
-                <th className="px-6 py-4 font-medium">Check Out</th>
-                <th className="px-6 py-4 font-medium">Source</th>
-                <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium text-right">Amount</th>
-                <th className="px-6 py-4 font-medium text-right">Actions</th>
+        <table className="w-full">
+          <thead>
+            <tr className="bg-secondary/50">
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Booking ID</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Guest</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Room Type</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Nights</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Check In</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Check Out</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Source</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Status</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground text-right">Amount</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/50">
+            {filteredReservations.map((res, i) => (
+              <tr key={i} className="hover:bg-secondary/30 transition-colors">
+                <td className="px-4 py-3 text-sm text-muted-foreground">{res.id}</td>
+                <td className="px-4 py-3 text-sm font-medium">{res.guest}</td>
+                <td className="px-4 py-3 text-sm text-muted-foreground">{res.roomType}</td>
+                <td className="px-4 py-3 text-sm text-muted-foreground">3</td>
+                <td className="px-4 py-3 text-sm">{res.checkIn}</td>
+                <td className="px-4 py-3 text-sm">{res.checkOut}</td>
+                <td className="px-4 py-3 text-sm">
+                  <span className={cn("px-3 py-1 rounded-full text-xs font-medium", getSourceBadgeColor(res.source))}>
+                    {res.source}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-sm">
+                  <span className={cn("px-3 py-1 rounded-full text-xs font-medium", getBadgeColor(res.status))}>
+                    {res.status}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-sm text-right font-medium">{res.amount}</td>
+                <td className="px-4 py-3 text-sm text-right">
+                  <button className="text-violet-600 hover:text-violet-700 font-medium text-xs mr-3">Modify</button>
+                  <button className="text-rose-600 hover:text-rose-700 font-medium text-xs">Cancel</button>
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-border/50">
-              {filteredReservations.map((res, i) => (
-                <tr key={i} className="hover:bg-secondary/30 transition-colors">
-                  <td className="px-6 py-4 text-muted-foreground">{res.id}</td>
-                  <td className="px-6 py-4 font-medium">{res.guest}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{res.roomType}</td>
-                  <td className="px-6 py-4 text-muted-foreground">3</td>
-                  <td className="px-6 py-4">{res.checkIn}</td>
-                  <td className="px-6 py-4">{res.checkOut}</td>
-                  <td className="px-6 py-4">
-                    <span className={cn("px-3 py-1 rounded-full text-xs font-medium", getSourceBadgeColor(res.source))}>
-                      {res.source}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={cn("px-3 py-1 rounded-full text-xs font-medium", getBadgeColor(res.status))}>
-                      {res.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right font-medium">{res.amount}</td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="text-violet-600 hover:text-violet-700 font-medium text-xs mr-3">Modify</button>
-                    <button className="text-red-600 hover:text-red-700 font-medium text-xs">Cancel</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* New Booking Modal */}
@@ -961,45 +993,43 @@ function FrontDeskReservations() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowNewBooking(false)}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
           >
             <motion.div
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
               onClick={e => e.stopPropagation()}
-              className="bg-card rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto"
             >
-              <div className="p-8">
-                {!showSuccess ? (
-                  <>
-                    {/* Progress indicator */}
-                    <div className="mb-8">
-                      <div className="flex justify-between mb-4">
-                        {[1, 2, 3, 4].map(step => (
-                          <div
-                            key={step}
-                            className={cn(
-                              "h-2 flex-1 rounded-full mx-1 transition-colors",
-                              step <= bookingStep ? "bg-violet-600" : "bg-secondary"
-                            )}
-                          />
-                        ))}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Step {bookingStep} of 4: {
-                          bookingStep === 1 ? "Search" :
-                          bookingStep === 2 ? "Select Room" :
-                          bookingStep === 3 ? "Guest Details" :
-                          "Confirm Booking"
-                        }
-                      </p>
+              {!showSuccess ? (
+                <>
+                  <div className="p-6 border-b border-border flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-semibold">New Booking</h2>
+                      <p className="text-xs text-muted-foreground mt-1">Step {bookingStep} of 4: {stepTitles[bookingStep - 1]}</p>
+                    </div>
+                    <button onClick={() => setShowNewBooking(false)} className="p-2 hover:bg-secondary rounded-xl transition-colors">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <div className="p-6">
+                    {/* Progress bar */}
+                    <div className="flex gap-1 mb-6">
+                      {[1, 2, 3, 4].map(step => (
+                        <div
+                          key={step}
+                          className={cn(
+                            "h-2 flex-1 rounded-full transition-colors",
+                            step <= bookingStep ? "bg-violet-600" : "bg-secondary"
+                          )}
+                        />
+                      ))}
                     </div>
 
                     {/* Step 1: Search */}
                     {bookingStep === 1 && (
                       <div className="space-y-4">
-                        <h2 className="text-2xl font-bold mb-6">Search Availability</h2>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium mb-2">Check-In Date</label>
@@ -1007,7 +1037,7 @@ function FrontDeskReservations() {
                               type="date"
                               value={searchParams.checkIn}
                               onChange={(e) => setSearchParams({...searchParams, checkIn: e.target.value})}
-                              className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none"
+                              className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none text-sm"
                             />
                           </div>
                           <div>
@@ -1016,7 +1046,7 @@ function FrontDeskReservations() {
                               type="date"
                               value={searchParams.checkOut}
                               onChange={(e) => setSearchParams({...searchParams, checkOut: e.target.value})}
-                              className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none"
+                              className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none text-sm"
                             />
                           </div>
                           <div>
@@ -1026,7 +1056,7 @@ function FrontDeskReservations() {
                               min="1"
                               value={searchParams.adults}
                               onChange={(e) => setSearchParams({...searchParams, adults: parseInt(e.target.value)})}
-                              className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none"
+                              className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none text-sm"
                             />
                           </div>
                           <div>
@@ -1036,7 +1066,7 @@ function FrontDeskReservations() {
                               min="0"
                               value={searchParams.children}
                               onChange={(e) => setSearchParams({...searchParams, children: parseInt(e.target.value)})}
-                              className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none"
+                              className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none text-sm"
                             />
                           </div>
                         </div>
@@ -1045,7 +1075,7 @@ function FrontDeskReservations() {
                           <select
                             value={searchParams.roomType}
                             onChange={(e) => setSearchParams({...searchParams, roomType: e.target.value})}
-                            className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none cursor-pointer"
+                            className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none cursor-pointer text-sm"
                           >
                             <option>Suite</option>
                             <option>Deluxe Room</option>
@@ -1055,7 +1085,7 @@ function FrontDeskReservations() {
                         </div>
                         <button
                           onClick={handleCheckAvailability}
-                          className="w-full bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white font-medium py-3 rounded-lg mt-6 transition-all"
+                          className="w-full bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors mt-2"
                         >
                           Check Availability
                         </button>
@@ -1064,53 +1094,49 @@ function FrontDeskReservations() {
 
                     {/* Step 2: Select Room */}
                     {bookingStep === 2 && (
-                      <div className="space-y-4">
-                        <h2 className="text-2xl font-bold mb-6">Select Room</h2>
-                        <div className="space-y-3">
-                          {mockAvailableRooms.map(room => (
-                            <motion.div
-                              key={room.id}
-                              whileHover={{ scale: 1.02 }}
-                              onClick={() => handleSelectRoom(room.id)}
-                              className="bg-secondary/30 rounded-2xl p-4 border-2 border-border hover:border-violet-500 cursor-pointer transition-all"
-                            >
-                              <div className="flex justify-between items-start mb-3">
-                                <div>
-                                  <h3 className="font-bold text-lg">{room.type}</h3>
-                                  <div className="flex flex-wrap gap-2 mt-2">
-                                    {room.amenities.map(amenity => (
-                                      <span key={amenity} className="text-xs bg-card rounded-full px-2 py-1">{amenity}</span>
-                                    ))}
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <p className="text-2xl font-bold text-violet-600">${room.nightly}</p>
-                                  <p className="text-xs text-muted-foreground">per night</p>
+                      <div className="space-y-3">
+                        {mockAvailableRooms.map(room => (
+                          <motion.div
+                            key={room.id}
+                            whileHover={{ scale: 1.01 }}
+                            onClick={() => handleSelectRoom(room.id)}
+                            className="bg-card rounded-2xl shadow-sm border border-border p-4 hover:border-violet-400 cursor-pointer transition-all"
+                          >
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <h3 className="font-semibold">{room.type}</h3>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  {room.amenities.map(amenity => (
+                                    <span key={amenity} className="text-xs bg-secondary rounded-full px-2 py-1">{amenity}</span>
+                                  ))}
                                 </div>
                               </div>
-                              <div className="flex justify-between items-center">
-                                <p className="text-sm font-medium">Total: <span className="font-bold text-lg">${room.total}</span></p>
-                                <button className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-1 rounded-lg text-sm font-medium">
-                                  Select
-                                </button>
+                              <div className="text-right">
+                                <p className="text-xl font-bold text-violet-600">${room.nightly}</p>
+                                <p className="text-xs text-muted-foreground">per night</p>
                               </div>
-                            </motion.div>
-                          ))}
-                        </div>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <p className="text-sm font-medium">Total: <span className="font-bold">${room.total}</span></p>
+                              <button className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors">
+                                Select
+                              </button>
+                            </div>
+                          </motion.div>
+                        ))}
                       </div>
                     )}
 
                     {/* Step 3: Guest Details */}
                     {bookingStep === 3 && (
                       <div className="space-y-4">
-                        <h2 className="text-2xl font-bold mb-6">Guest Details</h2>
                         <div>
                           <label className="block text-sm font-medium mb-2">Full Name</label>
                           <input
                             type="text"
                             value={guestDetails.fullName}
                             onChange={(e) => setGuestDetails({...guestDetails, fullName: e.target.value})}
-                            className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none"
+                            className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none text-sm"
                             placeholder="John Doe"
                           />
                         </div>
@@ -1121,7 +1147,7 @@ function FrontDeskReservations() {
                               type="email"
                               value={guestDetails.email}
                               onChange={(e) => setGuestDetails({...guestDetails, email: e.target.value})}
-                              className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none"
+                              className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none text-sm"
                             />
                           </div>
                           <div>
@@ -1130,7 +1156,7 @@ function FrontDeskReservations() {
                               type="tel"
                               value={guestDetails.phone}
                               onChange={(e) => setGuestDetails({...guestDetails, phone: e.target.value})}
-                              className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none"
+                              className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none text-sm"
                             />
                           </div>
                         </div>
@@ -1141,7 +1167,7 @@ function FrontDeskReservations() {
                               type="text"
                               value={guestDetails.nationality}
                               onChange={(e) => setGuestDetails({...guestDetails, nationality: e.target.value})}
-                              className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none"
+                              className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none text-sm"
                             />
                           </div>
                           <div>
@@ -1149,7 +1175,7 @@ function FrontDeskReservations() {
                             <select
                               value={guestDetails.idType}
                               onChange={(e) => setGuestDetails({...guestDetails, idType: e.target.value})}
-                              className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none cursor-pointer"
+                              className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none cursor-pointer text-sm"
                             >
                               <option>Passport</option>
                               <option>Drivers License</option>
@@ -1163,7 +1189,7 @@ function FrontDeskReservations() {
                             type="text"
                             value={guestDetails.idNumber}
                             onChange={(e) => setGuestDetails({...guestDetails, idNumber: e.target.value})}
-                            className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none"
+                            className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none text-sm"
                           />
                         </div>
                         <div>
@@ -1171,14 +1197,14 @@ function FrontDeskReservations() {
                           <textarea
                             value={guestDetails.specialRequests}
                             onChange={(e) => setGuestDetails({...guestDetails, specialRequests: e.target.value})}
-                            className="w-full bg-secondary border-none rounded-lg px-4 py-2 outline-none resize-none"
+                            className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none resize-none text-sm"
                             rows={3}
                             placeholder="Any special requests..."
                           />
                         </div>
                         <button
                           onClick={handleGuestDetailsSubmit}
-                          className="w-full bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white font-medium py-3 rounded-lg mt-6 transition-all"
+                          className="w-full bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
                         >
                           Continue to Confirmation
                         </button>
@@ -1188,30 +1214,26 @@ function FrontDeskReservations() {
                     {/* Step 4: Confirm */}
                     {bookingStep === 4 && (
                       <div className="space-y-6">
-                        <h2 className="text-2xl font-bold">Confirm Booking</h2>
-
-                        {/* Summary */}
-                        <div className="bg-secondary/30 rounded-2xl p-6 space-y-3">
-                          <h3 className="font-bold text-lg mb-4">Booking Summary</h3>
-                          <div className="flex justify-between">
+                        <div className="bg-card rounded-2xl shadow-sm border border-border p-6 space-y-3">
+                          <h3 className="font-semibold text-base mb-4">Booking Summary</h3>
+                          <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Guest:</span>
                             <span className="font-medium">{guestDetails.fullName}</span>
                           </div>
-                          <div className="flex justify-between">
+                          <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Check-In:</span>
                             <span className="font-medium">{searchParams.checkIn}</span>
                           </div>
-                          <div className="flex justify-between">
+                          <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Check-Out:</span>
                             <span className="font-medium">{searchParams.checkOut}</span>
                           </div>
-                          <div className="flex justify-between pt-3 border-t border-border">
+                          <div className="flex justify-between pt-3 border-t border-border text-sm">
                             <span className="text-muted-foreground">Total:</span>
-                            <span className="font-bold text-lg">$750</span>
+                            <span className="font-bold text-base">$750</span>
                           </div>
                         </div>
 
-                        {/* Payment Method */}
                         <div>
                           <label className="block text-sm font-medium mb-3">Payment Method</label>
                           <div className="grid grid-cols-2 gap-2">
@@ -1220,9 +1242,9 @@ function FrontDeskReservations() {
                                 key={method}
                                 onClick={() => setPaymentMethod(method)}
                                 className={cn(
-                                  "p-3 rounded-lg border-2 transition-all text-sm font-medium",
+                                  "p-3 rounded-xl border-2 transition-all text-sm font-medium",
                                   paymentMethod === method
-                                    ? "border-violet-600 bg-violet-50 dark:bg-violet-900/20 text-violet-600"
+                                    ? "border-violet-600 bg-violet-50 text-violet-600"
                                     : "border-border bg-secondary/30 text-muted-foreground hover:border-violet-300"
                                 )}
                               >
@@ -1234,41 +1256,31 @@ function FrontDeskReservations() {
 
                         <button
                           onClick={handleConfirmBooking}
-                          className="w-full bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white font-bold py-3 rounded-lg transition-all text-lg"
+                          className="w-full bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
                         >
                           Confirm Booking
                         </button>
                       </div>
                     )}
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center"
-                    >
-                      <svg className="w-8 h-8 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </motion.div>
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground mb-2">Booking Confirmed</p>
-                      <p className="text-2xl font-bold">{bookingNumber}</p>
-                    </div>
                   </div>
-                )}
-
-                {/* Close button */}
-                {!showSuccess && (
-                  <button
-                    onClick={() => setShowNewBooking(false)}
-                    className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center"
                   >
-                    <span className="text-2xl">×</span>
-                  </button>
-                )}
-              </div>
+                    <svg className="w-8 h-8 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </motion.div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mb-2">Booking Confirmed</p>
+                    <p className="text-2xl font-bold">{bookingNumber}</p>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}

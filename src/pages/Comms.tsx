@@ -11,7 +11,7 @@ import {
   CheckCircle2, AlertCircle, Clock, Star, Users,
   ChevronRight, Plus, Edit2, Trash2, Download,
   Archive, Filter, Mic2, MapPin, BookOpen, Radio,
-  Megaphone, Smartphone, BellRing, Eye, RefreshCw
+  Megaphone, Smartphone, BellRing, Eye, RefreshCw, FileText
 } from "lucide-react";
 
 interface CommsProps {

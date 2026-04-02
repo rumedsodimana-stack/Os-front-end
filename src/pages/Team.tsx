@@ -1808,11 +1808,11 @@ function HireWizardView() {
   });
 
   const pipelineColumns = [
-    { name: "Applications", count: 8, color: "from-blue-400 to-blue-500" },
-    { name: "Phone Screen", count: 5, color: "from-cyan-400 to-cyan-500" },
-    { name: "Interview", count: 3, color: "from-purple-400 to-purple-500" },
-    { name: "Offer", count: 2, color: "from-green-400 to-green-500" },
-    { name: "Hired", count: 1, color: "from-emerald-400 to-emerald-500" },
+    { name: "Applications", count: 8 },
+    { name: "Phone Screen", count: 5 },
+    { name: "Interview", count: 3 },
+    { name: "Offer", count: 2 },
+    { name: "Hired", count: 1 },
   ];
 
   const recentHires = [
@@ -1841,7 +1841,7 @@ function HireWizardView() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setShowPostForm(!showPostForm)}
-          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 text-sm font-medium text-white hover:shadow-lg transition-shadow"
+          className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
         >
           <Plus size={16} />
           Post New Role
@@ -1852,7 +1852,7 @@ function HireWizardView() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl bg-card border border-border p-6"
+          className="bg-card rounded-2xl shadow-sm border border-border p-6"
         >
           <h3 className="font-semibold text-foreground mb-4">Post New Job Opening</h3>
           <div className="grid grid-cols-2 gap-4">
@@ -1861,19 +1861,19 @@ function HireWizardView() {
               placeholder="Job Title"
               value={newRole.title}
               onChange={(e) => setNewRole({ ...newRole, title: e.target.value })}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground"
+              className="rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
             />
             <input
               type="text"
               placeholder="Department"
               value={newRole.department}
               onChange={(e) => setNewRole({ ...newRole, department: e.target.value })}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground"
+              className="rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
             />
             <select
               value={newRole.type}
               onChange={(e) => setNewRole({ ...newRole, type: e.target.value })}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+              className="rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground"
             >
               <option>Full-time</option>
               <option>Part-time</option>
@@ -1884,13 +1884,13 @@ function HireWizardView() {
               placeholder="Salary Range"
               value={newRole.salaryMin}
               onChange={(e) => setNewRole({ ...newRole, salaryMin: e.target.value })}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground"
+              className="rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
             />
             <input
               type="date"
               value={newRole.startDate}
               onChange={(e) => setNewRole({ ...newRole, startDate: e.target.value })}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground col-span-2"
+              className="rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground col-span-2"
             />
           </div>
           <div className="flex gap-2 mt-4">
@@ -1898,13 +1898,13 @@ function HireWizardView() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handlePostRole}
-              className="rounded-lg bg-gradient-to-r from-green-500 to-green-600 px-4 py-2 text-sm font-medium text-white hover:shadow-lg transition-shadow"
+              className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
             >
               Post Role
             </motion.button>
             <button
               onClick={() => setShowPostForm(false)}
-              className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+              className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary transition-colors"
             >
               Cancel
             </button>
@@ -1914,54 +1914,48 @@ function HireWizardView() {
 
       <div className="grid grid-cols-5 gap-4">
         {pipelineColumns.map((col) => (
-          <div key={col.name} className="space-y-3">
-            <div className={`bg-gradient-to-r ${col.color} rounded-lg p-4 text-white shadow-sm`}>
-              <p className="text-sm font-semibold">{col.name}</p>
-              <p className="text-2xl font-bold">{col.count}</p>
+          <div key={col.name} className="bg-secondary/30 rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium text-sm text-foreground">{col.name}</h4>
+              <span className="bg-violet-100 text-violet-700 text-xs px-2 py-0.5 rounded-full">{col.count}</span>
             </div>
             <div className="space-y-2">
               {col.count > 0 && (
-                <>
-                  <motion.div
-                    whileHover={{ y: -2 }}
-                    className="rounded-lg bg-card border border-border p-3 cursor-pointer hover:shadow-md transition-shadow"
-                  >
-                    <p className="font-medium text-sm text-foreground">Alice Brown</p>
-                    <p className="text-xs text-muted-foreground">Senior Chef</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-xs text-muted-foreground">5 days</span>
-                      <span className="text-xs font-semibold text-green-600">85/100</span>
-                    </div>
-                  </motion.div>
-                </>
+                <div className="bg-card rounded-xl border border-border p-3 shadow-sm cursor-pointer hover:shadow-md transition-shadow">
+                  <p className="text-sm font-medium">Alice Brown</p>
+                  <p className="text-xs text-muted-foreground">Senior Chef</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs text-muted-foreground">5 days</span>
+                    <span className="text-xs font-semibold text-emerald-600">85/100</span>
+                  </div>
+                </div>
               )}
             </div>
           </div>
         ))}
       </div>
 
-      <div className="rounded-2xl bg-card border border-border overflow-hidden">
-        <div className="bg-secondary/50 px-6 py-3 border-b border-border">
-          <h3 className="font-semibold text-foreground">Recent Hires</h3>
-        </div>
-        <table className="w-full text-sm">
-          <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
-            <tr>
-              <th className="text-left px-6 py-3 font-semibold">Name</th>
-              <th className="text-left px-6 py-3 font-semibold">Role</th>
-              <th className="text-left px-6 py-3 font-semibold">Department</th>
-              <th className="text-left px-6 py-3 font-semibold">Start Date</th>
-              <th className="text-left px-6 py-3 font-semibold">Status</th>
+      <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-secondary/50">
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Name</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Role</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Department</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Start Date</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-y divide-border/50">
             {recentHires.map((hire) => (
-              <tr key={hire.name} className="hover:bg-secondary/30">
-                <td className="px-6 py-3 text-foreground">{hire.name}</td>
-                <td className="px-6 py-3 text-muted-foreground">{hire.role}</td>
-                <td className="px-6 py-3 text-muted-foreground">{hire.department}</td>
-                <td className="px-6 py-3 text-muted-foreground">{hire.startDate}</td>
-                <td className="px-6 py-3"><span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300">{hire.status}</span></td>
+              <tr key={hire.name} className="hover:bg-secondary/30 transition-colors">
+                <td className="px-4 py-3 text-sm font-medium text-foreground">{hire.name}</td>
+                <td className="px-4 py-3 text-sm text-muted-foreground">{hire.role}</td>
+                <td className="px-4 py-3 text-sm text-muted-foreground">{hire.department}</td>
+                <td className="px-4 py-3 text-sm text-muted-foreground">{hire.startDate}</td>
+                <td className="px-4 py-3 text-sm">
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">{hire.status}</span>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -2010,11 +2004,6 @@ function OffboardingView() {
     },
   ];
 
-  const stats = [
-    { label: "Active Offboardings", value: "2", icon: AlertTriangle, color: "from-amber-400 to-amber-500" },
-    { label: "Completed This Month", value: "4", icon: CheckCircle2, color: "from-green-400 to-green-500" },
-  ];
-
   const handleStartOffboard = () => {
     if (newOffboard.name && newOffboard.lastDay) {
       setShowStartForm(false);
@@ -2033,7 +2022,7 @@ function OffboardingView() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setShowStartForm(!showStartForm)}
-          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 text-sm font-medium text-white hover:shadow-lg transition-shadow"
+          className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
         >
           <Plus size={16} />
           Start Offboarding
@@ -2041,34 +2030,35 @@ function OffboardingView() {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`bg-gradient-to-r ${stat.color} rounded-2xl p-6 text-white shadow-sm`}
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm opacity-90">{stat.label}</p>
-                  <p className="text-3xl font-bold mt-2">{stat.value}</p>
-                </div>
-                <div className="bg-white/20 rounded-lg p-2.5">
-                  <Icon size={20} />
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
+        <div className="bg-gradient-to-r from-amber-400 to-amber-500 rounded-2xl p-6 text-white relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-white/20 rounded-xl p-3"><AlertTriangle className="w-6 h-6 text-white" /></div>
+              <span className="text-sm text-white/70">offboarding</span>
+            </div>
+            <div className="text-3xl font-bold">2</div>
+            <div className="text-sm text-white/80 mt-1">Active Offboardings</div>
+          </div>
+          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+        </div>
+        <div className="bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-2xl p-6 text-white relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-white/20 rounded-xl p-3"><CheckCircle2 className="w-6 h-6 text-white" /></div>
+              <span className="text-sm text-white/70">this month</span>
+            </div>
+            <div className="text-3xl font-bold">4</div>
+            <div className="text-sm text-white/80 mt-1">Completed This Month</div>
+          </div>
+          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+        </div>
       </div>
 
       {showStartForm && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl bg-card border border-border p-6"
+          className="bg-card rounded-2xl shadow-sm border border-border p-6"
         >
           <h3 className="font-semibold text-foreground mb-4">Start New Offboarding</h3>
           <div className="space-y-4">
@@ -2077,20 +2067,20 @@ function OffboardingView() {
               placeholder="Staff Name"
               value={newOffboard.name}
               onChange={(e) => setNewOffboard({ ...newOffboard, name: e.target.value })}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground"
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
             />
             <div className="flex gap-2">
               <input
                 type="date"
                 value={newOffboard.lastDay}
                 onChange={(e) => setNewOffboard({ ...newOffboard, lastDay: e.target.value })}
-                className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground"
               />
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleStartOffboard}
-                className="rounded-lg bg-gradient-to-r from-green-500 to-green-600 px-6 py-2 text-sm font-medium text-white hover:shadow-lg transition-shadow"
+                className="bg-violet-600 hover:bg-violet-700 text-white px-6 py-2 rounded-xl text-sm font-medium transition-colors"
               >
                 Start
               </motion.button>
@@ -2105,7 +2095,7 @@ function OffboardingView() {
             key={offboard.id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl bg-card border border-border p-6"
+            className="bg-card rounded-2xl shadow-sm border border-border p-6"
           >
             <div className="flex items-start justify-between mb-4">
               <div>
@@ -2119,19 +2109,16 @@ function OffboardingView() {
                 initial={{ width: 0 }}
                 animate={{ width: `${offboard.progress}%` }}
                 transition={{ duration: 0.8 }}
-                className="h-full bg-gradient-to-r from-blue-500 to-blue-600"
+                className="h-full bg-gradient-to-r from-violet-400 to-violet-500"
               />
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="space-y-2">
               {offboard.checklist.map((item) => (
-                <div key={item.item} className="flex items-center gap-2">
-                  <div className={cn(
-                    "w-5 h-5 rounded border flex items-center justify-center",
-                    item.done ? "bg-green-500 border-green-500" : "border-border"
-                  )}>
-                    {item.done && <CheckCircle2 size={16} className="text-white" />}
+                <div key={item.item} className={cn("flex items-center gap-3 p-3 bg-secondary/30 rounded-xl hover:bg-secondary/50 transition-colors cursor-pointer")}>
+                  <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center", item.done ? "bg-emerald-500 border-emerald-500" : "border-border")}>
+                    {item.done && <CheckCircle2 className="w-3 h-3 text-white" />}
                   </div>
-                  <span className="text-xs text-muted-foreground">{item.item}</span>
+                  <span className={cn("text-sm", item.done && "line-through text-muted-foreground")}>{item.item}</span>
                 </div>
               ))}
             </div>
@@ -2148,10 +2135,10 @@ function TimeClockView() {
   const [selectedDept, setSelectedDept] = React.useState("All");
 
   const todayStats = [
-    { label: "Clocked In Now", value: "32", icon: Clock, color: "from-green-400 to-green-500" },
-    { label: "Late Today", value: "3", icon: AlertTriangle, color: "from-amber-400 to-amber-500" },
-    { label: "Absent", value: "2", icon: UserX, color: "from-red-400 to-red-500" },
-    { label: "On Leave", value: "4", icon: Heart, color: "from-purple-400 to-purple-500" },
+    { label: "Clocked In Now", value: "32", icon: Clock, gradient: "from-emerald-400 to-emerald-500", sub: "active staff" },
+    { label: "Late Today", value: "3", icon: AlertTriangle, gradient: "from-amber-400 to-amber-500", sub: "arrived late" },
+    { label: "Absent", value: "2", icon: UserX, gradient: "from-rose-400 to-rose-500", sub: "not checked in" },
+    { label: "On Leave", value: "4", icon: Heart, gradient: "from-violet-400 to-violet-500", sub: "approved leave" },
   ];
 
   const attendanceData = [
@@ -2169,15 +2156,14 @@ function TimeClockView() {
     { name: "Nicole Adams", dept: "F&B", clockIn: "08:00", clockOut: "16:15", hours: "8.25h", status: "Present" },
   ];
 
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case "Present": return "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300";
-      case "Late": return "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300";
-      case "Absent": return "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300";
-      case "On Leave": return "bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300";
-      default: return "bg-gray-100 text-gray-700 dark:bg-gray-950/40 dark:text-gray-300";
-    }
+  const statusBadge: Record<string, string> = {
+    Present: "bg-emerald-100 text-emerald-700",
+    Late: "bg-amber-100 text-amber-700",
+    Absent: "bg-rose-100 text-rose-700",
+    "On Leave": "bg-violet-100 text-violet-700",
   };
+
+  const filtered = selectedDept === "All" ? attendanceData : attendanceData.filter((r) => r.dept === selectedDept);
 
   return (
     <div className="space-y-6">
@@ -2189,7 +2175,7 @@ function TimeClockView() {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 text-sm font-medium text-white hover:shadow-lg transition-shadow"
+          className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
         >
           <Download size={16} />
           Export
@@ -2200,28 +2186,27 @@ function TimeClockView() {
         {todayStats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`bg-gradient-to-r ${stat.color} rounded-2xl p-4 text-white shadow-sm`}
-            >
-              <p className="text-sm opacity-90">{stat.label}</p>
-              <p className="text-3xl font-bold mt-2">{stat.value}</p>
-              <div className="bg-white/20 rounded-lg p-1.5 w-fit mt-3">
-                <Icon size={16} />
+            <div key={stat.label} className={`bg-gradient-to-r ${stat.gradient} rounded-2xl p-6 text-white relative overflow-hidden`}>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="bg-white/20 rounded-xl p-3"><Icon className="w-6 h-6 text-white" /></div>
+                  <span className="text-sm text-white/70">{stat.sub}</span>
+                </div>
+                <div className="text-3xl font-bold">{stat.value}</div>
+                <div className="text-sm text-white/80 mt-1">{stat.label}</div>
               </div>
-            </motion.div>
+              <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+            </div>
           );
         })}
       </div>
 
-      <div className="flex items-center gap-4">
-        <label className="text-sm text-muted-foreground">Filter by Department:</label>
+      <div className="bg-card rounded-2xl shadow-sm border border-border p-4 flex flex-wrap items-center gap-3">
+        <label className="text-sm text-muted-foreground">Department:</label>
         <select
           value={selectedDept}
           onChange={(e) => setSelectedDept(e.target.value)}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+          className="rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none"
         >
           <option>All</option>
           <option>Front Office</option>
@@ -2235,37 +2220,34 @@ function TimeClockView() {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="ml-auto rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+          className="ml-auto rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary transition-colors"
         >
           Manual Adjustment
         </motion.button>
       </div>
 
-      <div className="rounded-2xl bg-card border border-border overflow-hidden">
-        <div className="bg-secondary/50 px-6 py-3 border-b border-border">
-          <h3 className="font-semibold text-foreground">Attendance Log</h3>
-        </div>
-        <table className="w-full text-sm">
-          <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
-            <tr>
-              <th className="text-left px-6 py-3 font-semibold">Name</th>
-              <th className="text-left px-6 py-3 font-semibold">Department</th>
-              <th className="text-left px-6 py-3 font-semibold">Clock In</th>
-              <th className="text-left px-6 py-3 font-semibold">Clock Out</th>
-              <th className="text-left px-6 py-3 font-semibold">Hours</th>
-              <th className="text-left px-6 py-3 font-semibold">Status</th>
+      <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-secondary/50">
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Name</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Department</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Clock In</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Clock Out</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Hours</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
-            {attendanceData.map((record) => (
-              <tr key={record.name} className="hover:bg-secondary/30">
-                <td className="px-6 py-3 text-foreground font-medium">{record.name}</td>
-                <td className="px-6 py-3 text-muted-foreground">{record.dept}</td>
-                <td className="px-6 py-3 text-muted-foreground">{record.clockIn || "—"}</td>
-                <td className="px-6 py-3 text-muted-foreground">{record.clockOut || "—"}</td>
-                <td className="px-6 py-3 text-muted-foreground">{record.hours}</td>
-                <td className="px-6 py-3">
-                  <span className={cn("inline-block px-2 py-1 rounded-full text-xs font-medium", getStatusBadgeColor(record.status))}>
+          <tbody className="divide-y divide-border/50">
+            {filtered.map((record) => (
+              <tr key={record.name} className="hover:bg-secondary/30 transition-colors">
+                <td className="px-4 py-3 text-sm font-medium text-foreground">{record.name}</td>
+                <td className="px-4 py-3 text-sm text-muted-foreground">{record.dept}</td>
+                <td className="px-4 py-3 text-sm text-muted-foreground">{record.clockIn || "—"}</td>
+                <td className="px-4 py-3 text-sm text-muted-foreground">{record.clockOut || "—"}</td>
+                <td className="px-4 py-3 text-sm text-muted-foreground">{record.hours}</td>
+                <td className="px-4 py-3 text-sm">
+                  <span className={cn("px-2 py-1 rounded-full text-xs font-medium", statusBadge[record.status] ?? "bg-secondary text-muted-foreground")}>
                     {record.status}
                   </span>
                 </td>
@@ -2291,33 +2273,9 @@ function TransferView() {
   });
 
   const activeTransfers = [
-    {
-      id: 1,
-      name: "Marcus Johnson",
-      fromDept: "Front Office",
-      toDept: "Guest Services",
-      requestedBy: "Sarah Williams",
-      date: "2026-03-28",
-      status: "Pending",
-    },
-    {
-      id: 2,
-      name: "Elena Rodriguez",
-      fromDept: "Housekeeping",
-      toDept: "F&B",
-      requestedBy: "James Murphy",
-      date: "2026-03-25",
-      status: "Approved",
-    },
-    {
-      id: 3,
-      name: "David Chen",
-      fromDept: "F&B",
-      toDept: "Operations",
-      requestedBy: "Lisa Park",
-      date: "2026-03-20",
-      status: "Pending",
-    },
+    { id: 1, name: "Marcus Johnson", fromDept: "Front Office", toDept: "Guest Services", requestedBy: "Sarah Williams", date: "2026-03-28", status: "Pending" },
+    { id: 2, name: "Elena Rodriguez", fromDept: "Housekeeping", toDept: "F&B", requestedBy: "James Murphy", date: "2026-03-25", status: "Approved" },
+    { id: 3, name: "David Chen", fromDept: "F&B", toDept: "Operations", requestedBy: "Lisa Park", date: "2026-03-20", status: "Pending" },
   ];
 
   const completedTransfers = [
@@ -2328,13 +2286,10 @@ function TransferView() {
     { name: "Rachel Green", from: "Front Office", to: "Admin", date: "2026-02-20" },
   ];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Pending": return "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300";
-      case "Approved": return "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300";
-      case "Rejected": return "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300";
-      default: return "bg-gray-100 text-gray-700";
-    }
+  const statusBadge: Record<string, string> = {
+    Pending: "bg-amber-100 text-amber-700",
+    Approved: "bg-emerald-100 text-emerald-700",
+    Rejected: "bg-rose-100 text-rose-700",
   };
 
   const handleRequestTransfer = () => {
@@ -2355,7 +2310,7 @@ function TransferView() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setShowRequestForm(!showRequestForm)}
-          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 text-sm font-medium text-white hover:shadow-lg transition-shadow"
+          className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
         >
           <Plus size={16} />
           Request Transfer
@@ -2366,7 +2321,7 @@ function TransferView() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl bg-card border border-border p-6"
+          className="bg-card rounded-2xl shadow-sm border border-border p-6"
         >
           <h3 className="font-semibold text-foreground mb-4">Request Staff Transfer</h3>
           <div className="space-y-4">
@@ -2375,7 +2330,7 @@ function TransferView() {
               placeholder="Select Staff"
               value={newTransfer.staff}
               onChange={(e) => setNewTransfer({ ...newTransfer, staff: e.target.value })}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground"
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
             />
             <div className="grid grid-cols-2 gap-4">
               <input
@@ -2383,12 +2338,12 @@ function TransferView() {
                 placeholder="From (auto-filled)"
                 value={newTransfer.fromDept}
                 disabled
-                className="rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-muted-foreground"
+                className="rounded-xl border border-border bg-secondary px-3 py-2 text-sm text-muted-foreground"
               />
               <select
                 value={newTransfer.toDept}
                 onChange={(e) => setNewTransfer({ ...newTransfer, toDept: e.target.value })}
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                className="rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground"
               >
                 <option value="">Select Department</option>
                 <option>Front Office</option>
@@ -2405,26 +2360,26 @@ function TransferView() {
               type="date"
               value={newTransfer.effectiveDate}
               onChange={(e) => setNewTransfer({ ...newTransfer, effectiveDate: e.target.value })}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground"
             />
             <textarea
               placeholder="Reason for transfer"
               value={newTransfer.reason}
               onChange={(e) => setNewTransfer({ ...newTransfer, reason: e.target.value })}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground resize-none h-20"
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground resize-none h-20"
             />
             <div className="flex gap-2">
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleRequestTransfer}
-                className="rounded-lg bg-gradient-to-r from-green-500 to-green-600 px-6 py-2 text-sm font-medium text-white hover:shadow-lg transition-shadow"
+                className="bg-violet-600 hover:bg-violet-700 text-white px-6 py-2 rounded-xl text-sm font-medium transition-colors"
               >
                 Submit Request
               </motion.button>
               <button
                 onClick={() => setShowRequestForm(false)}
-                className="rounded-lg border border-border px-6 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+                className="rounded-xl border border-border px-6 py-2 text-sm font-medium text-foreground hover:bg-secondary transition-colors"
               >
                 Cancel
               </button>
@@ -2434,40 +2389,37 @@ function TransferView() {
       )}
 
       <div className="space-y-4">
-        <div className="rounded-2xl bg-card border border-border overflow-hidden">
-          <div className="bg-secondary/50 px-6 py-3 border-b border-border">
-            <h3 className="font-semibold text-foreground">Active Transfer Requests</h3>
-          </div>
-          <table className="w-full text-sm">
-            <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
-              <tr>
-                <th className="text-left px-6 py-3 font-semibold">Staff Name</th>
-                <th className="text-left px-6 py-3 font-semibold">From</th>
-                <th className="text-left px-6 py-3 font-semibold">To</th>
-                <th className="text-left px-6 py-3 font-semibold">Requested By</th>
-                <th className="text-left px-6 py-3 font-semibold">Date</th>
-                <th className="text-left px-6 py-3 font-semibold">Status</th>
-                <th className="text-left px-6 py-3 font-semibold">Actions</th>
+        <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-secondary/50">
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Staff Name</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">From</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">To</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Requested By</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Date</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Status</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-border/50">
               {activeTransfers.map((transfer) => (
-                <tr key={transfer.id} className="hover:bg-secondary/30">
-                  <td className="px-6 py-3 text-foreground font-medium">{transfer.name}</td>
-                  <td className="px-6 py-3 text-muted-foreground">{transfer.fromDept}</td>
-                  <td className="px-6 py-3 text-muted-foreground">{transfer.toDept}</td>
-                  <td className="px-6 py-3 text-muted-foreground">{transfer.requestedBy}</td>
-                  <td className="px-6 py-3 text-muted-foreground">{transfer.date}</td>
-                  <td className="px-6 py-3">
-                    <span className={cn("inline-block px-2 py-1 rounded-full text-xs font-medium", getStatusColor(transfer.status))}>
+                <tr key={transfer.id} className="hover:bg-secondary/30 transition-colors">
+                  <td className="px-4 py-3 text-sm font-medium text-foreground">{transfer.name}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{transfer.fromDept}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{transfer.toDept}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{transfer.requestedBy}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{transfer.date}</td>
+                  <td className="px-4 py-3 text-sm">
+                    <span className={cn("px-2 py-1 rounded-full text-xs font-medium", statusBadge[transfer.status] ?? "bg-secondary text-muted-foreground")}>
                       {transfer.status}
                     </span>
                   </td>
-                  <td className="px-6 py-3 text-sm">
+                  <td className="px-4 py-3 text-sm">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                      className="text-violet-600 hover:underline font-medium"
                     >
                       Review
                     </motion.button>
@@ -2478,16 +2430,16 @@ function TransferView() {
           </table>
         </div>
 
-        <div className="rounded-2xl bg-card border border-border p-6">
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
           <h3 className="font-semibold text-foreground mb-4">Completed Transfers This Month</h3>
           <div className="space-y-2">
             {completedTransfers.map((transfer, idx) => (
-              <div key={idx} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0 opacity-60">
+              <div key={idx} className="flex items-center justify-between p-3 bg-secondary/30 rounded-xl hover:bg-secondary/50 transition-colors">
                 <div>
-                  <p className="text-sm font-medium text-foreground line-through">{transfer.name}</p>
+                  <p className="text-sm font-medium text-foreground">{transfer.name}</p>
                   <p className="text-xs text-muted-foreground">{transfer.from} → {transfer.to}</p>
                 </div>
-                <span className="text-xs text-muted-foreground">{transfer.date}</span>
+                <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">{transfer.date}</span>
               </div>
             ))}
           </div>
