@@ -397,8 +397,6 @@ function FNBReports() {
         <SectionHeader title="F&B Reports" />
         <span className="text-sm text-muted-foreground">Today · {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</span>
       </div>
-      {/* KPI cards */}
-      <KpiStrip items={[{color:"bg-blue-500",value:totals.covers,label:"Total Covers"},{color:"bg-amber-500",value:totals.voids,label:"Voided Items"}]} />
       {/* Outlet breakdown */}
       <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
         <div className="px-6 py-4 border-b border-border font-semibold text-foreground">Outlet Breakdown</div>
@@ -1269,12 +1267,6 @@ function KitchenDisplay() {
         })}
       </div>
 
-      <KpiStrip items={[
-        { color: "bg-blue-500", value: "12m", label: "Avg Ticket Time" },
-        { color: "bg-emerald-500", value: "47", label: "Orders Today" },
-        { color: "bg-amber-500", value: "5", label: "Pending Orders" },
-        { color: "bg-rose-500", value: "2", label: "Rush Orders" },
-      ]} />
     </div>
   );
 }

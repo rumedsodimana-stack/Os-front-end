@@ -2101,13 +2101,6 @@ function TimeClockView() {
       ]} />}
     >
 
-      <KpiStrip items={[
-        {color:"bg-emerald-500",value:"32",label:"Clocked In Now"},
-        {color:"bg-amber-500",value:"3",label:"Late Today"},
-        {color:"bg-rose-500",value:"2",label:"Absent"},
-        {color:"bg-violet-500",value:"4",label:"On Leave"},
-      ]} />
-
       <div className="bg-card rounded-2xl shadow-sm border border-border p-4 flex flex-wrap items-center gap-3">
         <label className="text-sm text-muted-foreground">Department:</label>
         <select

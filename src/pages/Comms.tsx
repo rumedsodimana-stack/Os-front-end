@@ -328,10 +328,6 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
             {/* Filters */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-4">
               <div className="flex flex-wrap gap-3">
-                <div className="relative flex-1 min-w-[200px]">
-                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <input value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2 bg-secondary/50 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Search guest, room, request..." />
-                </div>
                 <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="px-3 py-2 bg-secondary/50 border border-border rounded-xl text-sm text-foreground focus:outline-none">
                   {["All", "Open", "In Progress", "Resolved", "Escalated", "Closed"].map(s => <option key={s}>{s}</option>)}
                 </select>
@@ -632,12 +628,6 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[600px]">
               {/* Message list */}
               <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden flex flex-col">
-                <div className="p-4 border-b border-border">
-                  <div className="relative">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input className="w-full pl-9 pr-4 py-2 bg-secondary/50 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Search messages..." />
-                  </div>
-                </div>
                 <div className="flex-1 overflow-y-auto divide-y divide-border/50">
                   {internalMessages.map(msg => (
                     <div key={msg.id} className={cn("p-4 cursor-pointer hover:bg-secondary/30 transition-colors", selectedMessage?.id === msg.id && "bg-secondary/50", !msg.read && "bg-purple-50/50")} onClick={() => setSelectedMessage(msg)}>

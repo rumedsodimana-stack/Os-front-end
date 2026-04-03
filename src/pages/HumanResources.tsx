@@ -825,8 +825,6 @@ const AttendanceView = () => {
       exit={{ opacity: 0, y: -8 }}
       className="space-y-4"
     >
-      <KpiStrip items={[{color:"bg-emerald-500",value:todayStats.present,label:"Present Today"},{color:"bg-amber-500",value:todayStats.late,label:"Late Today"},{color:"bg-red-500",value:todayStats.absent,label:"Absent Today"}]} />
-
       <FilterBar>
         <SelectFilter value={dateFilter} onChange={setDateFilter} options={dates} />
         <SelectFilter value={deptFilter} onChange={setDeptFilter} options={depts} />
@@ -1042,8 +1040,6 @@ const PayrollView = () => {
         />
       </div>
 
-      <KpiStrip items={[{color:"bg-indigo-500",value:fmt(totalPayroll),label:"Total Payroll"},{color:"bg-emerald-500",value:fmt(totalPaid),label:"Total Paid"},{color:"bg-amber-500",value:fmt(totalPending),label:"Pending"}]} />
-
       <SectionCard>
         <TableWrap>
           <thead>
@@ -1129,8 +1125,6 @@ const LeaveManagementView = () => {
       exit={{ opacity: 0, y: -8 }}
       className="space-y-4"
     >
-      <KpiStrip items={[{color:"bg-amber-500",value:pendingCount,label:"Pending Requests"},{color:"bg-blue-500",value:annualAvgDays+"d",label:"Avg Annual Leave"},{color:"bg-emerald-500",value:approvedCount,label:"Approved This Cycle"},{color:"bg-violet-500",value:totalDaysTaken,label:"Total Days Approved"}]} />
-
       <FilterBar>
         <SelectFilter
           value={statusFilter}
@@ -1223,8 +1217,6 @@ const TrainingView = () => {
       exit={{ opacity: 0, y: -8 }}
       className="space-y-4"
     >
-      <KpiStrip items={[{color:"bg-red-500",value:expiredCount,label:"Expired Certs"},{color:"bg-amber-500",value:dueSoonCount,label:"Due Soon"},{color:"bg-slate-500",value:notCompletedCount,label:"Not Completed"}]} />
-
       <FilterBar>
         <SelectFilter
           value={statusFilter}

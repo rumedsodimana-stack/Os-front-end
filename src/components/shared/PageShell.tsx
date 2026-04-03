@@ -27,12 +27,12 @@ interface PageShellProps {
 
 export function PageShell({ search, header, kpi, legend, children }: PageShellProps) {
   return (
-    <div className="flex flex-col h-full p-6">
-      {search && <div className="shrink-0 mb-3">{search}</div>}
-      {header && <div className="shrink-0 mb-3">{header}</div>}
-      {kpi && <div className="shrink-0 mb-3">{kpi}</div>}
-      {legend && <div className="shrink-0 mb-3">{legend}</div>}
-      {children && <div className="flex-1 min-h-0 overflow-y-auto">{children}</div>}
+    <div className="flex flex-col gap-3 p-6">
+      {search && <div className="shrink-0">{search}</div>}
+      {header && <div className="shrink-0">{header}</div>}
+      {kpi && <div className="shrink-0">{kpi}</div>}
+      {legend && <div className="shrink-0">{legend}</div>}
+      {children && <div>{children}</div>}
     </div>
   );
 }

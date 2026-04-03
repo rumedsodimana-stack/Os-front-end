@@ -1536,9 +1536,6 @@ function OverviewView() {
 
   return (
     <div className="space-y-6">
-            <KpiStrip items={[{color:"bg-indigo-500",value:workOrdersData.filter((w) => w.status === "Open").length,label:"Open Work Orders"},{color:"bg-blue-500",value:workOrdersData.filter((w) => w.status === "In Progress").length,label:"In Progress"},{color:"bg-emerald-500",value:workOrdersData.filter((w) => w.status === "Completed" && w.created === "2026-04-02").length,label:"Completed Today"},{color:"bg-rose-500",value:pmData.filter((p) => p.status === "Overdue").length,label:"PM Overdue"}]} />
-
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
           <SectionHeader title="Work Orders by Category" />
@@ -1694,9 +1691,6 @@ function WorkOrdersView() {
 function PMView() {
   return (
     <div className="space-y-6">
-            <KpiStrip items={[{color:"bg-blue-500",value:pmData.filter((p) => p.status === "Upcoming").length,label:"Upcoming PM"},{color:"bg-rose-500",value:pmData.filter((p) => p.status === "Overdue").length,label:"Overdue PM"},{color:"bg-emerald-500",value:pmData.length,label:"Total Scheduled"}]} />
-
-
       <div className={tw.tableWrap}>
         <div className="p-4 border-b border-border">
           <SectionHeader title="Preventive Maintenance Schedule" />
@@ -1758,8 +1752,6 @@ function AssetRegistryView() {
 
   return (
     <div className="space-y-4">
-            <KpiStrip items={[{color:"bg-indigo-500",value:assetsData.length,label:"Total Assets"},{color:"bg-emerald-500",value:`$${(totalCapex / 1000).toFixed(0)}k`,label:"Total CAPEX Value"},{color:"bg-rose-500",value:assetsData.filter((a) => a.condition === "Poor").length,label:"Poor Condition"}]} />
-
 
       <div className="flex flex-wrap gap-3 items-center">
         <select className={selectCls} value={catFilter} onChange={(e) => setCatFilter(e.target.value)}>
@@ -1814,8 +1806,6 @@ function AssetRegistryView() {
 function EnergyView() {
   return (
     <div className="space-y-6">
-            <KpiStrip items={[{color:"bg-amber-500",value:"1,842",label:"kWh Today"},{color:"bg-blue-500",value:"62",label:"Water Today (m3)"},{color:"bg-orange-500",value:"51",label:"Gas Today (m3)"},{color:"bg-emerald-500",value:"16%",label:"Solar Contribution"}]} />
-
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
@@ -1903,8 +1893,6 @@ function EnergyView() {
 function VendorsView() {
   return (
     <div className="space-y-4">
-            <KpiStrip items={[{color:"bg-emerald-500",value:vendorsData.filter((v) => v.status === "Active").length,label:"Active Vendors"},{color:"bg-rose-500",value:vendorsData.filter((v) => v.status === "Blacklisted").length,label:"Blacklisted"},{color:"bg-amber-500",value:vendorsData.filter((v) => v.contractExpiry <= "2026-06-30" && v.status === "Active").length,label:"Expiring Soon"}]} />
-
 
       <div className={tw.tableWrap}>
         <table className="w-full min-w-[1000px]">
@@ -1960,8 +1948,6 @@ function SparePartsView() {
 
   return (
     <div className="space-y-4">
-            <KpiStrip items={[{color:"bg-indigo-500",value:sparePartsData.length,label:"Total Part Types"},{color:"bg-rose-500",value:criticalCount + lowCount,label:"Reorder Alerts"},{color:"bg-emerald-500",value:sparePartsData.filter((s) => s.status === "Adequate").length,label:"Adequate Stock"},{color:"bg-amber-500",value:sparePartsData.filter((s) => s.stock === 0).length,label:"Out of Stock"}]} />
-
 
       <div className={tw.tableWrap}>
         <table className="w-full min-w-[900px]">
@@ -2025,8 +2011,6 @@ function CapexView() {
 
   return (
     <div className="space-y-4">
-            <KpiStrip items={[{color:"bg-emerald-500",value:`$${(approved / 1000).toFixed(0)}k`,label:"Total Approved Budget"},{color:"bg-blue-500",value:`$${(inProgress / 1000).toFixed(0)}k`,label:"Spent / In Progress"},{color:"bg-amber-500",value:`$${(pending / 1000).toFixed(0)}k`,label:"Pending Approval"}]} />
-
 
       <div className={tw.tableWrap}>
         <table className="w-full min-w-[900px]">
@@ -2073,9 +2057,6 @@ function ComplianceView() {
 
   return (
     <div className="space-y-4">
-            <KpiStrip items={[{color:"bg-indigo-500",value:complianceData.length,label:"Total Inspections"},{color:"bg-emerald-500",value:passed,label:"Passed"},{color:"bg-amber-500",value:dueSoon,label:"Due Soon"},{color:"bg-rose-500",value:failed,label:"Failed / Action Needed"}]} />
-
-
       <div className={tw.tableWrap}>
         <table className="w-full min-w-[1000px]">
           <thead className={tw.thead}>
@@ -2204,6 +2185,49 @@ export function Engineering({ aiEnabled, activeSubmenu }: EngineeringProps) {
   const submenu = (activeSubmenu ? (submenuNormalize[activeSubmenu] ?? activeSubmenu) : null) ?? "overview";
   const page = pageConfig[submenu] ?? pageConfig["overview"];
 
+  const getKpiItems = () => {
+    switch (submenu) {
+      case "overview":
+      case "work-orders":
+        return [{color:"bg-indigo-500",value:workOrdersData.filter((w) => w.status === "Open").length,label:"Open Work Orders"},{color:"bg-blue-500",value:workOrdersData.filter((w) => w.status === "In Progress").length,label:"In Progress"},{color:"bg-emerald-500",value:workOrdersData.filter((w) => w.status === "Completed" && w.created === "2026-04-02").length,label:"Completed Today"},{color:"bg-rose-500",value:pmData.filter((p) => p.status === "Overdue").length,label:"PM Overdue"},{color:"bg-amber-500",value:workOrdersData.length,label:"Total WOs"}];
+      case "preventive-maintenance":
+        return [{color:"bg-blue-500",value:pmData.filter((p) => p.status === "Upcoming").length,label:"Upcoming PM"},{color:"bg-rose-500",value:pmData.filter((p) => p.status === "Overdue").length,label:"Overdue PM"},{color:"bg-emerald-500",value:pmData.filter((p) => p.status === "Completed").length,label:"Completed"},{color:"bg-amber-500",value:pmData.filter((p) => p.status === "In Progress").length,label:"In Progress"},{color:"bg-indigo-500",value:pmData.length,label:"Total Scheduled"}];
+      case "asset-registry": {
+        const totalCapex = assetsData.reduce((s, a) => s + a.capex, 0);
+        return [{color:"bg-indigo-500",value:assetsData.length,label:"Total Assets"},{color:"bg-emerald-500",value:`$${(totalCapex / 1000).toFixed(0)}k`,label:"CAPEX Value"},{color:"bg-rose-500",value:assetsData.filter((a) => a.condition === "Poor").length,label:"Poor Condition"},{color:"bg-amber-500",value:assetsData.filter((a) => a.condition === "Fair").length,label:"Fair Condition"},{color:"bg-blue-500",value:assetsData.filter((a) => a.condition === "Good" || a.condition === "Excellent").length,label:"Good+"}];
+      }
+      case "energy-management":
+        return [{color:"bg-amber-500",value:"1,842",label:"kWh Today"},{color:"bg-blue-500",value:"62",label:"Water (m3)"},{color:"bg-orange-500",value:"51",label:"Gas (m3)"},{color:"bg-emerald-500",value:"16%",label:"Solar"},{color:"bg-violet-500",value:"78/100",label:"Efficiency"}];
+      case "vendors-contractors":
+        return [{color:"bg-emerald-500",value:vendorsData.filter((v) => v.status === "Active").length,label:"Active Vendors"},{color:"bg-rose-500",value:vendorsData.filter((v) => v.status === "Blacklisted").length,label:"Blacklisted"},{color:"bg-amber-500",value:vendorsData.filter((v) => v.contractExpiry <= "2026-06-30" && v.status === "Active").length,label:"Expiring Soon"},{color:"bg-blue-500",value:vendorsData.filter((v) => v.status === "Suspended").length,label:"Suspended"},{color:"bg-indigo-500",value:vendorsData.length,label:"Total"}];
+      case "spare-parts": {
+        const criticalCount = sparePartsData.filter((s) => s.status === "Critical").length;
+        const lowCount = sparePartsData.filter((s) => s.status === "Low").length;
+        return [{color:"bg-indigo-500",value:sparePartsData.length,label:"Total Part Types"},{color:"bg-rose-500",value:criticalCount + lowCount,label:"Reorder Alerts"},{color:"bg-emerald-500",value:sparePartsData.filter((s) => s.status === "Adequate").length,label:"Adequate Stock"},{color:"bg-amber-500",value:sparePartsData.filter((s) => s.stock === 0).length,label:"Out of Stock"}];
+      }
+      case "capex-requests": {
+        const approved = capexData.filter((c) => c.status === "Approved").reduce((s, c) => s + c.cost, 0);
+        const inProgressCost = capexData.filter((c) => c.status === "In Progress").reduce((s, c) => s + c.cost, 0);
+        const pending = capexData.filter((c) => c.status === "Submitted").reduce((s, c) => s + c.cost, 0);
+        return [{color:"bg-emerald-500",value:`$${(approved / 1000).toFixed(0)}k`,label:"Approved"},{color:"bg-blue-500",value:`$${(inProgressCost / 1000).toFixed(0)}k`,label:"In Progress"},{color:"bg-amber-500",value:`$${(pending / 1000).toFixed(0)}k`,label:"Pending"},{color:"bg-rose-500",value:capexData.filter((c) => c.status === "Rejected").length,label:"Rejected"},{color:"bg-indigo-500",value:capexData.length,label:"Total Requests"}];
+      }
+      case "compliance-safety": {
+        const passed = complianceData.filter((c) => c.result === "Pass").length;
+        const failed = complianceData.filter((c) => c.result === "Fail").length;
+        const dueSoon = complianceData.filter((c) => c.result === "Due Soon").length;
+        return [{color:"bg-indigo-500",value:complianceData.length,label:"Total Inspections"},{color:"bg-emerald-500",value:passed,label:"Passed"},{color:"bg-amber-500",value:dueSoon,label:"Due Soon"},{color:"bg-rose-500",value:failed,label:"Failed / Action Needed"}];
+      }
+      case "smart-rooms":
+        return [{color:"bg-emerald-500",value:roomsData.filter((r) => r.status === "normal").length,label:"Online"},{color:"bg-rose-500",value:roomsData.filter((r) => r.status === "alert").length,label:"Alerts"},{color:"bg-muted",value:roomsData.filter((r) => r.status === "offline").length,label:"Offline"},{color:"bg-blue-500",value:roomsData.length,label:"Total Rooms"},{color:"bg-amber-500",value:"22°C",label:"Avg Temp"}];
+      case "energy":
+        return [{color:"bg-amber-500",value:"105 kW",label:"Total Draw"},{color:"bg-red-500",value:"+12%",label:"vs Yesterday"},{color:"bg-blue-500",value:"2,847 BHD",label:"Monthly Cost"},{color:"bg-emerald-500",value:"78/100",label:"Efficiency"},{color:"bg-violet-500",value:"4",label:"Zones Active"}];
+      case "access-control":
+        return [{color:"bg-emerald-500",value:doorsData.filter((d) => d.status === "locked").length,label:"Secured"},{color:"bg-amber-500",value:doorsData.filter((d) => d.status === "unlocked").length,label:"Unlocked"},{color:"bg-rose-500",value:doorsData.filter((d) => d.status === "propped" || d.status === "offline").length,label:"Alerts"},{color:"bg-blue-500",value:doorsData.length,label:"Total Doors"},{color:"bg-indigo-500",value:"4",label:"Zones"}];
+      default:
+        return [{color:"bg-indigo-500",value:workOrdersData.filter((w) => w.status === "Open").length,label:"Open WOs"},{color:"bg-blue-500",value:workOrdersData.filter((w) => w.status === "In Progress").length,label:"In Progress"},{color:"bg-emerald-500",value:workOrdersData.filter((w) => w.status === "Completed").length,label:"Completed"},{color:"bg-rose-500",value:pmData.filter((p) => p.status === "Overdue").length,label:"PM Overdue"},{color:"bg-amber-500",value:workOrdersData.length,label:"Total"}];
+    }
+  };
+
   const renderContent = () => {
     switch (submenu) {
       case "overview":
@@ -2247,7 +2271,7 @@ export function Engineering({ aiEnabled, activeSubmenu }: EngineeringProps) {
         <PageShell
           search={<SectionSearch value={search} onChange={setSearch} placeholder="Search engineering..." />}
           header={<SectionHeader title={page.label} subtitle={page.description} icon={Wrench} actions={aiEnabled ? (<div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-100 text-violet-700 text-xs font-medium"><Wind className="w-3.5 h-3.5" />AI Insights Active</div>) : undefined} />}
-          kpi={<KpiStrip items={[{color:"bg-indigo-500",value:workOrdersData.filter((w) => w.status === "Open").length,label:"Open Work Orders"},{color:"bg-blue-500",value:workOrdersData.filter((w) => w.status === "In Progress").length,label:"In Progress"},{color:"bg-emerald-500",value:workOrdersData.filter((w) => w.status === "Completed").length,label:"Completed"},{color:"bg-rose-500",value:pmData.filter((p) => p.status === "Overdue").length,label:"PM Overdue"},{color:"bg-amber-500",value:assetsData.length,label:"Total Assets"}]} />}
+          kpi={<KpiStrip items={getKpiItems()} />}
         >
           {renderContent()}
         </PageShell>
@@ -2529,10 +2553,6 @@ const energyAlerts = [
 function EnergyDashboardView() {
   return (
     <div className="space-y-6">
-      {/* KPI Cards */}
-            <KpiStrip items={[{color:"bg-amber-500",value:"105 kW",label:"Total Draw (now)"},{color:"bg-red-500",value:"+12%",label:"vs Yesterday"},{color:"bg-blue-500",value:"2,847 BHD",label:"Monthly Cost"},{color:"bg-emerald-500",value:"78 / 100",label:"Efficiency Score"}]} />
-
-
       {/* Energy Chart */}
       <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
         <SectionHeader title="24-Hour Consumption" />

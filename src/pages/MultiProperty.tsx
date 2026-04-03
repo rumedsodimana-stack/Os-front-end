@@ -479,10 +479,6 @@ export function MultiProperty({ aiEnabled, activeSubmenu = "Overview" }: MultiPr
 
             <div className="bg-card rounded-2xl shadow-sm border border-border p-4">
               <div className="flex flex-wrap gap-3">
-                <div className="relative flex-1 min-w-[200px]">
-                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <input value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2 bg-secondary/50 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Search SOPs..." />
-                </div>
                 {["All", "Front Office", "Security", "Housekeeping", "F&B", "Sales & Revenue"].map(dept => (
                   <button key={dept} className={cn("px-3 py-2 rounded-xl text-sm font-medium transition-colors", activePropertyFilter === dept ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/70")} onClick={() => setActivePropertyFilter(dept)}>{dept}</button>
                 ))}

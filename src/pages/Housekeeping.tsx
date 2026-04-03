@@ -616,15 +616,6 @@ function RoomStatusView() {
           </div>
         </div>
 
-        {/* Status legend */}
-        <LegendBar items={[
-          { color: "bg-red-100 border-red-200", label: "Dirty" },
-          { color: "bg-orange-100 border-orange-200", label: "In Progress" },
-          { color: "bg-emerald-100 border-emerald-200", label: "Clean" },
-          { color: "bg-blue-100 border-blue-200", label: "Inspected" },
-          { color: "bg-purple-100 border-purple-200", label: "Out of Service" },
-        ]} className="mb-5" />
-
         {/* Room grid by floor */}
         {floors.filter(f => floorFilter === "all" || f === floorFilter).map(floor => {
           const floorRooms = filtered.filter(r => r.floor === floor);
@@ -1485,27 +1476,6 @@ export function Housekeeping({ aiEnabled, activeSubmenu }: HousekeepingProps) {
         transition={{ duration: 0.2, ease: "easeOut" }}
         className="space-y-6"
       >
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 shadow-sm">
-              <Icon className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <SectionHeader title={current.label} />
-              <p className="text-xs text-muted-foreground">
-                Housekeeping &rsaquo; {current.label} &mdash;{" "}
-                {new Date().toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
-              </p>
-            </div>
-          </div>
-          {aiEnabled && (
-            <div className="flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5">
-              <Star className="h-3.5 w-3.5 text-violet-500" fill="currentColor" />
-              <span className="text-xs font-medium text-violet-700">AI Optimised</span>
-            </div>
-          )}
-        </div>
-
         {current.component}
       </motion.div>
     </AnimatePresence>

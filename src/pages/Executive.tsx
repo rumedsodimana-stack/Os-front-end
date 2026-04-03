@@ -499,12 +499,6 @@ function TargetsView() {
         </div>
       </div>
 
-      <KpiStrip items={[
-        {color:"bg-emerald-500",value:onTrack.length,label:"On Track"},
-        {color:"bg-blue-500",value:exceeded.length,label:"Exceeded"},
-        {color:"bg-rose-500",value:behind.length,label:"Behind"},
-      ]} />
-
       {/* KPI Progress List */}
       <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
         <div className="px-6 py-4 border-b border-border">
@@ -898,13 +892,6 @@ function ESGView() {
         </button>
       </div>
 
-      <KpiStrip items={[
-        {color:"bg-emerald-500",value:"186 tCO₂e",label:"Carbon Footprint"},
-        {color:"bg-blue-500",value:"2,840 m³",label:"Water Usage"},
-        {color:"bg-amber-500",value:"62%",label:"Waste Diversion"},
-        {color:"bg-violet-500",value:"2 Active",label:"Green Certs"},
-      ]} />
-
       {/* Initiatives Table */}
       <div className="bg-card rounded-2xl shadow-sm border border-border overflow-x-auto">
         <div className="px-6 py-4 border-b border-border">
@@ -967,13 +954,6 @@ function BoardReportView() {
           </button>
         </div>
       </div>
-
-      <KpiStrip items={[
-        {color:"bg-emerald-500",value:"+1.3%",label:"Revenue vs Budget"},
-        {color:"bg-blue-500",value:"46.1%",label:"GOP Margin"},
-        {color:"bg-amber-500",value:"82 pts",label:"NPS Score"},
-        {color:"bg-violet-500",value:"1.08",label:"RGI Index"},
-      ]} />
 
       {/* Key Highlights */}
       <div className="bg-card rounded-2xl shadow-sm border border-border p-6">

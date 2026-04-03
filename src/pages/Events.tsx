@@ -590,12 +590,6 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
 
             {/* Equipment table */}
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
-              <div className="p-5 border-b border-border">
-                <div className="relative">
-                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <input className="w-full pl-9 pr-4 py-2 bg-secondary/50 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Search equipment..." />
-                </div>
-              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-secondary/50">
@@ -773,12 +767,6 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
 
             {/* Attendee table */}
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
-              <div className="p-5 border-b border-border flex items-center gap-3">
-                <div className="relative flex-1">
-                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <input className="w-full pl-9 pr-4 py-2 bg-secondary/50 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Search attendees..." />
-                </div>
-              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-secondary/50">
@@ -1004,10 +992,6 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
             {/* Filters */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-4">
               <div className="flex flex-wrap items-center gap-3">
-                <div className="relative flex-1 min-w-[200px]">
-                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <input value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2 bg-secondary/50 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Search events or clients..." />
-                </div>
                 <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="px-3 py-2 bg-secondary/50 border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30">
                   {["All", "Confirmed", "Tentative", "In Progress", "Completed", "Cancelled"].map(s => <option key={s}>{s}</option>)}
                 </select>
