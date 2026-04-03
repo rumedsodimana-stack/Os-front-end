@@ -32,8 +32,6 @@ import {
   Cell,
 } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
-import { KpiStrip, LegendBar, SectionSearch, SectionHeader } from "../components/shared";
-
 
 interface HumanResourcesProps {
   aiEnabled: boolean;
@@ -316,47 +314,47 @@ const StatCard = ({
 );
 
 const badgeStyles: Record<string, string> = {
-  Active: "bg-emerald-100 text-emerald-700",
-  "On Leave": "bg-amber-100 text-amber-700",
-  Probation: "bg-blue-100 text-blue-700",
-  "Full-time": "bg-indigo-100 text-indigo-700",
-  "Part-time": "bg-violet-100 text-violet-700",
-  Casual: "bg-pink-100 text-pink-700",
-  Present: "bg-emerald-100 text-emerald-700",
-  Late: "bg-amber-100 text-amber-700",
-  Absent: "bg-red-100 text-red-700",
-  "Half Day": "bg-orange-100 text-orange-700",
-  Holiday: "bg-sky-100 text-sky-700",
-  "On Duty": "bg-emerald-100 text-emerald-700",
-  Scheduled: "bg-blue-100 text-blue-700",
-  Processed: "bg-emerald-100 text-emerald-700",
-  Pending: "bg-amber-100 text-amber-700",
-  "On Hold": "bg-red-100 text-red-700",
-  Approved: "bg-emerald-100 text-emerald-700",
-  Rejected: "bg-red-100 text-red-700",
-  Annual: "bg-indigo-100 text-indigo-700",
-  Sick: "bg-red-100 text-red-700",
-  Emergency: "bg-orange-100 text-orange-700",
-  Maternity: "bg-pink-100 text-pink-700",
-  Unpaid: "bg-secondary text-foreground",
-  Valid: "bg-emerald-100 text-emerald-700",
-  Expired: "bg-red-100 text-red-700",
-  "Due Soon": "bg-amber-100 text-amber-700",
-  "Not Completed": "bg-secondary text-foreground",
-  Completed: "bg-emerald-100 text-emerald-700",
-  Overdue: "bg-red-100 text-red-700",
-  Mandatory: "bg-red-100 text-red-700",
-  Skills: "bg-blue-100 text-blue-700",
-  Compliance: "bg-orange-100 text-orange-700",
-  Leadership: "bg-purple-100 text-purple-700",
-  Warning: "bg-amber-100 text-amber-700",
-  "Written Warning": "bg-orange-100 text-orange-700",
-  "Final Warning": "bg-red-100 text-red-700",
-  Termination: "bg-red-200 text-red-800",
-  Resolved: "bg-emerald-100 text-emerald-700",
-  "Under Review": "bg-blue-100 text-blue-700",
-  Open: "bg-orange-100 text-orange-700",
-  Escalated: "bg-red-100 text-red-700",
+  Active: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
+  "On Leave": "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
+  Probation: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400",
+  "Full-time": "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400",
+  "Part-time": "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400",
+  Casual: "bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-400",
+  Present: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
+  Late: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
+  Absent: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+  "Half Day": "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400",
+  Holiday: "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400",
+  "On Duty": "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
+  Scheduled: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400",
+  Processed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
+  Pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
+  "On Hold": "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+  Approved: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
+  Rejected: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+  Annual: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400",
+  Sick: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+  Emergency: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400",
+  Maternity: "bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-400",
+  Unpaid: "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
+  Valid: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
+  Expired: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+  "Due Soon": "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
+  "Not Completed": "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
+  Completed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
+  Overdue: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+  Mandatory: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+  Skills: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400",
+  Compliance: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400",
+  Leadership: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400",
+  Warning: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
+  "Written Warning": "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400",
+  "Final Warning": "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+  Termination: "bg-red-200 text-red-800 dark:bg-red-900/60 dark:text-red-300",
+  Resolved: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
+  "Under Review": "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400",
+  Open: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400",
+  Escalated: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
 };
 
 const Badge = ({ label }: { label: string }) => (
@@ -372,11 +370,11 @@ const Badge = ({ label }: { label: string }) => (
 
 const ShiftCell = ({ code }: { code: string }) => {
   const styles: Record<string, string> = {
-    M: "bg-indigo-100 text-indigo-700",
-    A: "bg-amber-100 text-amber-700",
-    N: "bg-slate-200 text-slate-700",
+    M: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300",
+    A: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+    N: "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
     O: "bg-muted text-muted-foreground",
-    L: "bg-rose-100 text-rose-700",
+    L: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
   };
   const labels: Record<string, string> = {
     M: "Morning 07:00–15:00",
@@ -477,7 +475,7 @@ const avatarColors = [
   "bg-amber-500",
   "bg-sky-500",
   "bg-rose-500",
-  "bg-violet-500",
+  "bg-teal-500",
 ];
 
 const Avatar = ({
@@ -543,11 +541,42 @@ const OverviewView = () => (
     exit={{ opacity: 0, y: -8 }}
     className="space-y-6"
   >
-    <KpiStrip items={[{color:"bg-indigo-500",value:"114",label:"Total Staff"},{color:"bg-emerald-500",value:"78",label:"On Duty Now"},{color:"bg-amber-500",value:"9",label:"On Leave"},{color:"bg-rose-500",value:"6",label:"Open Positions"}]} />
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <StatCard
+        title="Total Staff"
+        value="114"
+        sub="Full-time, Part-time & Casual"
+        icon={Users}
+        gradient="bg-gradient-to-br from-indigo-500 to-indigo-700"
+      />
+      <StatCard
+        title="On Duty Now"
+        value="78"
+        sub="Across all departments"
+        icon={UserCheck}
+        gradient="bg-gradient-to-br from-emerald-500 to-emerald-700"
+      />
+      <StatCard
+        title="On Leave"
+        value="9"
+        sub="Approved absences today"
+        icon={Calendar}
+        gradient="bg-gradient-to-br from-amber-500 to-amber-600"
+      />
+      <StatCard
+        title="Open Positions"
+        value="6"
+        sub="Actively recruiting"
+        icon={Activity}
+        gradient="bg-gradient-to-br from-rose-500 to-rose-700"
+      />
+    </div>
 
     <div className="grid gap-4 lg:grid-cols-3">
       <SectionCard className="lg:col-span-2 p-5">
-        <SectionHeader title="Attendance Trend — Last 30 Days" className="mb-4" />
+        <h3 className="mb-4 text-sm font-semibold text-foreground">
+          Attendance Trend — Last 30 Days
+        </h3>
         <ResponsiveContainer width="100%" height={220}>
           <AreaChart
             data={attendanceTrend}
@@ -603,7 +632,7 @@ const OverviewView = () => (
       </SectionCard>
 
       <SectionCard className="p-5">
-        <SectionHeader title="Staff by Department" className="mb-4" />
+        <h3 className="mb-4 text-sm font-semibold text-foreground">Staff by Department</h3>
         <ResponsiveContainer width="100%" height={200}>
           <PieChart>
             <Pie
@@ -648,7 +677,7 @@ const OverviewView = () => (
 
     <SectionCard>
       <div className="border-b border-border px-5 py-4">
-        <SectionHeader title="Today's Roster" />
+        <h3 className="text-sm font-semibold text-foreground">Today's Roster</h3>
       </div>
       <TableWrap>
         <thead>
@@ -826,7 +855,41 @@ const AttendanceView = () => {
       exit={{ opacity: 0, y: -8 }}
       className="space-y-4"
     >
-      <KpiStrip items={[{color:"bg-emerald-500",value:todayStats.present,label:"Present Today"},{color:"bg-amber-500",value:todayStats.late,label:"Late Today"},{color:"bg-red-500",value:todayStats.absent,label:"Absent Today"}]} />
+      <div className="grid grid-cols-3 gap-4">
+        <SectionCard className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-emerald-100 p-2.5 dark:bg-emerald-900/40">
+              <UserCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Present Today</p>
+              <p className="text-2xl font-bold text-foreground">{todayStats.present}</p>
+            </div>
+          </div>
+        </SectionCard>
+        <SectionCard className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-amber-100 p-2.5 dark:bg-amber-900/40">
+              <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Late Today</p>
+              <p className="text-2xl font-bold text-foreground">{todayStats.late}</p>
+            </div>
+          </div>
+        </SectionCard>
+        <SectionCard className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-red-100 p-2.5 dark:bg-red-900/40">
+              <UserX className="h-5 w-5 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Absent Today</p>
+              <p className="text-2xl font-bold text-foreground">{todayStats.absent}</p>
+            </div>
+          </div>
+        </SectionCard>
+      </div>
 
       <FilterBar>
         <SelectFilter value={dateFilter} onChange={setDateFilter} options={dates} />
@@ -875,7 +938,7 @@ const AttendanceView = () => {
                 </Td>
                 <Td className="font-mono text-xs">
                   {row.overtime > 0 ? (
-                    <span className="text-indigo-600">+{row.overtime}h</span>
+                    <span className="text-indigo-600 dark:text-indigo-400">+{row.overtime}h</span>
                   ) : (
                     "—"
                   )}
@@ -915,13 +978,27 @@ const ShiftSchedulingView = () => {
       className="space-y-4"
     >
       <SectionCard className="px-5 py-4">
-        <LegendBar items={[
-          { color: "bg-indigo-100 border-indigo-200", label: "M — Morning 07:00–15:00" },
-          { color: "bg-amber-100 border-amber-200", label: "A — Afternoon 15:00–23:00" },
-          { color: "bg-slate-200 border-slate-300", label: "N — Night 23:00–07:00" },
-          { color: "bg-muted border-border", label: "O — Day Off" },
-          { color: "bg-rose-100 border-rose-200", label: "L — On Leave" },
-        ]} />
+        <div className="flex flex-wrap items-center gap-4 text-xs">
+          {[
+            { code: "M", label: "Morning 07:00–15:00", cls: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300" },
+            { code: "A", label: "Afternoon 15:00–23:00", cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" },
+            { code: "N", label: "Night 23:00–07:00", cls: "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200" },
+            { code: "O", label: "Day Off", cls: "bg-muted text-muted-foreground" },
+            { code: "L", label: "On Leave", cls: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300" },
+          ].map((item) => (
+            <div key={item.code} className="flex items-center gap-1.5">
+              <span
+                className={cn(
+                  "inline-flex h-5 w-5 items-center justify-center rounded font-bold",
+                  item.cls
+                )}
+              >
+                {item.code}
+              </span>
+              <span className="text-muted-foreground">{item.label}</span>
+            </div>
+          ))}
+        </div>
       </SectionCard>
 
       <SectionCard className="overflow-x-auto">
@@ -970,8 +1047,8 @@ const ShiftSchedulingView = () => {
                   className={cn(
                     "rounded-full px-2 py-0.5 text-xs font-bold",
                     count < 8
-                      ? "bg-red-100 text-red-700"
-                      : "bg-emerald-100 text-emerald-700"
+                      ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400"
+                      : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400"
                   )}
                 >
                   {count}
@@ -983,14 +1060,14 @@ const ShiftSchedulingView = () => {
       </SectionCard>
 
       {shiftCounts.some((c) => c < 8) && (
-        <SectionCard className="border-amber-300 bg-amber-50 p-4">
+        <SectionCard className="border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
           <div className="flex items-start gap-3">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
             <div>
-              <p className="text-sm font-semibold text-amber-800">
+              <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
                 Understaffing Alert
               </p>
-              <p className="mt-0.5 text-xs text-amber-700">
+              <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-400">
                 {days.filter((_, di) => shiftCounts[di] < 8).join(", ")} have fewer than 8 active
                 staff members scheduled. Consider reassigning or calling in additional personnel.
               </p>
@@ -1053,7 +1130,29 @@ const PayrollView = () => {
         />
       </div>
 
-      <KpiStrip items={[{color:"bg-indigo-500",value:fmt(totalPayroll),label:"Total Payroll"},{color:"bg-emerald-500",value:fmt(totalPaid),label:"Total Paid"},{color:"bg-amber-500",value:fmt(totalPending),label:"Pending"}]} />
+      <div className="grid grid-cols-3 gap-4">
+        <StatCard
+          title="Total Payroll"
+          value={fmt(totalPayroll)}
+          sub={`${processedRows.length} employees`}
+          icon={DollarSign}
+          gradient="bg-gradient-to-br from-indigo-500 to-indigo-700"
+        />
+        <StatCard
+          title="Total Paid"
+          value={fmt(totalPaid)}
+          sub={`${processedRows.filter((r) => r.status === "Processed").length} processed`}
+          icon={TrendingUp}
+          gradient="bg-gradient-to-br from-emerald-500 to-emerald-700"
+        />
+        <StatCard
+          title="Pending"
+          value={fmt(totalPending)}
+          sub={`${processedRows.filter((r) => r.status === "Pending").length} awaiting`}
+          icon={Clock}
+          gradient="bg-gradient-to-br from-amber-500 to-amber-600"
+        />
+      </div>
 
       <SectionCard>
         <TableWrap>
@@ -1084,7 +1183,7 @@ const PayrollView = () => {
                 <Td className="text-right font-mono text-xs">{fmt(row.serviceCharge)}</Td>
                 <Td className="text-right font-mono text-xs">
                   {row.overtime > 0 ? (
-                    <span className="text-indigo-600">
+                    <span className="text-indigo-600 dark:text-indigo-400">
                       {fmt(row.overtime)}
                     </span>
                   ) : (
@@ -1092,7 +1191,7 @@ const PayrollView = () => {
                   )}
                 </Td>
                 <Td className="text-right font-mono text-xs">{fmt(row.transport)}</Td>
-                <Td className="text-right font-mono text-xs text-red-600">
+                <Td className="text-right font-mono text-xs text-red-600 dark:text-red-400">
                   ({fmt(row.tax + row.social)})
                 </Td>
                 <Td className="text-right font-mono text-xs font-semibold">{fmt(row.netPay)}</Td>
@@ -1140,7 +1239,24 @@ const LeaveManagementView = () => {
       exit={{ opacity: 0, y: -8 }}
       className="space-y-4"
     >
-      <KpiStrip items={[{color:"bg-amber-500",value:pendingCount,label:"Pending Requests"},{color:"bg-blue-500",value:annualAvgDays+"d",label:"Avg Annual Leave"},{color:"bg-emerald-500",value:approvedCount,label:"Approved This Cycle"},{color:"bg-violet-500",value:totalDaysTaken,label:"Total Days Approved"}]} />
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <SectionCard className="p-4">
+          <p className="text-xs text-muted-foreground">Pending Requests</p>
+          <p className="mt-1 text-2xl font-bold text-amber-600">{pendingCount}</p>
+        </SectionCard>
+        <SectionCard className="p-4">
+          <p className="text-xs text-muted-foreground">Avg Annual Leave Days</p>
+          <p className="mt-1 text-2xl font-bold text-foreground">{annualAvgDays}d</p>
+        </SectionCard>
+        <SectionCard className="p-4">
+          <p className="text-xs text-muted-foreground">Approved This Cycle</p>
+          <p className="mt-1 text-2xl font-bold text-emerald-600">{approvedCount}</p>
+        </SectionCard>
+        <SectionCard className="p-4">
+          <p className="text-xs text-muted-foreground">Total Days Approved</p>
+          <p className="mt-1 text-2xl font-bold text-foreground">{totalDaysTaken}</p>
+        </SectionCard>
+      </div>
 
       <FilterBar>
         <SelectFilter
@@ -1234,7 +1350,36 @@ const TrainingView = () => {
       exit={{ opacity: 0, y: -8 }}
       className="space-y-4"
     >
-      <KpiStrip items={[{color:"bg-red-500",value:expiredCount,label:"Expired Certs"},{color:"bg-amber-500",value:dueSoonCount,label:"Due Soon"},{color:"bg-slate-500",value:notCompletedCount,label:"Not Completed"}]} />
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard
+          title="Compliance Rate"
+          value={`${complianceRate}%`}
+          sub="Valid certifications"
+          icon={Shield}
+          gradient="bg-gradient-to-br from-indigo-500 to-indigo-700"
+        />
+        <StatCard
+          title="Expired Certs"
+          value={expiredCount}
+          sub="Require immediate renewal"
+          icon={AlertCircle}
+          gradient="bg-gradient-to-br from-red-500 to-red-700"
+        />
+        <StatCard
+          title="Due Soon"
+          value={dueSoonCount}
+          sub="Expiring within 90 days"
+          icon={Clock}
+          gradient="bg-gradient-to-br from-amber-500 to-amber-600"
+        />
+        <StatCard
+          title="Not Completed"
+          value={notCompletedCount}
+          sub="Courses pending"
+          icon={BookOpen}
+          gradient="bg-gradient-to-br from-slate-500 to-slate-700"
+        />
+      </div>
 
       <FilterBar>
         <SelectFilter
@@ -1289,10 +1434,10 @@ const TrainingView = () => {
                       className={cn(
                         "font-semibold",
                         row.score >= 90
-                          ? "text-emerald-600"
+                          ? "text-emerald-600 dark:text-emerald-400"
                           : row.score >= 75
                           ? "text-foreground"
-                          : "text-amber-600"
+                          : "text-amber-600 dark:text-amber-400"
                       )}
                     >
                       {row.score}%
@@ -1339,7 +1484,9 @@ const PerformanceView = () => {
       className="space-y-4"
     >
       <SectionCard className="p-5">
-        <SectionHeader title="Average Performance Score by Department" className="mb-4" />
+        <h3 className="mb-4 text-sm font-semibold text-foreground">
+          Average Performance Score by Department
+        </h3>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={deptScores} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -1430,8 +1577,8 @@ const DisciplinaryView = () => (
     <div>
       <div className="mb-3 flex items-center gap-2">
         <Shield className="h-4 w-4 text-red-500" />
-        <SectionHeader title="Disciplinary Log" />
-        <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+        <h3 className="text-sm font-semibold text-foreground">Disciplinary Log</h3>
+        <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/40 dark:text-red-400">
           {disciplinaryRecords.length} cases
         </span>
       </div>
@@ -1481,8 +1628,8 @@ const DisciplinaryView = () => (
     <div>
       <div className="mb-3 flex items-center gap-2">
         <Heart className="h-4 w-4 text-violet-500" />
-        <SectionHeader title="Grievance Log" />
-        <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+        <h3 className="text-sm font-semibold text-foreground">Grievance Log</h3>
+        <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900/40 dark:text-violet-400">
           {grievanceRecords.length} cases
         </span>
       </div>
@@ -1574,15 +1721,15 @@ const HumanResources: React.FC<HumanResourcesProps> = ({ aiEnabled, activeSubmen
     <div className="space-y-5 px-1">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <SectionHeader title="Human Resources" />
+          <h1 className="text-2xl font-bold text-foreground">Human Resources</h1>
           <p className="text-sm text-muted-foreground">
             Staff management, scheduling, payroll & compliance — Singularity Hotel Group
           </p>
         </div>
         {aiEnabled && (
-          <div className="flex items-center gap-2 rounded-2xl border border-indigo-300 bg-indigo-50 px-3 py-2">
+          <div className="flex items-center gap-2 rounded-2xl border border-indigo-300 bg-indigo-50 px-3 py-2 dark:border-indigo-800 dark:bg-indigo-950/40">
             <TrendingUp className="h-4 w-4 text-indigo-500" />
-            <span className="text-xs font-medium text-indigo-700">
+            <span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">
               AI Insights Active
             </span>
           </div>

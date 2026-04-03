@@ -13,7 +13,6 @@ import {
   Archive, Filter, Mic2, MapPin, BookOpen, Radio,
   Megaphone, Smartphone, BellRing, Eye, RefreshCw, FileText, TrendingDown
 } from "lucide-react";
-import { KpiStrip, LegendBar, SectionSearch, SectionHeader } from "../components/shared";
 
 interface CommsProps {
   aiEnabled: boolean;
@@ -162,21 +161,21 @@ const requestsByType = [
 // ── Helper Components ─────────────────────────────────────────
 const RequestStatusBadge = ({ status }: { status: RequestStatus }) => {
   const map: Record<RequestStatus, string> = {
-    Open: "bg-blue-100 text-blue-700",
-    "In Progress": "bg-amber-100 text-amber-700",
-    Resolved: "bg-emerald-100 text-emerald-700",
-    Escalated: "bg-red-100 text-red-700",
-    Closed: "bg-slate-100 text-slate-700",
+    Open: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    "In Progress": "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    Resolved: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    Escalated: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    Closed: "bg-slate-100 text-slate-700 dark:bg-slate-700/30 dark:text-slate-400",
   };
   return <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", map[status])}>{status}</span>;
 };
 
 const PriorityBadge = ({ priority }: { priority: RequestPriority }) => {
   const map: Record<RequestPriority, string> = {
-    Low: "bg-slate-100 text-slate-600",
-    Medium: "bg-blue-100 text-blue-700",
-    High: "bg-orange-100 text-orange-700",
-    Urgent: "bg-red-100 text-red-700",
+    Low: "bg-slate-100 text-slate-600 dark:bg-slate-700/30 dark:text-slate-400",
+    Medium: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    High: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+    Urgent: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   };
   return <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", map[priority])}>{priority}</span>;
 };
@@ -214,17 +213,31 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
           <motion.div key="commsov" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
 
             {/* KPI Cards */}
-            <KpiStrip items={[
-              {color:"bg-blue-500",value:open,label:"Open Requests"},
-              {color:"bg-emerald-500",value:resolved,label:"Resolved Today"},
-              {color:"bg-amber-500",value:`${avgResponseTime}m`,label:"Avg Response Time"},
-              {color:"bg-violet-500",value:unreadMessages,label:"Unread Messages"},
-            ]} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { label: "Open Requests", value: open, sub: `${inProgress} in progress`, icon: Bell, gradient: "from-blue-400 to-blue-500" },
+                { label: "Resolved Today", value: resolved, sub: "Guest requests", icon: CheckCircle2, gradient: "from-emerald-400 to-emerald-500" },
+                { label: "Avg Response Time", value: `${avgResponseTime}m`, sub: "Target: 15 min", icon: Clock, gradient: "from-amber-400 to-amber-500" },
+                { label: "Unread Messages", value: unreadMessages, sub: "Internal comms", icon: MessageSquare, gradient: "from-purple-400 to-purple-500" },
+              ].map(({ label, value, sub, icon: Icon, gradient }) => (
+                <div key={label} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white", gradient)}>
+                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-white/80 text-sm">{label}</p>
+                      <p className="text-3xl font-bold mt-1">{value}</p>
+                      <p className="text-white/70 text-xs mt-1">{sub}</p>
+                    </div>
+                    <div className="bg-white/20 p-2.5 rounded-xl"><Icon size={20} /></div>
+                  </div>
+                </div>
+              ))}
+            </div>
 
             {/* Response time chart + request types */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2 bg-card rounded-2xl shadow-sm border border-border p-5">
-                <SectionHeader title="Response Time Today vs Target (minutes)" />
+                <h3 className="font-semibold text-foreground mb-4">Response Time Today vs Target (minutes)</h3>
                 <ResponsiveContainer width="100%" height={220}>
                   <AreaChart data={responseTimeData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -238,7 +251,7 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
                 </ResponsiveContainer>
               </div>
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <SectionHeader title="Requests by Type" />
+                <h3 className="font-semibold text-foreground mb-4">Requests by Type</h3>
                 <div className="space-y-2">
                   {requestsByType.map(item => (
                     <div key={item.type} className="flex items-center gap-3">
@@ -260,7 +273,7 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
             {/* Live feed of active requests */}
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
               <div className="p-5 border-b border-border flex items-center justify-between">
-                <SectionHeader title="Active Guest Requests" />
+                <h3 className="font-semibold text-foreground flex items-center gap-2"><BellRing size={16} className="text-amber-500" /> Active Guest Requests</h3>
                 <button className="text-xs text-primary flex items-center gap-1">View All <ChevronRight size={14} /></button>
               </div>
               <div className="divide-y divide-border/50">
@@ -288,11 +301,11 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
             {unreadMessages > 0 && (
               <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
                 <div className="p-5 border-b border-border">
-                  <SectionHeader title={`Unread Internal Messages (${unreadMessages})`} />
+                  <h3 className="font-semibold text-foreground flex items-center gap-2"><MessageSquare size={16} className="text-purple-500" /> Unread Internal Messages ({unreadMessages})</h3>
                 </div>
                 <div className="divide-y divide-border/50">
                   {internalMessages.filter(m => !m.read).map(msg => (
-                    <div key={msg.id} className="flex items-start gap-4 p-4 hover:bg-secondary/30 transition-colors cursor-pointer bg-purple-50/50" onClick={() => setSelectedMessage(msg)}>
+                    <div key={msg.id} className="flex items-start gap-4 p-4 hover:bg-secondary/30 transition-colors cursor-pointer bg-purple-50/50 dark:bg-purple-900/10" onClick={() => setSelectedMessage(msg)}>
                       <div className="w-2 h-2 rounded-full bg-purple-500 flex-shrink-0 mt-2" />
                       <div className="flex-1">
                         <p className="font-medium text-foreground text-sm">{msg.subject}</p>
@@ -311,18 +324,34 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
         {activeSubmenu === "Guest Requests" && (
           <motion.div key="guestreq" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between">
-              <SectionHeader title="Guest Request Tracker" />
+              <h2 className="text-xl font-semibold text-foreground">Guest Request Tracker</h2>
               <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"><Plus size={16} /> Log Request</button>
             </div>
 
             {/* Stats row */}
-            <KpiStrip items={[
-              {color:"bg-blue-500",value:open,label:"Open"},
-              {color:"bg-amber-500",value:inProgress,label:"In Progress"},
-              {color:"bg-emerald-500",value:resolved,label:"Resolved"},
-              {color:"bg-rose-500",value:guestRequests.filter(r=>r.status==="Escalated").length,label:"Escalated"},
-              {color:"bg-violet-500",value:`${avgResponseTime}m`,label:"Avg Response"},
-            ]} />
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+              {[
+                { label: "Open", value: open, gradient: "from-blue-400 to-blue-500", icon: MessageSquare },
+                { label: "In Progress", value: inProgress, gradient: "from-amber-400 to-amber-500", icon: Clock },
+                { label: "Resolved", value: resolved, gradient: "from-emerald-400 to-emerald-500", icon: CheckCircle2 },
+                { label: "Escalated", value: guestRequests.filter(r => r.status === "Escalated").length, gradient: "from-red-400 to-red-500", icon: AlertCircle },
+                { label: "Avg Response", value: `${avgResponseTime}m`, gradient: avgResponseTime <= 15 ? "from-emerald-400 to-emerald-500" : "from-amber-400 to-amber-500", icon: Clock },
+              ].map(c => {
+                const IconComponent = c.icon;
+                return (
+                  <div key={c.label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${c.gradient} p-5 text-white`}>
+                    <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                    <div className="flex items-start justify-between relative z-10">
+                      <div>
+                        <p className="text-white/80 text-sm">{c.label}</p>
+                        <p className="text-3xl font-bold mt-1">{c.value}</p>
+                      </div>
+                      <div className="bg-white/20 p-2.5 rounded-xl"><IconComponent size={20} /></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
             {/* Filters */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-4">
@@ -358,7 +387,7 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
                         </td>
                         <td className="px-4 py-3"><PriorityBadge priority={req.priority} /></td>
                         <td className="px-4 py-3">
-                          <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", req.channel === "WhatsApp" ? "bg-green-100 text-green-700" : req.channel === "Phone" ? "bg-blue-100 text-blue-700" : req.channel === "In-App" ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-700")}>{req.channel}</span>
+                          <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", req.channel === "WhatsApp" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : req.channel === "Phone" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : req.channel === "In-App" ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" : "bg-slate-100 text-slate-700 dark:bg-slate-700/30 dark:text-slate-400")}>{req.channel}</span>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">{req.assignedTo}</td>
                         <td className="px-4 py-3 text-muted-foreground">{req.createdAt.split(" ")[1]}</td>
@@ -400,7 +429,7 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
                 <div className="flex gap-2 flex-wrap">
                   {selectedRequest.status !== "Resolved" && <button className="px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600">Mark Resolved</button>}
                   <button className="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600">Reassign</button>
-                  <button className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Escalate</button>
+                  <button className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400">Escalate</button>
                   <button className="px-3 py-1.5 bg-secondary text-secondary-foreground rounded-lg text-sm font-medium hover:bg-secondary/70 flex items-center gap-1"><Send size={14} /> Reply to Guest</button>
                 </div>
               </div>
@@ -412,23 +441,39 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
         {activeSubmenu === "Concierge" && (
           <motion.div key="concierge" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between">
-              <SectionHeader title="Concierge Log" />
+              <h2 className="text-xl font-semibold text-foreground">Concierge Log</h2>
               <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"><Plus size={16} /> New Entry</button>
             </div>
 
-            <KpiStrip items={[
-              {color:"bg-indigo-500",value:conciergeLog.length,label:"Total Tasks"},
-              {color:"bg-emerald-500",value:conciergeLog.filter(c=>c.status==="Confirmed").length,label:"Confirmed"},
-              {color:"bg-amber-500",value:conciergeLog.filter(c=>c.status==="Pending").length,label:"Pending"},
-              {color:"bg-blue-500",value:conciergeLog.filter(c=>c.status==="Done").length,label:"Completed"},
-            ]} />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { label: "Total Tasks", value: conciergeLog.length, gradient: "from-indigo-400 to-indigo-500", icon: BookOpen },
+                { label: "Confirmed", value: conciergeLog.filter(c => c.status === "Confirmed").length, gradient: "from-emerald-400 to-emerald-500", icon: CheckCircle2 },
+                { label: "Pending", value: conciergeLog.filter(c => c.status === "Pending").length, gradient: "from-amber-400 to-amber-500", icon: Clock },
+                { label: "Completed", value: conciergeLog.filter(c => c.status === "Done").length, gradient: "from-blue-400 to-blue-500", icon: Star },
+              ].map(c => {
+                const IconComponent = c.icon;
+                return (
+                  <div key={c.label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${c.gradient} p-5 text-white`}>
+                    <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                    <div className="flex items-start justify-between relative z-10">
+                      <div>
+                        <p className="text-white/80 text-sm">{c.label}</p>
+                        <p className="text-3xl font-bold mt-1">{c.value}</p>
+                      </div>
+                      <div className="bg-white/20 p-2.5 rounded-xl"><IconComponent size={20} /></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
             <div className="space-y-4">
               {conciergeLog.map(entry => {
                 const statusMap: Record<string, string> = {
-                  Pending: "bg-amber-100 text-amber-700",
-                  Confirmed: "bg-emerald-100 text-emerald-700",
-                  Done: "bg-blue-100 text-blue-700",
+                  Pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+                  Confirmed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+                  Done: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
                 };
                 return (
                   <div key={entry.id} className="bg-card rounded-2xl shadow-sm border border-border p-5">
@@ -447,7 +492,7 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
                     </div>
                     <p className="text-sm text-foreground mb-3">{entry.details}</p>
                     {entry.notes && (
-                      <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 text-sm text-blue-800 mb-3">
+                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 text-sm text-blue-800 dark:text-blue-300 mb-3">
                         <strong>Notes:</strong> {entry.notes}
                       </div>
                     )}
@@ -470,30 +515,46 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
         {activeSubmenu === "Broadcast" && (
           <motion.div key="broadcast" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between">
-              <SectionHeader title="Guest Broadcast Messages" />
+              <h2 className="text-xl font-semibold text-foreground">Guest Broadcast Messages</h2>
               <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"><Plus size={16} /> New Broadcast</button>
             </div>
 
-            <KpiStrip items={[
-              {color:"bg-emerald-500",value:broadcastMessages.filter(b=>b.status==="Sent").length,label:"Sent This Month"},
-              {color:"bg-blue-500",value:broadcastMessages.filter(b=>b.status==="Scheduled").length,label:"Scheduled"},
-              {color:"bg-indigo-500",value:broadcastMessages.reduce((s,b)=>s+b.recipients,0),label:"Total Recipients"},
-              {color:"bg-amber-500",value:`${Math.round(broadcastMessages.filter(b=>b.recipients>0).reduce((s,b)=>s+(b.opened/Math.max(b.recipients,1))*100,0)/broadcastMessages.filter(b=>b.recipients>0).length)}%`,label:"Avg Open Rate"},
-            ]} />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { label: "Sent This Month", value: broadcastMessages.filter(b => b.status === "Sent").length, gradient: "from-emerald-400 to-emerald-500", icon: Send },
+                { label: "Scheduled", value: broadcastMessages.filter(b => b.status === "Scheduled").length, gradient: "from-blue-400 to-blue-500", icon: Clock },
+                { label: "Total Recipients", value: broadcastMessages.reduce((s, b) => s + b.recipients, 0), gradient: "from-indigo-400 to-indigo-500", icon: Users },
+                { label: "Avg Open Rate", value: `${Math.round(broadcastMessages.filter(b => b.recipients > 0).reduce((s, b) => s + (b.opened / Math.max(b.recipients, 1)) * 100, 0) / broadcastMessages.filter(b => b.recipients > 0).length)}%`, gradient: "from-amber-400 to-amber-500", icon: Eye },
+              ].map(c => {
+                const IconComponent = c.icon;
+                return (
+                  <div key={c.label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${c.gradient} p-5 text-white`}>
+                    <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                    <div className="flex items-start justify-between relative z-10">
+                      <div>
+                        <p className="text-white/80 text-sm">{c.label}</p>
+                        <p className="text-3xl font-bold mt-1">{c.value}</p>
+                      </div>
+                      <div className="bg-white/20 p-2.5 rounded-xl"><IconComponent size={20} /></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
             <div className="space-y-4">
               {broadcastMessages.map(msg => {
                 const statusMap: Record<string, string> = {
-                  Draft: "bg-slate-100 text-slate-700",
-                  Scheduled: "bg-blue-100 text-blue-700",
-                  Sent: "bg-emerald-100 text-emerald-700",
-                  Failed: "bg-red-100 text-red-700",
+                  Draft: "bg-slate-100 text-slate-700 dark:bg-slate-700/30 dark:text-slate-400",
+                  Scheduled: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                  Sent: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+                  Failed: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
                 };
                 const channelColor: Record<string, string> = {
-                  WhatsApp: "bg-green-100 text-green-700",
-                  Email: "bg-blue-100 text-blue-700",
-                  SMS: "bg-purple-100 text-purple-700",
-                  "In-App": "bg-indigo-100 text-indigo-700",
+                  WhatsApp: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                  Email: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                  SMS: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+                  "In-App": "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
                 };
                 const openRate = msg.recipients > 0 ? Math.round((msg.opened / msg.recipients) * 100) : 0;
                 const clickRate = msg.recipients > 0 ? Math.round((msg.clicked / msg.recipients) * 100) : 0;
@@ -540,16 +601,16 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
         {activeSubmenu === "Staff Briefings" && (
           <motion.div key="briefings" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between">
-              <SectionHeader title="Staff Briefings" />
+              <h2 className="text-xl font-semibold text-foreground">Staff Briefings</h2>
               <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"><Plus size={16} /> New Briefing</button>
             </div>
 
             {staffBriefings.map(brief => {
               const ackPct = Math.round((brief.acknowledged / brief.total) * 100);
               const statusMap: Record<string, string> = {
-                Upcoming: "bg-blue-100 text-blue-700",
-                Published: "bg-emerald-100 text-emerald-700",
-                Acknowledged: "bg-purple-100 text-purple-700",
+                Upcoming: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                Published: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+                Acknowledged: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
               };
               return (
                 <div key={brief.id} className="bg-card rounded-2xl shadow-sm border border-border p-5">
@@ -568,7 +629,7 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Departments</p>
                       <div className="flex flex-wrap gap-1">
-                        {brief.attendees.map(dept => <span key={dept} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">{dept}</span>)}
+                        {brief.attendees.map(dept => <span key={dept} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 rounded-full text-xs font-medium">{dept}</span>)}
                       </div>
                     </div>
                     <div>
@@ -606,7 +667,7 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
         {activeSubmenu === "Internal Messages" && (
           <motion.div key="internal" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-4">
             <div className="flex items-center justify-between">
-              <SectionHeader title="Internal Messages" />
+              <h2 className="text-xl font-semibold text-foreground">Internal Messages</h2>
               <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"><Plus size={16} /> Compose</button>
             </div>
 
@@ -621,7 +682,7 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
                 </div>
                 <div className="flex-1 overflow-y-auto divide-y divide-border/50">
                   {internalMessages.map(msg => (
-                    <div key={msg.id} className={cn("p-4 cursor-pointer hover:bg-secondary/30 transition-colors", selectedMessage?.id === msg.id && "bg-secondary/50", !msg.read && "bg-purple-50/50")} onClick={() => setSelectedMessage(msg)}>
+                    <div key={msg.id} className={cn("p-4 cursor-pointer hover:bg-secondary/30 transition-colors", selectedMessage?.id === msg.id && "bg-secondary/50", !msg.read && "bg-purple-50/50 dark:bg-purple-900/10")} onClick={() => setSelectedMessage(msg)}>
                       <div className="flex items-start gap-2">
                         {!msg.read && <div className="w-2 h-2 rounded-full bg-purple-500 flex-shrink-0 mt-1.5" />}
                         <div className={cn("flex-1 min-w-0", msg.read && "ml-4")}>
@@ -688,20 +749,37 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
         {activeSubmenu === "Reports" && (
           <motion.div key="commsrep" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between">
-              <SectionHeader title="Communications Reports" />
+              <h2 className="text-xl font-semibold text-foreground">Communications Reports</h2>
               <button className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-xl text-sm font-medium hover:bg-secondary/70"><Download size={16} /> Export</button>
             </div>
 
-            <KpiStrip items={[
-              {color:"bg-emerald-500",value:"4.6/5",label:"Guest Satisfaction"},
-              {color:"bg-blue-500",value:"94%",label:"Request Resolution Rate"},
-              {color:"bg-violet-500",value:`${avgResponseTime}m`,label:"Avg Response Time"},
-              {color:"bg-rose-500",value:"2%",label:"Escalation Rate"},
-            ]} />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { label: "Guest Satisfaction (Comms)", value: "4.6/5", sub: "+0.2 vs last week", gradient: "from-emerald-400 to-emerald-500", icon: Star },
+                { label: "Request Resolution Rate", value: "94%", sub: "+3% vs last week", gradient: "from-blue-400 to-blue-500", icon: CheckCircle2 },
+                { label: "Avg Response Time", value: `${avgResponseTime}m`, sub: "-4m vs last week", gradient: "from-violet-400 to-violet-500", icon: Clock },
+                { label: "Escalation Rate", value: "2%", sub: "-1% vs last week", gradient: "from-emerald-400 to-emerald-500", icon: TrendingDown },
+              ].map(k => {
+                const IconComponent = k.icon;
+                return (
+                  <div key={k.label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${k.gradient} p-5 text-white`}>
+                    <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                    <div className="flex items-start justify-between relative z-10">
+                      <div>
+                        <p className="text-white/80 text-sm">{k.label}</p>
+                        <p className="text-3xl font-bold mt-1">{k.value}</p>
+                        <p className="text-white/70 text-xs mt-1">{k.sub}</p>
+                      </div>
+                      <div className="bg-white/20 p-2.5 rounded-xl"><IconComponent size={20} /></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <SectionHeader title="Response Time Trend (Today)" />
+                <h3 className="font-semibold text-foreground mb-4">Response Time Trend (Today)</h3>
                 <ResponsiveContainer width="100%" height={220}>
                   <AreaChart data={responseTimeData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -714,7 +792,7 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
                 </ResponsiveContainer>
               </div>
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <SectionHeader title="Requests by Type (Today)" />
+                <h3 className="font-semibold text-foreground mb-4">Requests by Type (Today)</h3>
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={requestsByType} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -730,7 +808,7 @@ export function Comms({ aiEnabled, activeSubmenu = "Overview" }: CommsProps) {
             {/* Request log summary */}
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
               <div className="p-5 border-b border-border">
-                <SectionHeader title="Full Request Log" />
+                <h3 className="font-semibold text-foreground">Full Request Log</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">

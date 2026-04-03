@@ -42,7 +42,6 @@ import {
   Area,
 } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
-import { KpiStrip, LegendBar, SectionSearch, SectionHeader } from "../components/shared";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1434,10 +1433,10 @@ const tw = {
 
 function priorityBadge(p: string) {
   const colors: Record<string, string> = {
-    Critical: "bg-red-100 text-red-700",
-    High: "bg-orange-100 text-orange-700",
-    Medium: "bg-yellow-100 text-yellow-700",
-    Low: "bg-green-100 text-green-700",
+    Critical: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+    High: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
+    Medium: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
+    Low: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
   };
   return (
     <span className={cn("px-3 py-1 rounded-full text-xs font-medium", colors[p] ?? "bg-secondary text-muted-foreground")}>
@@ -1448,28 +1447,28 @@ function priorityBadge(p: string) {
 
 function statusBadge(s: string) {
   const colors: Record<string, string> = {
-    "In Progress": "bg-blue-100 text-blue-700",
-    Open: "bg-yellow-100 text-yellow-700",
-    Completed: "bg-green-100 text-green-700",
-    "On Hold": "bg-muted text-foreground",
-    Active: "bg-green-100 text-green-700",
-    Inactive: "bg-muted text-foreground",
-    Blacklisted: "bg-red-100 text-red-700",
-    Upcoming: "bg-blue-100 text-blue-700",
-    Overdue: "bg-red-100 text-red-700",
-    Adequate: "bg-green-100 text-green-700",
-    Low: "bg-yellow-100 text-yellow-700",
-    Critical: "bg-red-100 text-red-700",
-    Draft: "bg-muted text-foreground",
-    Submitted: "bg-blue-100 text-blue-700",
-    Approved: "bg-green-100 text-green-700",
-    Rejected: "bg-red-100 text-red-700",
-    Pass: "bg-green-100 text-green-700",
-    Fail: "bg-red-100 text-red-700",
-    "Due Soon": "bg-orange-100 text-orange-700",
-    Good: "bg-green-100 text-green-700",
-    Fair: "bg-yellow-100 text-yellow-700",
-    Poor: "bg-red-100 text-red-700",
+    "In Progress": "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+    Open: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
+    Completed: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+    "On Hold": "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+    Active: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+    Inactive: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+    Blacklisted: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+    Upcoming: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+    Overdue: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+    Adequate: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+    Low: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
+    Critical: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+    Draft: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+    Submitted: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+    Approved: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+    Rejected: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+    Pass: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+    Fail: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+    "Due Soon": "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
+    Good: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+    Fair: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
+    Poor: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
   };
   return (
     <span className={cn("px-3 py-1 rounded-full text-xs font-medium", colors[s] ?? "bg-secondary text-muted-foreground")}>
@@ -1536,12 +1535,40 @@ function OverviewView() {
 
   return (
     <div className="space-y-6">
-            <KpiStrip items={[{color:"bg-indigo-500",value:workOrdersData.filter((w) => w.status === "Open").length,label:"Open Work Orders"},{color:"bg-blue-500",value:workOrdersData.filter((w) => w.status === "In Progress").length,label:"In Progress"},{color:"bg-emerald-500",value:workOrdersData.filter((w) => w.status === "Completed" && w.created === "2026-04-02").length,label:"Completed Today"},{color:"bg-rose-500",value:pmData.filter((p) => p.status === "Overdue").length,label:"PM Overdue"}]} />
-
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatCard
+          icon={<ClipboardList className="w-6 h-6 text-white" />}
+          label="Open Work Orders"
+          value={workOrdersData.filter((w) => w.status === "Open").length}
+          sub="Awaiting assignment"
+          gradient="bg-gradient-to-r from-indigo-400 to-indigo-500"
+        />
+        <StatCard
+          icon={<Wrench className="w-6 h-6 text-white" />}
+          label="In Progress"
+          value={workOrdersData.filter((w) => w.status === "In Progress").length}
+          sub="Active technicians on site"
+          gradient="bg-gradient-to-r from-blue-400 to-blue-500"
+        />
+        <StatCard
+          icon={<CheckCircle2 className="w-6 h-6 text-white" />}
+          label="Completed Today"
+          value={workOrdersData.filter((w) => w.status === "Completed" && w.created === "2026-04-02").length}
+          sub="Apr 2, 2026"
+          gradient="bg-gradient-to-r from-emerald-400 to-emerald-500"
+        />
+        <StatCard
+          icon={<AlertTriangle className="w-6 h-6 text-white" />}
+          label="PM Overdue"
+          value={pmData.filter((p) => p.status === "Overdue").length}
+          sub="Requires immediate attention"
+          gradient="bg-gradient-to-r from-rose-400 to-rose-500"
+        />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-          <SectionHeader title="Work Orders by Category" />
+          <h3 className="text-base font-semibold text-foreground mb-4">Work Orders by Category</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={woCategoryData} barCategoryGap="35%">
               <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.1} />
@@ -1559,7 +1586,7 @@ function OverviewView() {
 
         <div className={tw.tableWrap}>
           <div className="p-4 border-b border-border">
-            <SectionHeader title="Active Work Orders" />
+            <h3 className="text-base font-semibold text-foreground">Active Work Orders</h3>
           </div>
           <table className="w-full">
             <thead className={tw.thead}>
@@ -1694,12 +1721,40 @@ function WorkOrdersView() {
 function PMView() {
   return (
     <div className="space-y-6">
-            <KpiStrip items={[{color:"bg-blue-500",value:pmData.filter((p) => p.status === "Upcoming").length,label:"Upcoming PM"},{color:"bg-rose-500",value:pmData.filter((p) => p.status === "Overdue").length,label:"Overdue PM"},{color:"bg-emerald-500",value:pmData.length,label:"Total Scheduled"}]} />
-
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatCard
+          icon={<Calendar className="w-6 h-6 text-white" />}
+          label="Upcoming PM"
+          value={pmData.filter((p) => p.status === "Upcoming").length}
+          sub="Next 30 days"
+          gradient="bg-gradient-to-r from-blue-400 to-blue-500"
+        />
+        <StatCard
+          icon={<AlertTriangle className="w-6 h-6 text-white" />}
+          label="Overdue PM"
+          value={pmData.filter((p) => p.status === "Overdue").length}
+          sub="Requires immediate action"
+          gradient="bg-gradient-to-r from-rose-400 to-rose-500"
+        />
+        <StatCard
+          icon={<CheckCircle2 className="w-6 h-6 text-white" />}
+          label="Total Scheduled"
+          value={pmData.length}
+          sub="Active PM schedule"
+          gradient="bg-gradient-to-r from-emerald-400 to-emerald-500"
+        />
+        <StatCard
+          icon={<Settings className="w-6 h-6 text-white" />}
+          label="Completion Rate"
+          value="73%"
+          sub="Last 90 days"
+          gradient="bg-gradient-to-r from-violet-400 to-violet-500"
+        />
+      </div>
 
       <div className={tw.tableWrap}>
         <div className="p-4 border-b border-border">
-          <SectionHeader title="Preventive Maintenance Schedule" />
+          <h3 className="text-base font-semibold text-foreground">Preventive Maintenance Schedule</h3>
         </div>
         <table className="w-full min-w-[900px]">
           <thead className={tw.thead}>
@@ -1716,7 +1771,7 @@ function PMView() {
           </thead>
           <tbody className="divide-y divide-border/50">
             {pmData.map((p) => (
-              <tr key={p.id} className={cn(tw.tr, p.status === "Overdue" && "bg-red-50/30")}>
+              <tr key={p.id} className={cn(tw.tr, p.status === "Overdue" && "bg-red-50/30 dark:bg-red-900/5")}>
                 <td className={cn(tw.td, "font-mono text-xs text-muted-foreground")}>{p.id}</td>
                 <td className={cn(tw.td, "max-w-[200px] truncate")} title={p.equipment}>{p.equipment}</td>
                 <td className={cn(tw.td, "max-w-[140px] truncate")} title={p.location}>{p.location}</td>
@@ -1758,8 +1813,29 @@ function AssetRegistryView() {
 
   return (
     <div className="space-y-4">
-            <KpiStrip items={[{color:"bg-indigo-500",value:assetsData.length,label:"Total Assets"},{color:"bg-emerald-500",value:`$${(totalCapex / 1000).toFixed(0)}k`,label:"Total CAPEX Value"},{color:"bg-rose-500",value:assetsData.filter((a) => a.condition === "Poor").length,label:"Poor Condition"}]} />
-
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard
+          icon={<Database className="w-6 h-6 text-white" />}
+          label="Total Assets"
+          value={assetsData.length}
+          sub="Registered assets"
+          gradient="bg-gradient-to-r from-indigo-400 to-indigo-500"
+        />
+        <StatCard
+          icon={<TrendingUp className="w-6 h-6 text-white" />}
+          label="Total CAPEX Value"
+          value={`$${(totalCapex / 1000).toFixed(0)}k`}
+          sub="Combined book value"
+          gradient="bg-gradient-to-r from-emerald-400 to-emerald-500"
+        />
+        <StatCard
+          icon={<AlertTriangle className="w-6 h-6 text-white" />}
+          label="Poor Condition"
+          value={assetsData.filter((a) => a.condition === "Poor").length}
+          sub="Requires replacement planning"
+          gradient="bg-gradient-to-r from-rose-400 to-rose-500"
+        />
+      </div>
 
       <div className="flex flex-wrap gap-3 items-center">
         <select className={selectCls} value={catFilter} onChange={(e) => setCatFilter(e.target.value)}>
@@ -1788,7 +1864,7 @@ function AssetRegistryView() {
           </thead>
           <tbody className="divide-y divide-border/50">
             {filtered.map((a) => (
-              <tr key={a.id} className={cn(tw.tr, a.condition === "Poor" && "bg-red-50/30")}>
+              <tr key={a.id} className={cn(tw.tr, a.condition === "Poor" && "bg-red-50/30 dark:bg-red-900/5")}>
                 <td className={cn(tw.td, "font-mono text-xs text-muted-foreground")}>{a.id}</td>
                 <td className={cn(tw.td, "max-w-[180px] truncate")} title={a.name}>{a.name}</td>
                 <td className={cn(tw.td, "max-w-[140px] truncate text-xs text-muted-foreground")} title={a.category}>{a.category}</td>
@@ -1814,12 +1890,42 @@ function AssetRegistryView() {
 function EnergyView() {
   return (
     <div className="space-y-6">
-            <KpiStrip items={[{color:"bg-amber-500",value:"1,842",label:"kWh Today"},{color:"bg-blue-500",value:"62",label:"Water Today (m3)"},{color:"bg-orange-500",value:"51",label:"Gas Today (m3)"},{color:"bg-emerald-500",value:"16%",label:"Solar Contribution"}]} />
-
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatCard
+          icon={<Zap className="w-6 h-6 text-white" />}
+          label="kWh Today"
+          value="1,842"
+          sub="Down 4.2% vs yesterday"
+          gradient="bg-gradient-to-r from-amber-400 to-amber-500"
+        />
+        <StatCard
+          icon={<Droplets className="w-6 h-6 text-white" />}
+          label="Water Today (m3)"
+          value="62"
+          sub="Up 2.1% vs yesterday"
+          gradient="bg-gradient-to-r from-blue-400 to-blue-500"
+        />
+        <StatCard
+          icon={<Thermometer className="w-6 h-6 text-white" />}
+          label="Gas Today (m3)"
+          value="51"
+          sub="Boiler + Kitchen"
+          gradient="bg-gradient-to-r from-orange-400 to-orange-500"
+        />
+        <StatCard
+          icon={<Gauge className="w-6 h-6 text-white" />}
+          label="Solar Contribution"
+          value="16%"
+          sub="of total electricity today"
+          gradient="bg-gradient-to-r from-emerald-400 to-emerald-500"
+        />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-          <SectionHeader title="Electricity Consumption — Last 30 Days (kWh)" />
+          <h3 className="text-base font-semibold text-foreground mb-4">
+            Electricity Consumption — Last 30 Days (kWh)
+          </h3>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={energyChartData}>
               <defs>
@@ -1838,7 +1944,7 @@ function EnergyView() {
         </div>
 
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-          <SectionHeader title="Monthly Utility Costs (AED)" />
+          <h3 className="text-base font-semibold text-foreground mb-4">Monthly Utility Costs (AED)</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={utilityCostData} barCategoryGap="30%">
               <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.1} />
@@ -1855,7 +1961,7 @@ function EnergyView() {
 
       <div className={tw.tableWrap}>
         <div className="p-4 border-b border-border">
-          <SectionHeader title="Meter Readings" />
+          <h3 className="text-base font-semibold text-foreground">Meter Readings</h3>
         </div>
         <table className="w-full min-w-[800px]">
           <thead className={tw.thead}>
@@ -1903,8 +2009,29 @@ function EnergyView() {
 function VendorsView() {
   return (
     <div className="space-y-4">
-            <KpiStrip items={[{color:"bg-emerald-500",value:vendorsData.filter((v) => v.status === "Active").length,label:"Active Vendors"},{color:"bg-rose-500",value:vendorsData.filter((v) => v.status === "Blacklisted").length,label:"Blacklisted"},{color:"bg-amber-500",value:vendorsData.filter((v) => v.contractExpiry <= "2026-06-30" && v.status === "Active").length,label:"Expiring Soon"}]} />
-
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard
+          icon={<FileText className="w-6 h-6 text-white" />}
+          label="Active Vendors"
+          value={vendorsData.filter((v) => v.status === "Active").length}
+          sub="Under active contract"
+          gradient="bg-gradient-to-r from-emerald-400 to-emerald-500"
+        />
+        <StatCard
+          icon={<AlertTriangle className="w-6 h-6 text-white" />}
+          label="Blacklisted"
+          value={vendorsData.filter((v) => v.status === "Blacklisted").length}
+          sub="Do not engage"
+          gradient="bg-gradient-to-r from-rose-400 to-rose-500"
+        />
+        <StatCard
+          icon={<Calendar className="w-6 h-6 text-white" />}
+          label="Expiring Soon"
+          value={vendorsData.filter((v) => v.contractExpiry <= "2026-06-30" && v.status === "Active").length}
+          sub="Contracts within 90 days"
+          gradient="bg-gradient-to-r from-amber-400 to-amber-500"
+        />
+      </div>
 
       <div className={tw.tableWrap}>
         <table className="w-full min-w-[1000px]">
@@ -1923,7 +2050,7 @@ function VendorsView() {
           </thead>
           <tbody className="divide-y divide-border/50">
             {vendorsData.map((v) => (
-              <tr key={v.id} className={cn(tw.tr, v.status === "Blacklisted" && "bg-red-50/30")}>
+              <tr key={v.id} className={cn(tw.tr, v.status === "Blacklisted" && "bg-red-50/30 dark:bg-red-900/5")}>
                 <td className={cn(tw.td, "font-medium max-w-[150px] truncate")} title={v.name}>{v.name}</td>
                 <td className={cn(tw.td, "text-xs text-muted-foreground max-w-[130px] truncate")} title={v.category}>{v.category}</td>
                 <td className={cn(tw.td, "max-w-[120px] truncate")} title={v.contact}>{v.contact}</td>
@@ -1960,8 +2087,36 @@ function SparePartsView() {
 
   return (
     <div className="space-y-4">
-            <KpiStrip items={[{color:"bg-indigo-500",value:sparePartsData.length,label:"Total Part Types"},{color:"bg-rose-500",value:criticalCount + lowCount,label:"Reorder Alerts"},{color:"bg-emerald-500",value:sparePartsData.filter((s) => s.status === "Adequate").length,label:"Adequate Stock"},{color:"bg-amber-500",value:sparePartsData.filter((s) => s.stock === 0).length,label:"Out of Stock"}]} />
-
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatCard
+          icon={<Package className="w-6 h-6 text-white" />}
+          label="Total Part Types"
+          value={sparePartsData.length}
+          sub="In engineering store"
+          gradient="bg-gradient-to-r from-indigo-400 to-indigo-500"
+        />
+        <StatCard
+          icon={<AlertTriangle className="w-6 h-6 text-white" />}
+          label="Reorder Alerts"
+          value={criticalCount + lowCount}
+          sub={`${criticalCount} critical · ${lowCount} low`}
+          gradient="bg-gradient-to-r from-rose-400 to-rose-500"
+        />
+        <StatCard
+          icon={<CheckCircle2 className="w-6 h-6 text-white" />}
+          label="Adequate Stock"
+          value={sparePartsData.filter((s) => s.status === "Adequate").length}
+          sub="Above minimum threshold"
+          gradient="bg-gradient-to-r from-emerald-400 to-emerald-500"
+        />
+        <StatCard
+          icon={<Database className="w-6 h-6 text-white" />}
+          label="Out of Stock"
+          value={sparePartsData.filter((s) => s.stock === 0).length}
+          sub="Immediate procurement needed"
+          gradient="bg-gradient-to-r from-amber-400 to-amber-500"
+        />
+      </div>
 
       <div className={tw.tableWrap}>
         <table className="w-full min-w-[900px]">
@@ -1984,8 +2139,8 @@ function SparePartsView() {
                 key={s.id}
                 className={cn(
                   tw.tr,
-                  s.status === "Critical" && "bg-red-50/40",
-                  s.status === "Low" && "bg-amber-50/30"
+                  s.status === "Critical" && "bg-red-50/40 dark:bg-red-900/10",
+                  s.status === "Low" && "bg-amber-50/30 dark:bg-amber-900/5"
                 )}
               >
                 <td className={cn(tw.td, "font-mono text-xs text-muted-foreground")}>{s.id}</td>
@@ -2025,8 +2180,29 @@ function CapexView() {
 
   return (
     <div className="space-y-4">
-            <KpiStrip items={[{color:"bg-emerald-500",value:`$${(approved / 1000).toFixed(0)}k`,label:"Total Approved Budget"},{color:"bg-blue-500",value:`$${(inProgress / 1000).toFixed(0)}k`,label:"Spent / In Progress"},{color:"bg-amber-500",value:`$${(pending / 1000).toFixed(0)}k`,label:"Pending Approval"}]} />
-
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard
+          icon={<TrendingUp className="w-6 h-6 text-white" />}
+          label="Total Approved Budget"
+          value={`$${(approved / 1000).toFixed(0)}k`}
+          sub="Approved CAPEX 2026"
+          gradient="bg-gradient-to-r from-emerald-400 to-emerald-500"
+        />
+        <StatCard
+          icon={<Wrench className="w-6 h-6 text-white" />}
+          label="Spent / In Progress"
+          value={`$${(inProgress / 1000).toFixed(0)}k`}
+          sub="Active works"
+          gradient="bg-gradient-to-r from-blue-400 to-blue-500"
+        />
+        <StatCard
+          icon={<ClipboardList className="w-6 h-6 text-white" />}
+          label="Pending Approval"
+          value={`$${(pending / 1000).toFixed(0)}k`}
+          sub={`${capexData.filter((c) => c.status === "Submitted").length} requests awaiting`}
+          gradient="bg-gradient-to-r from-amber-400 to-amber-500"
+        />
+      </div>
 
       <div className={tw.tableWrap}>
         <table className="w-full min-w-[900px]">
@@ -2073,8 +2249,36 @@ function ComplianceView() {
 
   return (
     <div className="space-y-4">
-            <KpiStrip items={[{color:"bg-indigo-500",value:complianceData.length,label:"Total Inspections"},{color:"bg-emerald-500",value:passed,label:"Passed"},{color:"bg-amber-500",value:dueSoon,label:"Due Soon"},{color:"bg-rose-500",value:failed,label:"Failed / Action Needed"}]} />
-
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatCard
+          icon={<Shield className="w-6 h-6 text-white" />}
+          label="Total Inspections"
+          value={complianceData.length}
+          sub="Tracked compliance items"
+          gradient="bg-gradient-to-r from-indigo-400 to-indigo-500"
+        />
+        <StatCard
+          icon={<CheckCircle2 className="w-6 h-6 text-white" />}
+          label="Passed"
+          value={passed}
+          sub="Currently compliant"
+          gradient="bg-gradient-to-r from-emerald-400 to-emerald-500"
+        />
+        <StatCard
+          icon={<AlertTriangle className="w-6 h-6 text-white" />}
+          label="Due Soon"
+          value={dueSoon}
+          sub="Renewal within 30 days"
+          gradient="bg-gradient-to-r from-amber-400 to-amber-500"
+        />
+        <StatCard
+          icon={<AlertTriangle className="w-6 h-6 text-white" />}
+          label="Failed / Action Needed"
+          value={failed}
+          sub="Immediate attention required"
+          gradient="bg-gradient-to-r from-rose-400 to-rose-500"
+        />
+      </div>
 
       <div className={tw.tableWrap}>
         <table className="w-full min-w-[1000px]">
@@ -2095,8 +2299,8 @@ function ComplianceView() {
                 key={c.id}
                 className={cn(
                   tw.tr,
-                  c.result === "Fail" && "bg-red-50/40",
-                  c.result === "Due Soon" && "bg-amber-50/30"
+                  c.result === "Fail" && "bg-red-50/40 dark:bg-red-900/10",
+                  c.result === "Due Soon" && "bg-amber-50/30 dark:bg-amber-900/5"
                 )}
               >
                 <td className={cn(tw.td, "max-w-[220px] truncate")} title={c.item}>{c.item}</td>
@@ -2249,12 +2453,12 @@ export function Engineering({ aiEnabled, activeSubmenu }: EngineeringProps) {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-muted-foreground">{page.icon}</span>
-              <SectionHeader title={page.label} />
+              <h1 className="text-2xl font-bold text-foreground">{page.label}</h1>
             </div>
             <p className="text-muted-foreground text-sm">{page.description}</p>
           </div>
           {aiEnabled && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-100 text-violet-700 text-xs font-medium">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs font-medium">
               <Wind className="w-3.5 h-3.5" />
               AI Insights Active
             </div>
@@ -2325,7 +2529,7 @@ function SmartRoomsView() {
       case "alert":
         return "bg-red-50 border-red-200 hover:bg-red-100";
       case "offline":
-        return "bg-muted border-border hover:bg-secondary";
+        return "bg-gray-100 border-gray-300 hover:bg-gray-200";
       default:
         return "bg-card border-border hover:bg-secondary";
     }
@@ -2548,12 +2752,40 @@ function EnergyDashboardView() {
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-            <KpiStrip items={[{color:"bg-amber-500",value:"105 kW",label:"Total Draw (now)"},{color:"bg-red-500",value:"+12%",label:"vs Yesterday"},{color:"bg-blue-500",value:"2,847 BHD",label:"Monthly Cost"},{color:"bg-emerald-500",value:"78 / 100",label:"Efficiency Score"}]} />
-
+      <div className="grid grid-cols-4 gap-4">
+        <StatCard
+          icon={<Zap className="w-5 h-5" />}
+          label="Total Draw (now)"
+          value="105 kW"
+          sub="Peak usage"
+          gradient="bg-gradient-to-r from-amber-400 to-orange-500"
+        />
+        <StatCard
+          icon={<TrendingUp className="w-5 h-5" />}
+          label="vs Yesterday"
+          value="+12%"
+          sub="Higher consumption"
+          gradient="bg-gradient-to-r from-red-400 to-orange-500"
+        />
+        <StatCard
+          icon={<Gauge className="w-5 h-5" />}
+          label="Monthly Cost"
+          value="2,847 BHD"
+          sub="On track vs budget"
+          gradient="bg-gradient-to-r from-blue-400 to-cyan-500"
+        />
+        <StatCard
+          icon={<CheckCircle2 className="w-5 h-5" />}
+          label="Efficiency Score"
+          value="78 / 100"
+          sub="Room for optimization"
+          gradient="bg-gradient-to-r from-emerald-400 to-teal-500"
+        />
+      </div>
 
       {/* Energy Chart */}
       <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
-        <SectionHeader title="24-Hour Consumption" />
+        <h3 className="text-sm font-semibold mb-4">24-Hour Consumption</h3>
         <ResponsiveContainer width="100%" height={300}>
           <AreaChart data={energyDataHourly}>
             <defs>
@@ -2581,7 +2813,7 @@ function EnergyDashboardView() {
       <div className="grid grid-cols-3 gap-6">
         {/* Energy Breakdown Table */}
         <div className="col-span-2 space-y-4">
-          <SectionHeader title="Department Consumption" />
+          <h3 className="text-sm font-semibold">Department Consumption</h3>
           <div className={tw.tableWrap}>
             <table className="w-full">
               <thead className={tw.thead}>
@@ -2614,7 +2846,7 @@ function EnergyDashboardView() {
 
         {/* Alerts & Actions */}
         <div className="space-y-4">
-          <SectionHeader title="Alerts" />
+          <h3 className="text-sm font-semibold">Alerts</h3>
           <div className="space-y-3">
             {energyAlerts.map((alert, idx) => (
               <div
@@ -2634,7 +2866,7 @@ function EnergyDashboardView() {
             ))}
           </div>
 
-          <SectionHeader title="Quick Actions" />
+          <h3 className="text-sm font-semibold mt-6">Quick Actions</h3>
           <div className="space-y-2">
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -2793,7 +3025,7 @@ function AccessControlView() {
 
       {/* Access Log */}
       <div className="space-y-4">
-        <SectionHeader title="Recent Access Events (Last 24h)" />
+        <h3 className="text-sm font-semibold">Recent Access Events (Last 24h)</h3>
         <div className={tw.tableWrap}>
           <table className="w-full">
             <thead className={tw.thead}>

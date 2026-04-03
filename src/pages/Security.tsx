@@ -7,7 +7,6 @@ import {
   Camera, Lock, Unlock, RefreshCw, XCircle, Activity, MapPin,
 } from "lucide-react";
 import { cn } from "../lib/utils";
-import { KpiStrip, LegendBar, SectionSearch, SectionHeader } from "../components/shared";
 
 interface SecurityProps { aiEnabled: boolean; activeSubmenu?: string; }
 
@@ -73,9 +72,9 @@ const patrols: PatrolLog[] = [
 const getSeverityColor = (s: SecurityIncident["severity"]) => {
   switch (s) {
     case "Critical": return "bg-red-600 text-white";
-    case "High": return "bg-red-100 text-red-700";
-    case "Medium": return "bg-amber-100 text-amber-700";
-    case "Low": return "bg-emerald-100 text-emerald-700";
+    case "High": return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+    case "Medium": return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
+    case "Low": return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400";
   }
 };
 
@@ -90,18 +89,36 @@ export function Security({ aiEnabled, activeSubmenu = "Overview" }: SecurityProp
           <motion.div key="Overview" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <SectionHeader title="Overview" />
+                <h2 className="text-2xl font-bold text-foreground">Overview</h2>
                 <p className="text-muted-foreground text-sm mt-0.5">Live security operations — {new Date().toLocaleDateString("en-GB")}</p>
               </div>
               <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><Plus className="w-4 h-4" /> Log Incident</button>
             </div>
 
-            <KpiStrip items={[{color:"bg-red-500",value:incidents.filter(i => i.status === "Open" || i.status === "Investigating").length,label:"Active Incidents"},{color:"bg-blue-500",value:visitors.filter(v => v.status === "In" || v.status === "Overstay").length,label:"Visitors In-House"},{color:"bg-amber-500",value:keyRecords.filter(k => k.status === "Issued").length,label:"Keys Outstanding"},{color:"bg-emerald-500",value:patrols.filter(p => p.status === "Completed").length,label:"Patrols Today"}]} />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: "Active Incidents", value: incidents.filter(i => i.status === "Open" || i.status === "Investigating").length, icon: AlertTriangle, color: "from-red-400 to-red-500" },
+                { label: "Visitors In-House", value: visitors.filter(v => v.status === "In" || v.status === "Overstay").length, icon: Users, color: "from-blue-400 to-blue-500" },
+                { label: "Keys Outstanding", value: keyRecords.filter(k => k.status === "Issued").length, icon: Key, color: "from-amber-400 to-amber-500" },
+                { label: "Patrols Today", value: patrols.filter(p => p.status === "Completed").length, icon: Shield, color: "from-emerald-400 to-emerald-500" },
+              ].map(c => (
+                <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-5 text-white relative overflow-hidden`}>
+                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-white/80 text-sm">{c.label}</p>
+                      <p className="text-3xl font-bold mt-1">{c.value}</p>
+                    </div>
+                    <div className="bg-white/20 p-2.5 rounded-xl"><c.icon className="w-5 h-5 text-white" /></div>
+                  </div>
+                </div>
+              ))}
+            </div>
 
             {/* Recent Incidents */}
             <div className="bg-card rounded-2xl shadow-sm border border-border">
               <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-                <SectionHeader title="Recent Incidents" />
+                <h3 className="font-semibold text-foreground">Recent Incidents</h3>
                 <span className="text-xs text-muted-foreground">{incidents.filter(i => i.status === "Open" || i.status === "Investigating").length} active</span>
               </div>
               <div className="divide-y divide-border/50">
@@ -116,7 +133,7 @@ export function Security({ aiEnabled, activeSubmenu = "Overview" }: SecurityProp
                       <p className="text-xs text-muted-foreground">{inc.location} · {inc.date} {inc.time}</p>
                       <p className="text-xs text-muted-foreground mt-0.5 truncate">{inc.description}</p>
                     </div>
-                    <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium flex-shrink-0", inc.status === "Resolved" || inc.status === "Closed" ? "bg-emerald-100 text-emerald-700" : inc.status === "Investigating" ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700")}>{inc.status}</span>
+                    <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium flex-shrink-0", inc.status === "Resolved" || inc.status === "Closed" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : inc.status === "Investigating" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400")}>{inc.status}</span>
                   </div>
                 ))}
               </div>
@@ -125,7 +142,7 @@ export function Security({ aiEnabled, activeSubmenu = "Overview" }: SecurityProp
             {/* Current Visitors */}
             <div className="bg-card rounded-2xl shadow-sm border border-border">
               <div className="px-6 py-4 border-b border-border">
-                <SectionHeader title="Visitors Currently On-Site" />
+                <h3 className="font-semibold text-foreground">Visitors Currently On-Site</h3>
               </div>
               <div className="divide-y divide-border/50">
                 {visitors.filter(v => v.status === "In" || v.status === "Overstay").map(vis => (
@@ -136,7 +153,7 @@ export function Security({ aiEnabled, activeSubmenu = "Overview" }: SecurityProp
                       <p className="text-xs text-muted-foreground">{vis.company} · {vis.purpose}</p>
                     </div>
                     <span className="text-xs text-muted-foreground">In: {vis.checkIn}</span>
-                    <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", vis.status === "Overstay" ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")}>{vis.status}</span>
+                    <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", vis.status === "Overstay" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400")}>{vis.status}</span>
                     <button className="px-3 py-1.5 rounded-xl border border-border text-xs text-muted-foreground hover:bg-secondary/50 transition-colors flex-shrink-0">Check Out</button>
                   </div>
                 ))}
@@ -148,7 +165,7 @@ export function Security({ aiEnabled, activeSubmenu = "Overview" }: SecurityProp
         {activeSubmenu === "Incidents" && (
           <motion.div key="Incidents" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <SectionHeader title="Incident Log" />
+              <h2 className="text-xl font-bold text-foreground">Incident Log</h2>
               <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><Plus className="w-4 h-4" /> Log Incident</button>
             </div>
             <div className="flex gap-2">
@@ -172,7 +189,7 @@ export function Security({ aiEnabled, activeSubmenu = "Overview" }: SecurityProp
                       <td className="px-4 py-3 text-xs text-muted-foreground">{inc.date} {inc.time}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{inc.reportedBy}</td>
                       <td className="px-4 py-3"><span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", getSeverityColor(inc.severity))}>{inc.severity}</span></td>
-                      <td className="px-4 py-3"><span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", inc.status === "Resolved" || inc.status === "Closed" ? "bg-emerald-100 text-emerald-700" : inc.status === "Investigating" ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700")}>{inc.status}</span></td>
+                      <td className="px-4 py-3"><span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", inc.status === "Resolved" || inc.status === "Closed" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : inc.status === "Investigating" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400")}>{inc.status}</span></td>
                       <td className="px-4 py-3">
                         <div className="flex gap-1">
                           <button className="p-1.5 rounded-lg hover:bg-secondary transition-colors"><Eye className="w-3.5 h-3.5 text-muted-foreground" /></button>
@@ -190,7 +207,7 @@ export function Security({ aiEnabled, activeSubmenu = "Overview" }: SecurityProp
         {activeSubmenu === "Visitor Management" && (
           <motion.div key="Visitor Management" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <SectionHeader title="Visitor Management" />
+              <h2 className="text-xl font-bold text-foreground">Visitor Management</h2>
               <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><Plus className="w-4 h-4" /> Register Visitor</button>
             </div>
             <div className="relative">
@@ -215,7 +232,7 @@ export function Security({ aiEnabled, activeSubmenu = "Overview" }: SecurityProp
                       <td className="px-4 py-3 text-sm text-muted-foreground">{vis.checkOut || "—"}</td>
                       <td className="px-4 py-3 text-xs text-muted-foreground">{vis.idType}: {vis.idNo}</td>
                       <td className="px-4 py-3 text-xs text-muted-foreground">{vis.vehiclePlate || "—"}</td>
-                      <td className="px-4 py-3"><span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", vis.status === "In" ? "bg-blue-100 text-blue-700" : vis.status === "Overstay" ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")}>{vis.status}</span></td>
+                      <td className="px-4 py-3"><span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", vis.status === "In" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : vis.status === "Overstay" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400")}>{vis.status}</span></td>
                       <td className="px-4 py-3">
                         {vis.status === "In" && <button className="px-2.5 py-1 rounded-lg bg-secondary text-muted-foreground text-xs hover:bg-secondary/80 transition-colors">Check Out</button>}
                       </td>
@@ -230,7 +247,7 @@ export function Security({ aiEnabled, activeSubmenu = "Overview" }: SecurityProp
         {activeSubmenu === "Key Management" && (
           <motion.div key="Key Management" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <SectionHeader title="Key Management" />
+              <h2 className="text-xl font-bold text-foreground">Key Management</h2>
               <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><Plus className="w-4 h-4" /> Issue Key</button>
             </div>
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-x-auto">
@@ -250,7 +267,7 @@ export function Security({ aiEnabled, activeSubmenu = "Overview" }: SecurityProp
                       <td className="px-4 py-3 text-sm text-muted-foreground">{k.issuedAt}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{k.returnedAt || "—"}</td>
                       <td className="px-4 py-3">
-                        <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", k.status === "Issued" ? "bg-blue-100 text-blue-700" : k.status === "Returned" ? "bg-emerald-100 text-emerald-700" : k.status === "Lost" ? "bg-red-100 text-red-700" : "bg-muted text-muted-foreground")}>{k.status}</span>
+                        <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", k.status === "Issued" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : k.status === "Returned" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : k.status === "Lost" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400")}>{k.status}</span>
                       </td>
                     </tr>
                   ))}
@@ -263,7 +280,7 @@ export function Security({ aiEnabled, activeSubmenu = "Overview" }: SecurityProp
         {activeSubmenu === "Patrol Log" && (
           <motion.div key="Patrol Log" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <SectionHeader title="Patrol & Checkpoint Log" />
+              <h2 className="text-xl font-bold text-foreground">Patrol & Checkpoint Log</h2>
               <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><Plus className="w-4 h-4" /> Add Patrol</button>
             </div>
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
@@ -280,7 +297,7 @@ export function Security({ aiEnabled, activeSubmenu = "Overview" }: SecurityProp
                       <td className="px-4 py-3 text-sm text-muted-foreground">{p.zone}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{p.checkTime}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{p.date}</td>
-                      <td className="px-4 py-3"><span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", p.status === "Completed" ? "bg-emerald-100 text-emerald-700" : p.status === "Delayed" ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700")}>{p.status}</span></td>
+                      <td className="px-4 py-3"><span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", p.status === "Completed" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : p.status === "Delayed" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400")}>{p.status}</span></td>
                       <td className="px-4 py-3 text-xs text-muted-foreground max-w-[200px] truncate">{p.notes || "—"}</td>
                     </tr>
                   ))}

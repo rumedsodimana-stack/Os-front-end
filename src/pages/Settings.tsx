@@ -7,8 +7,7 @@ import {
   Phone, Mail, MapPin, Save, Upload, Shield, Key, Eye, EyeOff,
   Tag, Calendar, Percent, RefreshCw, Download, Wifi, WifiOff,
   Star, ChevronRight, ToggleLeft, ToggleRight, Clock,
-} from "lucide-react";import { KpiStrip, LegendBar, SectionSearch, SectionHeader } from "../components/shared";
-
+} from "lucide-react";
 
 interface SettingsProps {
   aiEnabled: boolean;
@@ -90,12 +89,12 @@ export function Settings({ aiEnabled, activeSubmenu = "Hotel Profile" }: Setting
         {activeSubmenu === "Hotel Profile" && (
           <motion.div key="profile" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-6">
             <div className="flex items-center justify-between">
-              <div><SectionHeader title="Hotel Profile" /><p className="text-muted-foreground text-sm mt-0.5">Property identity, contact details, and brand settings</p></div>
+              <div><h2 className="text-2xl font-bold text-foreground">Hotel Profile</h2><p className="text-muted-foreground text-sm mt-0.5">Property identity, contact details, and brand settings</p></div>
               <button className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"><Save className="w-4 h-4"/>Save Changes</button>
             </div>
             {/* Hotel branding */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-              <SectionHeader title="Property Identity" />
+              <h3 className="font-semibold text-foreground mb-5 flex items-center gap-2"><Building className="w-4 h-4"/>Property Identity</h3>
               <div className="flex items-start gap-6 mb-6">
                 <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold shrink-0">S</div>
                 <div className="flex-1">
@@ -115,7 +114,7 @@ export function Settings({ aiEnabled, activeSubmenu = "Hotel Profile" }: Setting
             </div>
             {/* Contact */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-              <SectionHeader title="Contact & Location" />
+              <h3 className="font-semibold text-foreground mb-5 flex items-center gap-2"><Phone className="w-4 h-4"/>Contact & Location</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[["Address","Building 123, Road 45, Block 302"],["City","Manama"],["Country","Kingdom of Bahrain"],["Postcode","00973"],["Phone","+973 1234 5678"],["Email","info@singularitymanama.com"],["Website","www.singularityhotels.com"],["Currency","BHD — Bahraini Dinar"]].map(([label,val])=>(
                   <div key={label}>
@@ -132,7 +131,7 @@ export function Settings({ aiEnabled, activeSubmenu = "Hotel Profile" }: Setting
         {activeSubmenu === "Room Types" && (
           <motion.div key="roomtypes" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-5">
             <div className="flex items-center justify-between">
-              <div><SectionHeader title="Room Types" /><p className="text-muted-foreground text-sm mt-0.5">{roomTypes.length} room categories · {roomTypes.reduce((s,r)=>s+r.count,0)} total rooms</p></div>
+              <div><h2 className="text-2xl font-bold text-foreground">Room Types</h2><p className="text-muted-foreground text-sm mt-0.5">{roomTypes.length} room categories · {roomTypes.reduce((s,r)=>s+r.count,0)} total rooms</p></div>
               <button className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"><Plus className="w-4 h-4"/>Add Room Type</button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -165,7 +164,7 @@ export function Settings({ aiEnabled, activeSubmenu = "Hotel Profile" }: Setting
         {activeSubmenu === "Rate Plans" && (
           <motion.div key="rateplans" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-5">
             <div className="flex items-center justify-between">
-              <div><SectionHeader title="Rate Plans" /><p className="text-muted-foreground text-sm mt-0.5">{ratePlans.filter(r=>r.active).length} active plans · {ratePlans.length} total</p></div>
+              <div><h2 className="text-2xl font-bold text-foreground">Rate Plans</h2><p className="text-muted-foreground text-sm mt-0.5">{ratePlans.filter(r=>r.active).length} active plans · {ratePlans.length} total</p></div>
               <button className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"><Plus className="w-4 h-4"/>New Rate Plan</button>
             </div>
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
@@ -189,7 +188,7 @@ export function Settings({ aiEnabled, activeSubmenu = "Hotel Profile" }: Setting
                         <div className="flex flex-wrap gap-1">{rp.channels.slice(0,2).map(c=><span key={c} className="px-1.5 py-0.5 bg-secondary rounded text-xs text-muted-foreground">{c}</span>)}{rp.channels.length>2&&<span className="text-xs text-muted-foreground">+{rp.channels.length-2}</span>}</div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold",rp.active?"bg-emerald-100 text-emerald-700":"bg-muted text-muted-foreground")}>{rp.active?"Active":"Inactive"}</span>
+                        <span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold",rp.active?"bg-emerald-100 text-emerald-700":"bg-gray-100 text-gray-500")}>{rp.active?"Active":"Inactive"}</span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-1">
@@ -209,7 +208,7 @@ export function Settings({ aiEnabled, activeSubmenu = "Hotel Profile" }: Setting
         {activeSubmenu === "User Roles" && (
           <motion.div key="users" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-5">
             <div className="flex items-center justify-between">
-              <div><SectionHeader title="User Roles & Access" /><p className="text-muted-foreground text-sm mt-0.5">{users.filter(u=>u.status==="Active").length} active users</p></div>
+              <div><h2 className="text-2xl font-bold text-foreground">User Roles & Access</h2><p className="text-muted-foreground text-sm mt-0.5">{users.filter(u=>u.status==="Active").length} active users</p></div>
               <button className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"><Plus className="w-4 h-4"/>Invite User</button>
             </div>
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
@@ -229,7 +228,7 @@ export function Settings({ aiEnabled, activeSubmenu = "Hotel Profile" }: Setting
                       <td className="px-4 py-3 font-medium text-foreground">{u.role}</td>
                       <td className="px-4 py-3 text-muted-foreground">{u.department}</td>
                       <td className="px-4 py-3 text-xs text-muted-foreground">{u.lastLogin}</td>
-                      <td className="px-4 py-3"><span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold",u.status==="Active"?"bg-emerald-100 text-emerald-700":"bg-muted text-muted-foreground")}>{u.status}</span></td>
+                      <td className="px-4 py-3"><span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold",u.status==="Active"?"bg-emerald-100 text-emerald-700":"bg-gray-100 text-gray-500")}>{u.status}</span></td>
                       <td className="px-4 py-3"><div className="flex flex-wrap gap-1">{u.permissions.slice(0,2).map(p=><span key={p} className="px-1.5 py-0.5 bg-secondary rounded text-xs text-muted-foreground">{p}</span>)}{u.permissions.length>2&&<span className="text-xs text-muted-foreground">+{u.permissions.length-2}</span>}</div></td>
                       <td className="px-4 py-3"><div className="flex gap-1"><button className="p-1.5 hover:bg-secondary rounded-lg transition-colors"><Edit2 className="w-3.5 h-3.5 text-muted-foreground"/></button><button className="p-1.5 hover:bg-secondary rounded-lg transition-colors"><Key className="w-3.5 h-3.5 text-muted-foreground"/></button></div></td>
                     </tr>
@@ -244,7 +243,7 @@ export function Settings({ aiEnabled, activeSubmenu = "Hotel Profile" }: Setting
         {activeSubmenu === "Integrations" && (
           <motion.div key="integrations" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-5">
             <div className="flex items-center justify-between">
-              <div><SectionHeader title="Integrations" /><p className="text-muted-foreground text-sm mt-0.5">{integrations.filter(i=>i.status==="Connected").length} connected · {integrations.filter(i=>i.status==="Error").length} with errors</p></div>
+              <div><h2 className="text-2xl font-bold text-foreground">Integrations</h2><p className="text-muted-foreground text-sm mt-0.5">{integrations.filter(i=>i.status==="Connected").length} connected · {integrations.filter(i=>i.status==="Error").length} with errors</p></div>
               <button className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"><Plus className="w-4 h-4"/>Add Integration</button>
             </div>
             {["OTA","GDS","Payments","Messaging","POS","BMS","Channel Manager","Review"].map(cat=>{
@@ -258,7 +257,7 @@ export function Settings({ aiEnabled, activeSubmenu = "Hotel Profile" }: Setting
                       <div key={intg.id} className="bg-card rounded-2xl shadow-sm border border-border p-4 flex items-center gap-4">
                         <div className="text-3xl w-12 h-12 rounded-xl bg-secondary/50 flex items-center justify-center shrink-0">{intg.logo}</div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2"><span className="font-semibold text-foreground">{intg.name}</span><span className={cn("px-2 py-0.5 rounded-full text-xs font-semibold",intg.status==="Connected"?"bg-emerald-100 text-emerald-700":intg.status==="Error"?"bg-red-100 text-red-700":"bg-muted text-muted-foreground")}>{intg.status}</span></div>
+                          <div className="flex items-center gap-2"><span className="font-semibold text-foreground">{intg.name}</span><span className={cn("px-2 py-0.5 rounded-full text-xs font-semibold",intg.status==="Connected"?"bg-emerald-100 text-emerald-700":intg.status==="Error"?"bg-red-100 text-red-700":"bg-gray-100 text-gray-500")}>{intg.status}</span></div>
                           <p className="text-xs text-muted-foreground mt-0.5 truncate">{intg.description}</p>
                           <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1"><RefreshCw className="w-2.5 h-2.5"/>Last sync: {intg.lastSync}</p>
                         </div>
@@ -278,12 +277,12 @@ export function Settings({ aiEnabled, activeSubmenu = "Hotel Profile" }: Setting
         {/* ── APPEARANCE ───────────────────────────────────── */}
         {activeSubmenu === "Appearance" && (
           <motion.div key="appearance" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-5">
-            <div><SectionHeader title="Appearance" /><p className="text-muted-foreground text-sm mt-0.5">Theme, colours, language and display preferences</p></div>
+            <div><h2 className="text-2xl font-bold text-foreground">Appearance</h2><p className="text-muted-foreground text-sm mt-0.5">Theme, colours, language and display preferences</p></div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <SectionHeader title="Theme" />
+                <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Palette className="w-4 h-4"/>Theme</h3>
                 <div className="grid grid-cols-3 gap-3">
-                  {[{label:"Light",bg:"bg-white",border:"border-violet-500",text:"text-foreground"},{label:"Dark",bg:"bg-muted-foreground",border:"border-border",text:"text-white"},{label:"System",bg:"bg-gradient-to-br from-white to-slate-900",border:"border-border",text:"text-muted-foreground"}].map(t=>(
+                  {[{label:"Light",bg:"bg-white",border:"border-violet-500",text:"text-gray-800"},{label:"Dark",bg:"bg-gray-900",border:"border-border",text:"text-white"},{label:"System",bg:"bg-gradient-to-br from-white to-gray-900",border:"border-border",text:"text-gray-600"}].map(t=>(
                     <button key={t.label} className={cn("rounded-xl border-2 p-3 text-center transition-all hover:border-violet-400",t.border,t.bg)}>
                       <div className={cn("text-xs font-semibold",t.text)}>{t.label}</div>
                     </button>
@@ -291,7 +290,7 @@ export function Settings({ aiEnabled, activeSubmenu = "Hotel Profile" }: Setting
                 </div>
               </div>
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <SectionHeader title="Language & Region" />
+                <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Globe className="w-4 h-4"/>Language & Region</h3>
                 <div className="space-y-3">
                   {[["Language","English (UK)"],["Date Format","DD/MM/YYYY"],["Time Format","24-hour"],["Timezone","GMT+3 (Arabia Standard)"],["Currency Display","BHD #,###.###"]].map(([k,v])=>(
                     <div key={k} className="flex justify-between items-center text-sm border-b border-border/50 pb-2 last:border-0">
@@ -302,7 +301,7 @@ export function Settings({ aiEnabled, activeSubmenu = "Hotel Profile" }: Setting
                 </div>
               </div>
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <SectionHeader title="Security" />
+                <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Shield className="w-4 h-4"/>Security</h3>
                 <div className="space-y-3">
                   {[["Two-Factor Auth","Enabled"],["Session Timeout","30 minutes"],["Password Policy","Strong (min 12 chars)"],["Audit Logging","All actions"]].map(([k,v])=>(
                     <div key={k} className="flex justify-between items-center text-sm border-b border-border/50 pb-2 last:border-0">
@@ -313,7 +312,7 @@ export function Settings({ aiEnabled, activeSubmenu = "Hotel Profile" }: Setting
                 </div>
               </div>
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <SectionHeader title="Hotel Timings" />
+                <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Clock className="w-4 h-4"/>Hotel Timings</h3>
                 <div className="space-y-3">
                   {[["Check-in Time","15:00"],["Check-out Time","12:00"],["Night Audit Time","02:00"],["Breakfast Hours","06:30 – 11:00"],["Spa Hours","09:00 – 22:00"]].map(([k,v])=>(
                     <div key={k} className="flex justify-between items-center text-sm border-b border-border/50 pb-2 last:border-0">
@@ -330,7 +329,7 @@ export function Settings({ aiEnabled, activeSubmenu = "Hotel Profile" }: Setting
         {/* ── BILLING ──────────────────────────────────────── */}
         {activeSubmenu === "Billing" && (
           <motion.div key="billing" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-5">
-            <div><SectionHeader title="Billing & Subscription" /><p className="text-muted-foreground text-sm mt-0.5">Manage your Singularity PMS subscription</p></div>
+            <div><h2 className="text-2xl font-bold text-foreground">Billing & Subscription</h2><p className="text-muted-foreground text-sm mt-0.5">Manage your Singularity PMS subscription</p></div>
             <div className="bg-gradient-to-r from-violet-600 to-indigo-700 rounded-2xl p-6 text-white relative overflow-hidden">
               <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"/>
               <div className="flex items-start justify-between">
@@ -344,7 +343,7 @@ export function Settings({ aiEnabled, activeSubmenu = "Hotel Profile" }: Setting
               </div>
             </div>
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
-              <div className="px-5 py-4 border-b border-border"><SectionHeader title="Recent Invoices" /></div>
+              <div className="px-5 py-4 border-b border-border"><h3 className="font-semibold text-foreground">Recent Invoices</h3></div>
               <table className="w-full text-sm">
                 <thead><tr className="bg-secondary/50 text-muted-foreground text-xs uppercase tracking-wide">
                   {["Invoice","Period","Amount","Status","Action"].map(h=><th key={h} className="text-left px-4 py-3 font-medium">{h}</th>)}

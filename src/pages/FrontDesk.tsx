@@ -3,7 +3,6 @@ import { Users, DoorOpen, Key, DollarSign, TrendingUp, TrendingDown, Bed, CheckC
 import { cn } from "../lib/utils";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
-import { KpiStrip, LegendBar, SectionSearch, SectionHeader, PageShell } from "../components/shared";
 
 const getBadgeColor = (status: string) => {
   switch (status) {
@@ -77,15 +76,34 @@ const mockRooms: Room[] = [
 function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
   return (
     <div className="space-y-6">
-      <SectionHeader title="Front Desk Overview" subtitle="Live hotel metrics and daily activity" />
-      <KpiStrip
-        items={[
-          { color: "bg-pink-500", value: "45", label: "Arrivals" },
-          { color: "bg-violet-500", value: "128", label: "In-House" },
-          { color: "bg-emerald-500", value: "32", label: "Departures" },
-          { color: "bg-amber-500", value: "$12,896", label: "Revenue" },
-        ]}
-      />
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-foreground">Analytic Overview</h1>
+      </div>
+
+      {/* KPIs */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: "Arrivals", value: "45", change: "+4% Last Month", icon: DoorOpen, bg: "bg-gradient-to-r from-pink-400 to-pink-500" },
+          { label: "In-House", value: "128", change: "+1% Last Month", icon: Users, bg: "bg-gradient-to-r from-violet-400 to-violet-500" },
+          { label: "Departures", value: "32", change: "-2% Last Month", icon: Key, bg: "bg-gradient-to-r from-emerald-400 to-emerald-500" },
+          { label: "Revenue", value: "$12,896", change: "+8% Last Month", icon: DollarSign, bg: "bg-gradient-to-r from-yellow-400 to-yellow-500" },
+        ].map((stat, i) => (
+          <div key={i} className={cn("rounded-2xl p-6 shadow-sm text-white relative overflow-hidden", stat.bg)}>
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 bg-white/20 rounded-xl">
+                  <stat.icon className="w-6 h-6 text-white" />
+                </div>
+                <p className="text-lg font-medium text-white/90">{stat.label}</p>
+              </div>
+              <h3 className="text-3xl font-bold mb-1">{stat.value}</h3>
+              <p className="text-sm text-white/80">{stat.change}</p>
+            </div>
+            {/* Decorative background shape */}
+            <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+          </div>
+        ))}
+      </div>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -93,12 +111,16 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
         {/* Area Chart */}
         <div className="lg:col-span-2 bg-card rounded-2xl p-6 shadow-sm border border-border">
           <div className="flex justify-between items-center mb-6">
-            <SectionHeader title="Revenue" />
+            <h2 className="font-semibold text-lg">Revenue</h2>
             <div className="flex items-center gap-4 text-sm">
-              <LegendBar items={[
-                { color: "bg-pink-100 border-pink-200", label: "Room Rev" },
-                { color: "bg-emerald-100 border-emerald-200", label: "F&B Rev" },
-              ]} />
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-pink-500"></div>
+                <span className="text-muted-foreground">Room Rev</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                <span className="text-muted-foreground">F&B Rev</span>
+              </div>
               <select className="bg-secondary text-secondary-foreground border-none rounded-xl px-3 py-1.5 outline-none cursor-pointer text-xs font-medium ml-2">
                 <option>This Month</option>
               </select>
@@ -133,7 +155,7 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
         {/* Donut Chart */}
         <div className="bg-card rounded-2xl p-6 shadow-sm border border-border flex flex-col">
           <div className="flex justify-between items-center mb-2">
-            <SectionHeader title="Status" />
+            <h2 className="font-semibold text-lg">Status</h2>
             <select className="bg-secondary text-secondary-foreground border-none rounded-xl px-3 py-1.5 outline-none cursor-pointer text-xs font-medium">
               <option>Today</option>
             </select>
@@ -188,7 +210,7 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
         {/* Main Table */}
         <div className="lg:col-span-2 bg-card rounded-2xl p-6 shadow-sm border border-border">
           <div className="flex justify-between items-center mb-6">
-            <SectionHeader title="Recent Bookings" />
+            <h2 className="font-semibold text-lg">Recent Bookings</h2>
             <select className="bg-secondary text-secondary-foreground border-none rounded-xl px-3 py-1.5 outline-none cursor-pointer text-xs font-medium">
               <option>This Week</option>
             </select>
@@ -232,7 +254,7 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
         {/* Secondary Table */}
         <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
           <div className="flex justify-between items-center mb-6">
-            <SectionHeader title="Top Regions" />
+            <h2 className="font-semibold text-lg">Top Regions</h2>
             <select className="bg-secondary text-secondary-foreground border-none rounded-xl px-3 py-1.5 outline-none cursor-pointer text-xs font-medium">
               <option>This Year</option>
             </select>
@@ -333,20 +355,70 @@ function FrontDeskRooms() {
   const selectedRoomData = selectedRoom ? mockRooms.find(r => r.number === selectedRoom) : null;
 
   return (
-    <div className="space-y-4">
-      {/* Compact KPI Strip */}
-      <KpiStrip items={[
-        { color: "bg-violet-500", value: stats.total, label: "Total Rooms" },
-        { color: "bg-emerald-500", value: stats.available, label: "Available" },
-        { color: "bg-blue-500", value: `${Math.round((stats.occupied / stats.total) * 100)}%`, label: "Occupancy" },
-        { color: "bg-amber-500", value: stats.arrivals, label: "Arrivals" },
-        { color: "bg-rose-500", value: stats.departures, label: "Departures" },
-      ]} />
+    <div className="space-y-6">
+      {/* KPI Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="bg-gradient-to-r from-violet-400 to-violet-500 rounded-2xl p-6 text-white relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-white/20 rounded-xl p-3"><Bed className="w-6 h-6 text-white" /></div>
+              <span className="text-sm text-white/70">Total</span>
+            </div>
+            <div className="text-3xl font-bold">{stats.total}</div>
+            <div className="text-sm text-white/80 mt-1">Total Rooms</div>
+          </div>
+          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+        </div>
+        <div className="bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-2xl p-6 text-white relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-white/20 rounded-xl p-3"><DoorOpen className="w-6 h-6 text-white" /></div>
+              <span className="text-sm text-white/70">Clean</span>
+            </div>
+            <div className="text-3xl font-bold">{stats.available}</div>
+            <div className="text-sm text-white/80 mt-1">Available</div>
+          </div>
+          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+        </div>
+        <div className="bg-gradient-to-r from-blue-400 to-blue-500 rounded-2xl p-6 text-white relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-white/20 rounded-xl p-3"><Users className="w-6 h-6 text-white" /></div>
+              <span className="text-sm text-white/70">Rate</span>
+            </div>
+            <div className="text-3xl font-bold">{Math.round((stats.occupied / stats.total) * 100)}%</div>
+            <div className="text-sm text-white/80 mt-1">Occupancy</div>
+          </div>
+          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+        </div>
+        <div className="bg-gradient-to-r from-amber-400 to-amber-500 rounded-2xl p-6 text-white relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-white/20 rounded-xl p-3"><Key className="w-6 h-6 text-white" /></div>
+              <span className="text-sm text-white/70">Today</span>
+            </div>
+            <div className="text-3xl font-bold">{stats.arrivals}</div>
+            <div className="text-sm text-white/80 mt-1">Arrivals</div>
+          </div>
+          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+        </div>
+        <div className="bg-gradient-to-r from-rose-400 to-rose-500 rounded-2xl p-6 text-white relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-white/20 rounded-xl p-3"><TrendingDown className="w-6 h-6 text-white" /></div>
+              <span className="text-sm text-white/70">Today</span>
+            </div>
+            <div className="text-3xl font-bold">{stats.departures}</div>
+            <div className="text-sm text-white/80 mt-1">Departures</div>
+          </div>
+          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+        </div>
+      </div>
 
       {/* Floor plan card */}
       <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
         <div className="flex items-center justify-between mb-4">
-          <SectionHeader title="Room Plan" />
+          <h2 className="text-base font-semibold">Room Plan</h2>
         </div>
 
         {/* Floor tabs */}
@@ -368,17 +440,35 @@ function FrontDeskRooms() {
         </div>
 
         {/* Status legend */}
-        <LegendBar items={[
-          { color: "bg-emerald-100 border-emerald-200", label: "Available (Clean)" },
-          { color: "bg-amber-100 border-amber-200", label: "Available (Dirty)" },
-          { color: "bg-rose-100 border-rose-200", label: "Occupied" },
-          { color: "bg-violet-100 border-violet-200", label: "Arriving Today" },
-          { color: "bg-blue-100 border-blue-200", label: "Departing Today" },
-          { color: "bg-slate-100 border-slate-200", label: "Out of Service" },
-        ]} className="mb-5" />
+        <div className="flex flex-wrap gap-4 items-center text-xs mb-5">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-emerald-200 bg-emerald-100"></div>
+            <span className="text-muted-foreground">Available (Clean)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-amber-200 bg-amber-100"></div>
+            <span className="text-muted-foreground">Available (Dirty)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-rose-200 bg-rose-100"></div>
+            <span className="text-muted-foreground">Occupied</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-violet-200 bg-violet-100"></div>
+            <span className="text-muted-foreground">Arriving Today</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-blue-200 bg-blue-100"></div>
+            <span className="text-muted-foreground">Departing Today</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-slate-200 bg-slate-100"></div>
+            <span className="text-muted-foreground">Out of Service</span>
+          </div>
+        </div>
 
         {/* Room grid */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-9 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
           {floorRooms.map(room => (
             <motion.button
               key={room.number}
@@ -496,16 +586,25 @@ function FrontDeskArrivals() {
     <div>
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <SectionHeader title="Arrival List" />
+          <h1 className="text-xl font-semibold text-foreground">Arrival List</h1>
         </div>
 
         {/* Legend & Filters */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
-          <LegendBar items={[
-            { color: "bg-emerald-100 border-emerald-200", label: "Checked In" },
-            { color: "bg-amber-100 border-amber-200", label: "Pending" },
-            { color: "bg-purple-100 border-purple-200", label: "VIP" },
-          ]} />
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
+              <span className="text-sm font-medium text-muted-foreground">Checked In</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-amber-400"></div>
+              <span className="text-sm font-medium text-muted-foreground">Pending</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-purple-400"></div>
+              <span className="text-sm font-medium text-muted-foreground">VIP</span>
+            </div>
+          </div>
           <div className="flex items-center gap-2">
             <select 
               className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer"
@@ -611,16 +710,25 @@ function FrontDeskDepartures() {
     <div>
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <SectionHeader title="Departure List" />
+          <h1 className="text-xl font-semibold text-foreground">Departure List</h1>
         </div>
 
         {/* Legend & Filters */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
-          <LegendBar items={[
-            { color: "bg-emerald-100 border-emerald-200", label: "Checked Out" },
-            { color: "bg-amber-100 border-amber-200", label: "Pending" },
-            { color: "bg-red-100 border-red-200", label: "Has Balance" },
-          ]} />
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
+              <span className="text-sm font-medium text-muted-foreground">Checked Out</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-amber-400"></div>
+              <span className="text-sm font-medium text-muted-foreground">Pending</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-400"></div>
+              <span className="text-sm font-medium text-muted-foreground">Has Balance</span>
+            </div>
+          </div>
           <div className="flex items-center gap-2">
             <select 
               className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer"
@@ -792,22 +900,32 @@ function FrontDeskReservations() {
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Reservations" actions={
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-foreground">Reservations</h1>
         <button
           onClick={handleNewBooking}
           className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
         >
           New Booking
         </button>
-      } />
+      </div>
 
       {/* Legend & Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
-        <LegendBar items={[
-          { color: "bg-emerald-100 border-emerald-200", label: "Confirmed" },
-          { color: "bg-amber-100 border-amber-200", label: "Pending" },
-          { color: "bg-red-100 border-red-200", label: "Cancelled" },
-        ]} />
+        <div className="flex flex-wrap items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
+            <span className="text-sm font-medium text-muted-foreground">Confirmed</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-amber-400"></div>
+            <span className="text-sm font-medium text-muted-foreground">Pending</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-400"></div>
+            <span className="text-sm font-medium text-muted-foreground">Cancelled</span>
+          </div>
+        </div>
         <select
           className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer"
           value={statusFilter}
@@ -1097,7 +1215,7 @@ function FrontDeskReservations() {
                     {bookingStep === 4 && (
                       <div className="space-y-6">
                         <div className="bg-card rounded-2xl shadow-sm border border-border p-6 space-y-3">
-                          <SectionHeader title="Booking Summary" />
+                          <h3 className="font-semibold text-base mb-4">Booking Summary</h3>
                           <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Guest:</span>
                             <span className="font-medium">{guestDetails.fullName}</span>
@@ -1220,17 +1338,29 @@ function FrontDeskTimeline() {
     <div className="flex flex-col h-[calc(100vh-140px)]">
       <div className="flex-none mb-6">
         <div className="flex items-center justify-between mb-4">
-          <SectionHeader title="Timeline" />
+          <h1 className="text-xl font-semibold text-foreground">Timeline</h1>
         </div>
 
         {/* Legend & Filters */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
-          <LegendBar items={[
-            { color: "bg-blue-100 border-blue-200", label: "Stay Over" },
-            { color: "bg-emerald-100 border-emerald-200", label: "Arrival / Confirmed" },
-            { color: "bg-amber-100 border-amber-200", label: "Departure" },
-            { color: "bg-red-100 border-red-200", label: "Out of Order" },
-          ]} />
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+              <span className="text-sm font-medium text-muted-foreground">Stay Over</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+              <span className="text-sm font-medium text-muted-foreground">Arrival / Confirmed</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+              <span className="text-sm font-medium text-muted-foreground">Departure</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <span className="text-sm font-medium text-muted-foreground">Out of Order</span>
+            </div>
+          </div>
           <div className="flex items-center gap-2">
             <button className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer hover:bg-secondary/80 transition-colors">
               Today
@@ -1330,7 +1460,7 @@ export function FrontDesk({ aiEnabled, activeSubmenu = "Overview" }: FrontDeskPr
             <div className="w-24 h-24 bg-secondary rounded-full flex items-center justify-center mb-6">
               <span className="text-4xl">🚧</span>
             </div>
-            <SectionHeader title={`Front Desk - ${activeSubmenu}`} />
+            <h2 className="text-2xl font-bold text-foreground mb-2">Front Desk - {activeSubmenu}</h2>
             <p className="text-muted-foreground max-w-md">
               The {activeSubmenu} view is currently under construction.
             </p>

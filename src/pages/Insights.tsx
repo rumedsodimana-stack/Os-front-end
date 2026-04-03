@@ -15,7 +15,6 @@ import {
   Percent, Coffee, UtensilsCrossed, Waves, ChevronUp, ChevronDown,
   Search, ChevronRight, Plus,
 } from "lucide-react";
-import { KpiStrip, LegendBar, SectionSearch, SectionHeader } from "../components/shared";
 
 interface InsightsProps {
   aiEnabled: boolean;
@@ -132,24 +131,38 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
         {activeSubmenu === "Overview" && (
           <motion.div key="overview" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <div><SectionHeader title="GM Dashboard" /><p className="text-muted-foreground text-sm mt-0.5">March 2026 · Singularity Grand Manama</p></div>
+              <div><h2 className="text-2xl font-bold text-foreground">GM Dashboard</h2><p className="text-muted-foreground text-sm mt-0.5">March 2026 · Singularity Grand Manama</p></div>
               <div className="flex gap-2">
                 <button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-secondary/50 text-sm text-muted-foreground"><RefreshCw className="w-4 h-4"/>Refresh</button>
                 <button className="flex items-center gap-2 px-3 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-medium transition-colors"><Download className="w-4 h-4"/>Board Report</button>
               </div>
             </div>
             {/* Primary KPIs */}
-            <KpiStrip items={[
-              {color:"bg-emerald-500",value:`BHD ${(latestMonth.total/1000).toFixed(0)}k`,label:"Total Revenue"},
-              {color:"bg-blue-500",value:`${latestKPI.occ}%`,label:"Occupancy"},
-              {color:"bg-violet-500",value:`BHD ${latestKPI.revpar}`,label:"RevPAR"},
-              {color:"bg-amber-500",value:latestKPI.nps,label:"Guest NPS"},
-            ]} />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { label: "Total Revenue", value: `BHD ${(latestMonth.total/1000).toFixed(0)}k`, prev: prevMonth.total, curr: latestMonth.total, icon: <DollarSign className="w-5 h-5 text-white"/>, gradient: "from-emerald-400 to-emerald-600", sub: "+4.5% vs Feb" },
+                { label: "Occupancy", value: `${latestKPI.occ}%`, prev: prevKPI.occ, curr: latestKPI.occ, icon: <Bed className="w-5 h-5 text-white"/>, gradient: "from-blue-400 to-blue-600", sub: "ADR BHD "+latestKPI.adr },
+                { label: "RevPAR", value: `BHD ${latestKPI.revpar}`, prev: prevKPI.revpar, curr: latestKPI.revpar, icon: <BarChart2 className="w-5 h-5 text-white"/>, gradient: "from-violet-400 to-violet-600", sub: "+9.5% vs Feb" },
+                { label: "Guest NPS", value: latestKPI.nps, prev: prevKPI.nps, curr: latestKPI.nps, icon: <Star className="w-5 h-5 text-white"/>, gradient: "from-amber-400 to-orange-500", sub: "Top 10% in region" },
+              ].map(card => (
+                <div key={card.label} className={cn("relative overflow-hidden rounded-2xl p-5 bg-gradient-to-r text-white shadow-md", card.gradient)}>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-white/80 text-xs font-medium uppercase tracking-wide">{card.label}</p>
+                      <p className="text-3xl font-bold mt-1">{card.value}</p>
+                      <p className="text-white/70 text-xs mt-1">{card.sub}</p>
+                    </div>
+                    <div className="bg-white/20 rounded-xl p-2">{card.icon}</div>
+                  </div>
+                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                </div>
+              ))}
+            </div>
 
             {/* Revenue + KPI trend charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <SectionHeader title="Revenue by Department — 6 Months" />
+                <h3 className="font-semibold text-foreground mb-4">Revenue by Department — 6 Months</h3>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={revenueTotal} margin={{left:0,right:0}}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border,#e2e8f0)" />
@@ -165,7 +178,7 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
                 </ResponsiveContainer>
               </div>
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <SectionHeader title="Key Performance Indicators" />
+                <h3 className="font-semibold text-foreground mb-4">Key Performance Indicators</h3>
                 <ResponsiveContainer width="100%" height={200}>
                   <LineChart data={kpiTrend}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border,#e2e8f0)"/>
@@ -183,7 +196,7 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
             {/* Channel mix + Dept performance snapshot */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <SectionHeader title="Booking Channel Mix" />
+                <h3 className="font-semibold text-foreground mb-3">Booking Channel Mix</h3>
                 <ResponsiveContainer width="100%" height={140}>
                   <PieChart>
                     <Pie data={channelMix} cx="50%" cy="50%" innerRadius={38} outerRadius={58} dataKey="value" paddingAngle={2}>
@@ -200,7 +213,7 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
                 ))}</div>
               </div>
               <div className="lg:col-span-2 bg-card rounded-2xl shadow-sm border border-border p-5">
-                <SectionHeader title="Department Snapshot" />
+                <h3 className="font-semibold text-foreground mb-4">Department Snapshot</h3>
                 <div className="space-y-3">
                   {deptScorecard.filter(d=>d.revenue>0).map(d=>{
                     const pct = d.budget>0?Math.round((d.revenue/d.budget)*100):null;
@@ -227,19 +240,34 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
         {activeSubmenu === "Revenue Analytics" && (
           <motion.div key="revenue" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-6">
             <div className="flex items-center justify-between">
-              <div><SectionHeader title="Revenue Analytics" /><p className="text-muted-foreground text-sm mt-0.5">6-month performance · March 2026</p></div>
+              <div><h2 className="text-2xl font-bold text-foreground">Revenue Analytics</h2><p className="text-muted-foreground text-sm mt-0.5">6-month performance · March 2026</p></div>
               <button className="flex items-center gap-2 px-3 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-medium"><Download className="w-4 h-4"/>Export</button>
             </div>
-            <KpiStrip items={[
-              {color:"bg-emerald-500",value:`BHD ${(latestMonth.total/1000).toFixed(0)}k`,label:"Mar Revenue"},
-              {color:"bg-blue-500",value:`BHD ${latestKPI.adr}`,label:"ADR"},
-              {color:"bg-violet-500",value:`BHD ${latestKPI.revpar}`,label:"RevPAR"},
-              {color:"bg-amber-500",value:`${latestKPI.occ}%`,label:"Occupancy"},
-              {color:"bg-indigo-500",value:`BHD ${(revenueTotal.reduce((s,m)=>s+m.total,0)/1000).toFixed(0)}k`,label:"6M Total"},
-            ]} />
+            {/* Revenue KPIs */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+              {[
+                { label: "Mar Revenue", value: `BHD ${(latestMonth.total/1000).toFixed(0)}k`, sub: "↑ vs Feb", gradient: "from-emerald-400 to-emerald-500", icon: <DollarSign size={20} /> },
+                { label: "ADR", value: `BHD ${latestKPI.adr}`, sub: "Mar 2026", gradient: "from-blue-400 to-blue-500", icon: <Building size={20} /> },
+                { label: "RevPAR", value: `BHD ${latestKPI.revpar}`, sub: "Mar 2026", gradient: "from-violet-400 to-violet-500", icon: <BarChart2 size={20} /> },
+                { label: "Occupancy", value: `${latestKPI.occ}%`, sub: "Mar 2026", gradient: "from-amber-400 to-amber-500", icon: <Percent size={20} /> },
+                { label: "6M Total", value: `BHD ${(revenueTotal.reduce((s,m)=>s+m.total,0)/1000).toFixed(0)}k`, sub: "Oct–Mar", gradient: "from-indigo-400 to-indigo-500", icon: <TrendingUp size={20} /> },
+              ].map(k=>(
+                <div key={k.label} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r", k.gradient, "p-5 text-white")}>
+                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-white/80 text-sm">{k.label}</p>
+                      <p className="text-3xl font-bold mt-1">{k.value}</p>
+                      <p className="text-white/70 text-xs mt-1">{k.sub}</p>
+                    </div>
+                    <div className="bg-white/20 p-2.5 rounded-xl">{k.icon}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
             {/* Stacked area chart */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-              <SectionHeader title="Revenue Trend by Stream" />
+              <h3 className="font-semibold text-foreground mb-4">Revenue Trend by Stream</h3>
               <ResponsiveContainer width="100%" height={260}>
                 <AreaChart data={revenueTotal}>
                   <defs>
@@ -264,7 +292,7 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
             {/* Channel mix + monthly breakdown table */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <SectionHeader title="Booking Channel Mix" />
+                <h3 className="font-semibold text-foreground mb-3">Booking Channel Mix</h3>
                 <div className="space-y-3">
                   {channelMix.map(c=>(
                     <div key={c.name}>
@@ -275,7 +303,7 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
                 </div>
               </div>
               <div className="lg:col-span-2 bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
-                <div className="px-5 py-4 border-b border-border"><SectionHeader title="Monthly Revenue Breakdown" /></div>
+                <div className="px-5 py-4 border-b border-border"><h3 className="font-semibold text-foreground">Monthly Revenue Breakdown</h3></div>
                 <table className="w-full text-sm">
                   <thead><tr className="bg-secondary/50 text-muted-foreground text-xs uppercase tracking-wide">
                     {["Month","Rooms","F&B","Events","Spa","Total","vs Prev"].map(h=><th key={h} className="text-right px-4 py-3 font-medium first:text-left">{h}</th>)}
@@ -303,7 +331,7 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
         {/* ── DEPARTMENT SCORECARD ─────────────────────────── */}
         {activeSubmenu === "Department Scorecard" && (
           <motion.div key="scorecard" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-6">
-            <div><SectionHeader title="Department Scorecard" /><p className="text-muted-foreground text-sm mt-0.5">Performance across all departments · March 2026</p></div>
+            <div><h2 className="text-2xl font-bold text-foreground">Department Scorecard</h2><p className="text-muted-foreground text-sm mt-0.5">Performance across all departments · March 2026</p></div>
             {/* Scorecard cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {deptScorecard.map(d => {
@@ -312,7 +340,7 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
                   <div key={d.dept} className="bg-card rounded-2xl shadow-sm border border-border p-5">
                     <div className="flex items-center justify-between mb-4">
                       <span className="font-bold text-foreground">{d.dept}</span>
-                      <span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold", d.trend==="up"?"bg-emerald-100 text-emerald-700":d.trend==="down"?"bg-red-100 text-red-700":"bg-muted text-muted-foreground")}>{d.trend==="up"?"↑ On Track":d.trend==="down"?"↓ Below Target":"→ Flat"}</span>
+                      <span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold", d.trend==="up"?"bg-emerald-100 text-emerald-700":d.trend==="down"?"bg-red-100 text-red-700":"bg-gray-100 text-gray-600")}>{d.trend==="up"?"↑ On Track":d.trend==="down"?"↓ Below Target":"→ Flat"}</span>
                     </div>
                     {d.revenue > 0 && (
                       <div className="mb-4">
@@ -325,7 +353,7 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
                       <div className="bg-secondary/40 rounded-xl p-3 text-center">
                         <p className="text-xs text-muted-foreground">Guest Satisfaction</p>
                         <p className="text-xl font-bold text-foreground mt-0.5">{d.satisfaction}</p>
-                        <div className="flex justify-center mt-1">{[1,2,3,4,5].map(s=><Star key={s} className={cn("w-2.5 h-2.5",s<=Math.round(d.satisfaction/2)?"text-amber-400 fill-amber-400":"text-muted-foreground")}/>)}</div>
+                        <div className="flex justify-center mt-1">{[1,2,3,4,5].map(s=><Star key={s} className={cn("w-2.5 h-2.5",s<=Math.round(d.satisfaction/2)?"text-amber-400 fill-amber-400":"text-gray-200")}/>)}</div>
                       </div>
                       <div className="bg-secondary/40 rounded-xl p-3 text-center">
                         <p className="text-xs text-muted-foreground">Efficiency</p>
@@ -339,7 +367,7 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
             </div>
             {/* Radar comparison */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-              <SectionHeader title="Singularity vs Market Average" />
+              <h3 className="font-semibold text-foreground mb-4">Singularity vs Market Average</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <RadarChart data={radarData}>
                   <PolarGrid stroke="var(--color-border,#e2e8f0)"/>
@@ -358,21 +386,31 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
         {activeSubmenu === "Forecast" && (
           <motion.div key="forecast" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <div><SectionHeader title="Revenue Forecast" /><p className="text-muted-foreground text-sm mt-0.5">Apr–Sep 2026 · AI-driven scenario modelling</p></div>
+              <div><h2 className="text-2xl font-bold text-foreground">Revenue Forecast</h2><p className="text-muted-foreground text-sm mt-0.5">Apr–Sep 2026 · AI-driven scenario modelling</p></div>
               <div className="flex gap-2">
                 {(["base","optimistic","conservative"] as const).map(s=>(
                   <button key={s} onClick={()=>setForecastScenario(s)} className={cn("px-3 py-1.5 rounded-xl text-xs font-semibold border capitalize transition-colors", forecastScenario===s?s==="optimistic"?"bg-emerald-600 text-white border-emerald-600":s==="conservative"?"bg-amber-500 text-white border-amber-500":"bg-violet-600 text-white border-violet-600":"border-border text-muted-foreground hover:bg-secondary")}>{s}</button>
                 ))}
               </div>
             </div>
-            <KpiStrip items={[
-              {color:"bg-violet-500",value:`BHD ${((forecastData[0][forecastScenario]!+forecastData[1][forecastScenario]!+forecastData[2][forecastScenario]!)/1000).toFixed(0)}k`,label:"Q2 2026 Forecast"},
-              {color:"bg-blue-500",value:"Jul",label:"Peak Month"},
-              {color:"bg-emerald-500",value:`BHD ${(forecastData.reduce((s,m)=>s+m[forecastScenario]!,0)/forecastData.length/1000).toFixed(0)}k`,label:"Avg Monthly"},
-            ]} />
+            {/* Forecast summary cards */}
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { label: "Q2 2026 Forecast", value: `BHD ${((forecastData[0][forecastScenario]!+forecastData[1][forecastScenario]!+forecastData[2][forecastScenario]!)/1000).toFixed(0)}k`, sub: forecastScenario+" scenario", gradient: "from-violet-400 to-violet-600" },
+                { label: "Peak Month", value: "Jul", sub: `BHD ${(forecastData[3][forecastScenario]!/1000).toFixed(0)}k projected`, gradient: "from-blue-400 to-blue-600" },
+                { label: "Avg Monthly", value: `BHD ${(forecastData.reduce((s,m)=>s+m[forecastScenario]!,0)/forecastData.length/1000).toFixed(0)}k`, sub: "Apr–Sep average", gradient: "from-emerald-400 to-emerald-600" },
+              ].map(c=>(
+                <div key={c.label} className={cn("relative overflow-hidden rounded-2xl p-5 bg-gradient-to-r text-white shadow-md",c.gradient)}>
+                  <p className="text-white/80 text-xs font-medium uppercase tracking-wide">{c.label}</p>
+                  <p className="text-3xl font-bold mt-1">{c.value}</p>
+                  <p className="text-white/70 text-xs mt-1">{c.sub}</p>
+                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl"/>
+                </div>
+              ))}
+            </div>
             {/* Forecast chart */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-              <SectionHeader title="Forecast vs Scenarios" />
+              <h3 className="font-semibold text-foreground mb-4">Forecast vs Scenarios</h3>
               <ResponsiveContainer width="100%" height={260}>
                 <AreaChart data={forecastData}>
                   <defs>
@@ -393,7 +431,7 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
             </div>
             {/* Forecast assumptions */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-              <SectionHeader title="AI Forecast Assumptions" />
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Sparkles className="w-4 h-4 text-violet-500"/>AI Forecast Assumptions</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 {[["Market Demand","GCC business travel demand +12% YoY based on IATA forward bookings"],["Regional Events","Bahrain Grand Prix (Apr), Gulf Hotels Expo (May) expected to drive +8-15% spike"],["Competition","2 new hotels opening in Manama Q3 — conservative scenario factors -4% ADR pressure"],["Seasonal Pattern","Summer softness Jun–Aug modelled at 72-78% occ; corporate recovery Sep"],["Currency","BHD/USD stable; GBP/EUR forex assumption flat YoY for European guests"],["Direct Booking","Loyalty programme growth driving +3% direct mix shift, protecting margins"]].map(([k,v])=>(
                   <div key={k} className="bg-secondary/30 rounded-xl p-3">
@@ -410,7 +448,7 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
         {activeSubmenu === "P&L Summary" && (
           <motion.div key="pl" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <div><SectionHeader title="P&L Summary" /><p className="text-muted-foreground text-sm mt-0.5">Departmental profit & loss · March 2026</p></div>
+              <div><h2 className="text-2xl font-bold text-foreground">P&L Summary</h2><p className="text-muted-foreground text-sm mt-0.5">Departmental profit & loss · March 2026</p></div>
               <button className="flex items-center gap-2 px-3 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-medium"><Download className="w-4 h-4"/>Export PDF</button>
             </div>
             {/* P&L totals */}
@@ -422,13 +460,21 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
               const gp = totRev - totCogs;
               const np = totRev - totCogs - totLabor - totOverhead;
               return (
-                <KpiStrip items={[
-                  {color:"bg-emerald-500",value:`BHD ${(totRev/1000).toFixed(0)}k`,label:"Total Revenue"},
-                  {color:"bg-rose-500",value:`BHD ${(totCogs/1000).toFixed(0)}k`,label:"Cost of Sales"},
-                  {color:"bg-orange-500",value:`BHD ${(totLabor/1000).toFixed(0)}k`,label:"Labour Cost"},
-                  {color:"bg-blue-500",value:`BHD ${(gp/1000).toFixed(0)}k`,label:"Gross Profit"},
-                  {color:"bg-violet-500",value:`BHD ${(np/1000).toFixed(0)}k`,label:"Net Profit"},
-                ]} />
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                  {[{l:"Total Revenue",v:totRev,color:"from-emerald-400 to-emerald-600",icon:<DollarSign size={20}/>},{l:"Cost of Sales",v:totCogs,color:"from-red-400 to-red-500",icon:<TrendingDown size={20}/>},{l:"Labour Cost",v:totLabor,color:"from-orange-400 to-orange-500",icon:<Users size={20}/>},{l:"Gross Profit",v:gp,color:"from-blue-400 to-blue-600",icon:<TrendingUp size={20}/>},{l:"Net Profit",v:np,color:"from-violet-400 to-violet-600",icon:<Award size={20}/>}].map(k=>(
+                    <div key={k.l} className={cn("relative overflow-hidden rounded-2xl p-5 bg-gradient-to-r text-white",k.color)}>
+                      <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl"/>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-white/80 text-sm">{k.l}</p>
+                          <p className="text-3xl font-bold mt-1">BHD {(k.v/1000).toFixed(0)}k</p>
+                          <p className="text-white/70 text-xs mt-1">{Math.round(k.v/totRev*100)}% of revenue</p>
+                        </div>
+                        <div className="bg-white/20 p-2.5 rounded-xl">{k.icon}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               );
             })()}
             {/* P&L table */}
@@ -478,35 +524,24 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
         {activeSubmenu === "ESG" && (
           <motion.div key="esg" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <div><SectionHeader title="ESG & Sustainability" /><p className="text-muted-foreground text-sm mt-0.5">Environmental, Social & Governance · March 2026</p></div>
+              <div><h2 className="text-2xl font-bold text-foreground">ESG & Sustainability</h2><p className="text-muted-foreground text-sm mt-0.5">Environmental, Social & Governance · March 2026</p></div>
               <button className="flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-medium"><Download className="w-4 h-4"/>ESG Report</button>
             </div>
-            <KpiStrip items={esgMetrics.map((m, i) => {
-              const esgColors = ["bg-green-500","bg-blue-500","bg-yellow-500","bg-emerald-500","bg-amber-500","bg-orange-500"];
-              return { color: esgColors[i % esgColors.length], value: `${m.current.toLocaleString()} ${m.unit}`, label: m.label };
-            })} />
-            {/* ESG metric detail cards */}
+            {/* ESG metric cards */}
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
               {esgMetrics.map(m => {
-                const onTrack = (m.label === "Waste Diverted" || m.label === "Solar Coverage")
-                  ? m.current >= m.target * 0.9
-                  : m.current <= m.target * 1.1;
+                const onTrack = m.label === "Waste Diverted" || m.label === "Solar Coverage" ? m.current <= m.target + 10 : m.current <= m.target * 1.1;
+                const gradient = m.label === "Carbon Footprint" ? "from-green-400 to-green-500" : m.label === "Water Usage" ? "from-blue-400 to-blue-500" : m.label === "Electricity (kWh)" ? "from-yellow-400 to-yellow-500" : m.label === "Waste Diverted" ? "from-emerald-400 to-emerald-500" : m.label === "Solar Coverage" ? "from-amber-400 to-amber-500" : "from-orange-400 to-orange-500";
                 return (
-                  <div key={m.label} className="relative overflow-hidden rounded-2xl bg-card border border-border p-5">
+                  <div key={m.label} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r", gradient, "p-5 text-white")}>
+                    <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <p className="text-muted-foreground text-sm">{m.label}</p>
-                        <p className="text-3xl font-bold mt-1 text-foreground">
-                          {m.current.toLocaleString()} <span className="text-sm font-normal text-muted-foreground">{m.unit}</span>
-                        </p>
-                        <p className="text-muted-foreground text-xs mt-1">Target: {m.target.toLocaleString()} {m.unit}</p>
+                      <div>
+                        <p className="text-white/80 text-sm">{m.label}</p>
+                        <p className="text-3xl font-bold mt-1">{m.current.toLocaleString()} <span className="text-sm font-normal text-white/70">{m.unit}</span></p>
+                        <p className="text-white/70 text-xs mt-1">Target: {m.target.toLocaleString()} {m.unit}</p>
                       </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <span className="text-2xl">{m.icon}</span>
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${onTrack ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>
-                          {onTrack ? "On Track" : "Off Target"}
-                        </span>
-                      </div>
+                      <div className="bg-white/20 p-2.5 rounded-xl text-xl">{m.icon}</div>
                     </div>
                   </div>
                 );
@@ -514,7 +549,7 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
             </div>
             {/* ESG initiatives */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-              <SectionHeader title="Sustainability Initiatives" />
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Leaf className="w-4 h-4 text-emerald-500"/>Sustainability Initiatives</h3>
               <div className="space-y-3">
                 {[
                   { initiative: "Solar Panel Expansion", status: "In Progress", progress: 70, target: "Q2 2026", detail: "8 additional panels commissioned — targeting 40% solar coverage" },
@@ -549,7 +584,7 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
         {activeSubmenu === "Audit Trail" && (
           <motion.div key="audit" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-5">
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <div><SectionHeader title="System Audit Trail" /><p className="text-muted-foreground text-sm mt-0.5">All system actions, overrides and sensitive changes</p></div>
+              <div><h2 className="text-2xl font-bold text-foreground">System Audit Trail</h2><p className="text-muted-foreground text-sm mt-0.5">All system actions, overrides and sensitive changes</p></div>
               <button className="flex items-center gap-2 px-3 py-2 border border-border rounded-xl text-sm text-muted-foreground hover:bg-secondary/50"><Download className="w-4 h-4"/>Export Log</button>
             </div>
             {/* Risk filter pills */}
@@ -572,7 +607,7 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
                       <td className="px-4 py-3 text-muted-foreground text-xs max-w-[240px] truncate">{entry.target}</td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">{entry.timestamp}</td>
                       <td className="px-4 py-3">
-                        <span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold",entry.risk==="High"?"bg-red-100 text-red-700":entry.risk==="Medium"?"bg-amber-100 text-amber-700":entry.risk==="Low"?"bg-blue-100 text-blue-700":"bg-muted text-muted-foreground")}>{entry.risk}</span>
+                        <span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold",entry.risk==="High"?"bg-red-100 text-red-700":entry.risk==="Medium"?"bg-amber-100 text-amber-700":entry.risk==="Low"?"bg-blue-100 text-blue-700":"bg-gray-100 text-gray-500")}>{entry.risk}</span>
                       </td>
                     </tr>
                   ))}
@@ -586,7 +621,7 @@ export function Insights({ aiEnabled, activeSubmenu = "Overview" }: InsightsProp
         {activeSubmenu === "Board Report" && (
           <motion.div key="board" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <div><SectionHeader title="Board Report" /><p className="text-muted-foreground text-sm mt-0.5">Auto-generated executive summary · March 2026</p></div>
+              <div><h2 className="text-2xl font-bold text-foreground">Board Report</h2><p className="text-muted-foreground text-sm mt-0.5">Auto-generated executive summary · March 2026</p></div>
               <div className="flex gap-2">
                 <button className="flex items-center gap-2 px-3 py-2 border border-border rounded-xl text-sm text-muted-foreground hover:bg-secondary/50"><Eye className="w-4 h-4"/>Preview</button>
                 <button className="flex items-center gap-2 px-3 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-medium"><Download className="w-4 h-4"/>Download PDF</button>
@@ -660,7 +695,7 @@ function KnowledgeBaseView() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <SectionHeader title="Knowledge Base" />
+          <h2 className="text-2xl font-bold text-foreground">Knowledge Base</h2>
           <p className="text-sm text-muted-foreground mt-0.5">Find everything you need about hotel operations</p>
         </div>
         <button className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors inline-flex items-center gap-2">
@@ -763,7 +798,7 @@ function KnowledgeBaseView() {
       {/* Recently Accessed */}
       <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
         <div className="px-6 py-4 border-b border-border">
-          <SectionHeader title="Recently Accessed" />
+          <h3 className="font-semibold text-foreground">Recently Accessed</h3>
         </div>
         <div className="divide-y divide-border/50">
           {documents.slice(0, 5).map((doc, i) => (
