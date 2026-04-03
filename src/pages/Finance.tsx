@@ -9,9 +9,10 @@ import {
   AlertTriangle, Clock, Search, Plus, Download, RefreshCw, Eye,
   Edit2, ChevronDown, ArrowUpRight, ArrowDownRight, Banknote,
   CreditCard, Receipt, BookOpen, BarChart2, Shield, Globe,
-  Calculator, Building, Calendar, Filter, XCircle,
+  Calculator, Building, Calendar, Filter, XCircle, Wallet,
 } from "lucide-react";
 import { cn } from "../lib/utils";
+import { KpiStrip, LegendBar, SectionSearch, SectionHeader, PageShell } from "../components/shared";
 
 interface FinanceProps {
   aiEnabled: boolean;
@@ -143,27 +144,27 @@ const revenueByChannel = [
 
 const getFolioStatusColor = (s: Folio["status"]) => {
   switch (s) {
-    case "Open": return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
-    case "Closed": return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400";
-    case "Disputed": return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+    case "Open": return "bg-blue-100 text-blue-700";
+    case "Closed": return "bg-emerald-100 text-emerald-700";
+    case "Disputed": return "bg-red-100 text-red-700";
   }
 };
 
 const getARStatusColor = (s: AREntry["status"]) => {
   switch (s) {
-    case "Current": return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400";
-    case "Overdue 30": return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
-    case "Overdue 60": return "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400";
-    case "Overdue 90+": return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+    case "Current": return "bg-emerald-100 text-emerald-700";
+    case "Overdue 30": return "bg-amber-100 text-amber-700";
+    case "Overdue 60": return "bg-orange-100 text-orange-700";
+    case "Overdue 90+": return "bg-red-100 text-red-700";
   }
 };
 
 const getAPStatusColor = (s: APEntry["status"]) => {
   switch (s) {
-    case "Paid": return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400";
-    case "Approved": return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
-    case "Pending": return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
-    case "Disputed": return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+    case "Paid": return "bg-emerald-100 text-emerald-700";
+    case "Approved": return "bg-blue-100 text-blue-700";
+    case "Pending": return "bg-amber-100 text-amber-700";
+    case "Disputed": return "bg-red-100 text-red-700";
   }
 };
 
@@ -171,54 +172,33 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
   const [arFilter, setArFilter] = useState("All");
   const [apFilter, setApFilter] = useState("All");
   const [folioSearch, setFolioSearch] = useState("");
+  const [search, setSearch] = useState("");
 
   const todayRevenue = revenueByDay[revenueByDay.length - 1];
   const totalAR = arEntries.reduce((s, a) => s + a.amount, 0);
   const totalAP = apEntries.filter(a => a.status !== "Paid").reduce((s, a) => s + a.amount, 0);
 
   return (
-    <div className="p-6 space-y-6">
-      <AnimatePresence mode="wait">
+    <AnimatePresence mode="wait">
         {/* OVERVIEW */}
         {activeSubmenu === "Overview" && (
-          <motion.div key="Overview" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div>
-                <h2 className="text-2xl font-bold text-foreground">Overview</h2>
-                <p className="text-muted-foreground text-sm mt-0.5">Today's financial snapshot — {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}</p>
-              </div>
-              <div className="flex gap-2">
-                <button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm text-muted-foreground"><RefreshCw className="w-4 h-4" /> Refresh</button>
-                <button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm text-muted-foreground"><Download className="w-4 h-4" /> Export</button>
-              </div>
-            </div>
-
-            {/* KPI Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: "Today's Revenue", value: `BHD ${todayRevenue.total.toLocaleString()}`, icon: DollarSign, color: "from-emerald-400 to-emerald-500", sub: "+8.2% vs yesterday" },
-                { label: "Room Revenue", value: `BHD ${todayRevenue.rooms.toLocaleString()}`, icon: Building, color: "from-blue-400 to-blue-500", sub: "68.7% of total" },
-                { label: "Outstanding AR", value: `BHD ${totalAR.toLocaleString()}`, icon: ArrowUpRight, color: "from-amber-400 to-amber-500", sub: "3 overdue invoices" },
-                { label: "Payables Due", value: `BHD ${totalAP.toLocaleString()}`, icon: ArrowDownRight, color: "from-red-400 to-red-500", sub: "Within 14 days" },
-              ].map(c => (
-                <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-5 text-white relative overflow-hidden`}>
-                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-white/80 text-sm">{c.label}</p>
-                      <p className="text-3xl font-bold mt-1">{c.value}</p>
-                      <p className="text-white/70 text-xs mt-1">{c.sub}</p>
-                    </div>
-                    <div className="bg-white/20 p-2.5 rounded-xl"><c.icon className="w-5 h-5 text-white" /></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <motion.div key="Overview" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }}>
+            <PageShell
+              search={<SectionSearch value={search} onChange={setSearch} placeholder="Search finance..." />}
+              header={<SectionHeader title="Overview" subtitle={`Today's financial snapshot — ${new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}`} icon={Wallet} actions={<div className="flex gap-2"><button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm text-muted-foreground"><RefreshCw className="w-4 h-4" /> Refresh</button><button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm text-muted-foreground"><Download className="w-4 h-4" /> Export</button></div>} />}
+              kpi={<KpiStrip items={[
+                {color:"bg-emerald-500",value:`BHD ${todayRevenue.total.toLocaleString()}`,label:"Today's Revenue"},
+                {color:"bg-blue-500",value:`BHD ${todayRevenue.rooms.toLocaleString()}`,label:"Room Revenue"},
+                {color:"bg-amber-500",value:`BHD ${totalAR.toLocaleString()}`,label:"Outstanding AR"},
+                {color:"bg-rose-500",value:`BHD ${totalAP.toLocaleString()}`,label:"Payables Due"},
+                {color:"bg-violet-500",value:`BHD ${todayRevenue.fb.toLocaleString()}`,label:"F&B Revenue"},
+              ]} />}
+            >
 
             {/* Revenue Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 bg-card rounded-2xl shadow-sm border border-border p-6">
-                <h3 className="font-semibold text-foreground mb-4">Revenue by Department — 7 Days</h3>
+                <SectionHeader title="Revenue by Department — 7 Days" />
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={revenueByDay} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -234,7 +214,7 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
                 </ResponsiveContainer>
               </div>
               <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-                <h3 className="font-semibold text-foreground mb-4">Revenue by Channel</h3>
+                <SectionHeader title="Revenue by Channel" />
                 <ResponsiveContainer width="100%" height={160}>
                   <PieChart>
                     <Pie data={revenueByChannel} cx="50%" cy="50%" innerRadius={50} outerRadius={70} dataKey="value" paddingAngle={3}>
@@ -256,14 +236,14 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
 
             {/* Today's Revenue Breakdown */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-              <h3 className="font-semibold text-foreground mb-4">Today's Revenue Breakdown</h3>
+              <SectionHeader title="Today's Revenue Breakdown" />
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 {[
                   { label: "Rooms", value: todayRevenue.rooms, pct: Math.round((todayRevenue.rooms / todayRevenue.total) * 100), color: "bg-blue-500" },
                   { label: "F&B", value: todayRevenue.fb, pct: Math.round((todayRevenue.fb / todayRevenue.total) * 100), color: "bg-amber-500" },
                   { label: "Spa", value: todayRevenue.spa, pct: Math.round((todayRevenue.spa / todayRevenue.total) * 100), color: "bg-purple-500" },
                   { label: "Events", value: todayRevenue.events, pct: Math.round((todayRevenue.events / todayRevenue.total) * 100), color: "bg-emerald-500" },
-                  { label: "Other", value: todayRevenue.other, pct: Math.round((todayRevenue.other / todayRevenue.total) * 100), color: "bg-gray-500" },
+                  { label: "Other", value: todayRevenue.other, pct: Math.round((todayRevenue.other / todayRevenue.total) * 100), color: "bg-muted0" },
                 ].map(item => (
                   <div key={item.label} className="bg-secondary/30 rounded-xl p-4 space-y-2">
                     <p className="text-xs text-muted-foreground">{item.label}</p>
@@ -276,24 +256,23 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
                 ))}
               </div>
             </div>
+            </PageShell>
           </motion.div>
         )}
 
         {/* NIGHT AUDIT */}
         {activeSubmenu === "Night Audit" && (
-          <motion.div key="Night Audit" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Night Audit</h2>
-                <p className="text-muted-foreground text-sm">April 2, 2026 — {nightAuditChecklist.filter(t => t.done).length}/{nightAuditChecklist.length} tasks complete</p>
-              </div>
-              <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><CheckCircle2 className="w-4 h-4" /> Run Audit</button>
-            </div>
+          <motion.div key="Night Audit" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }}>
+            <PageShell
+              search={<SectionSearch value={search} onChange={setSearch} placeholder="Search audit..." />}
+              header={<SectionHeader title="Night Audit" subtitle={`April 2, 2026 — ${nightAuditChecklist.filter(t => t.done).length}/${nightAuditChecklist.length} tasks complete`} icon={Wallet} actions={<button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><CheckCircle2 className="w-4 h-4" /> Run Audit</button>} />}
+              kpi={<KpiStrip items={[{color:"bg-emerald-500",value:nightAuditChecklist.filter(t => t.done).length,label:"Completed"},{color:"bg-slate-500",value:nightAuditChecklist.filter(t => !t.done).length,label:"Remaining"},{color:"bg-blue-500",value:nightAuditChecklist.length,label:"Total Tasks"},{color:"bg-amber-500",value:`BHD ${todayRevenue.total.toLocaleString()}`,label:"Day Revenue"},{color:"bg-violet-500",value:"128,200",label:"Trial Balance"}]} />}
+            >
 
             {/* Progress */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-foreground">Audit Checklist</h3>
+                <SectionHeader title="Audit Checklist" />
                 <span className="text-sm text-muted-foreground">{nightAuditChecklist.filter(t => t.done).length} of {nightAuditChecklist.length} completed</span>
               </div>
               <div className="w-full bg-secondary rounded-full h-2 mb-6">
@@ -314,7 +293,7 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
             {/* Trial Balance Preview */}
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
               <div className="px-6 py-4 border-b border-border">
-                <h3 className="font-semibold text-foreground">Trial Balance — April 2, 2026</h3>
+                <SectionHeader title="Trial Balance — April 2, 2026" />
               </div>
               <table className="w-full">
                 <thead className="bg-secondary/50">
@@ -351,45 +330,24 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
                 </tbody>
               </table>
             </div>
+            </PageShell>
           </motion.div>
         )}
 
         {/* FOLIO MANAGEMENT */}
         {activeSubmenu === "Folios" && (
-          <motion.div key="Folios" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Folio Management</h2>
-                <p className="text-muted-foreground text-sm">{folios.filter(f => f.status === "Open").length} open folios · BHD {folios.filter(f => f.status === "Open").reduce((s, f) => s + f.balance, 0).toLocaleString()} outstanding</p>
-              </div>
-              <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><Plus className="w-4 h-4" /> New Folio</button>
-            </div>
-
-            {/* Summary */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: "Open Folios", value: folios.filter(f => f.status === "Open").length, color: "from-blue-400 to-blue-500", icon: <FileText size={20} /> },
-                { label: "Outstanding", value: `BHD ${folios.filter(f => f.status === "Open").reduce((s, f) => s + f.balance, 0).toLocaleString()}`, color: "from-amber-400 to-amber-500", icon: <AlertTriangle size={20} /> },
-                { label: "Closed Today", value: folios.filter(f => f.status === "Closed").length, color: "from-emerald-400 to-emerald-500", icon: <CheckCircle2 size={20} /> },
-                { label: "Disputed", value: folios.filter(f => f.status === "Disputed").length, color: "from-red-400 to-red-500", icon: <XCircle size={20} /> },
-              ].map(c => (
-                <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-5 text-white relative overflow-hidden`}>
-                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-white/80 text-sm">{c.label}</p>
-                      <p className="text-3xl font-bold mt-1">{c.value}</p>
-                    </div>
-                    <div className="bg-white/20 p-2.5 rounded-xl">{c.icon}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input value={folioSearch} onChange={e => setFolioSearch(e.target.value)} placeholder="Search guest, room, folio number…" className="w-full pl-9 pr-4 py-2 rounded-xl border border-border bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" />
-            </div>
+          <motion.div key="Folios" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }}>
+            <PageShell
+              search={<SectionSearch value={folioSearch} onChange={setFolioSearch} placeholder="Search guest, room, folio number..." />}
+              header={<SectionHeader title="Folio Management" subtitle={`${folios.filter(f => f.status === "Open").length} open folios · BHD ${folios.filter(f => f.status === "Open").reduce((s, f) => s + f.balance, 0).toLocaleString()} outstanding`} icon={Wallet} actions={<button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><Plus className="w-4 h-4" /> New Folio</button>} />}
+              kpi={<KpiStrip items={[
+                {color:"bg-blue-500",value:folios.filter(f=>f.status==="Open").length,label:"Open Folios"},
+                {color:"bg-amber-500",value:`BHD ${folios.filter(f=>f.status==="Open").reduce((s,f)=>s+f.balance,0).toLocaleString()}`,label:"Outstanding"},
+                {color:"bg-emerald-500",value:folios.filter(f=>f.status==="Closed").length,label:"Closed Today"},
+                {color:"bg-rose-500",value:folios.filter(f=>f.status==="Disputed").length,label:"Disputed"},
+                {color:"bg-violet-500",value:folios.length,label:"Total Folios"},
+              ]} />}
+            >
 
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-x-auto">
               <table className="w-full min-w-[900px]">
@@ -407,7 +365,7 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
                       <td className="px-4 py-3 text-sm text-muted-foreground">{folio.checkIn}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{folio.checkOut}</td>
                       <td className="px-4 py-3 font-semibold text-foreground">BHD {folio.charges.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-emerald-600 dark:text-emerald-400 font-medium">BHD {folio.payments.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-emerald-600 font-medium">BHD {folio.payments.toLocaleString()}</td>
                       <td className="px-4 py-3 font-bold" style={{ color: folio.balance > 0 ? "var(--color-red-500, #ef4444)" : "#10b981" }}>
                         BHD {folio.balance.toLocaleString()}
                       </td>
@@ -423,43 +381,24 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
                 </tbody>
               </table>
             </div>
+            </PageShell>
           </motion.div>
         )}
 
         {/* ACCOUNTS RECEIVABLE */}
         {activeSubmenu === "Receivables" && (
-          <motion.div key="Receivables" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Accounts Receivable</h2>
-                <p className="text-muted-foreground text-sm">BHD {totalAR.toLocaleString()} total outstanding</p>
-              </div>
-              <div className="flex gap-2">
-                <button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm text-muted-foreground"><Download className="w-4 h-4" /> AR Aging</button>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><Plus className="w-4 h-4" /> New Invoice</button>
-              </div>
-            </div>
-
-            {/* AR Aging Summary */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: "Current", value: arEntries.filter(a => a.status === "Current").reduce((s, a) => s + a.amount, 0), color: "from-emerald-400 to-emerald-500", icon: <CheckCircle2 size={20} /> },
-                { label: "Overdue 30", value: arEntries.filter(a => a.status === "Overdue 30").reduce((s, a) => s + a.amount, 0), color: "from-amber-400 to-amber-500", icon: <Clock size={20} /> },
-                { label: "Overdue 60", value: arEntries.filter(a => a.status === "Overdue 60").reduce((s, a) => s + a.amount, 0), color: "from-orange-400 to-orange-500", icon: <AlertTriangle size={20} /> },
-                { label: "Overdue 90+", value: arEntries.filter(a => a.status === "Overdue 90+").reduce((s, a) => s + a.amount, 0), color: "from-red-400 to-red-500", icon: <AlertTriangle size={20} /> },
-              ].map(c => (
-                <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-5 text-white relative overflow-hidden`}>
-                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-white/80 text-sm">{c.label}</p>
-                      <p className="text-3xl font-bold mt-1">BHD {c.value.toLocaleString()}</p>
-                    </div>
-                    <div className="bg-white/20 p-2.5 rounded-xl">{c.icon}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <motion.div key="Receivables" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }}>
+            <PageShell
+              search={<SectionSearch value={search} onChange={setSearch} placeholder="Search receivables..." />}
+              header={<SectionHeader title="Accounts Receivable" subtitle={`BHD ${totalAR.toLocaleString()} total outstanding`} icon={Wallet} actions={<div className="flex gap-2"><button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm text-muted-foreground"><Download className="w-4 h-4" /> AR Aging</button><button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><Plus className="w-4 h-4" /> New Invoice</button></div>} />}
+              kpi={<KpiStrip items={[
+                {color:"bg-emerald-500",value:`BHD ${arEntries.filter(a=>a.status==="Current").reduce((s,a)=>s+a.amount,0).toLocaleString()}`,label:"Current"},
+                {color:"bg-amber-500",value:`BHD ${arEntries.filter(a=>a.status==="Overdue 30").reduce((s,a)=>s+a.amount,0).toLocaleString()}`,label:"Overdue 30"},
+                {color:"bg-orange-500",value:`BHD ${arEntries.filter(a=>a.status==="Overdue 60").reduce((s,a)=>s+a.amount,0).toLocaleString()}`,label:"Overdue 60"},
+                {color:"bg-rose-500",value:`BHD ${arEntries.filter(a=>a.status==="Overdue 90+").reduce((s,a)=>s+a.amount,0).toLocaleString()}`,label:"Overdue 90+"},
+                {color:"bg-blue-500",value:arEntries.length,label:"Total Invoices"},
+              ]} />}
+            >
 
             <div className="flex gap-2">
               {["All", "Current", "Overdue 30", "Overdue 60", "Overdue 90+"].map(f => (
@@ -483,7 +422,7 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
                       <td className="px-4 py-3 text-sm text-muted-foreground">{ar.invoiceDate}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{ar.dueDate}</td>
                       <td className="px-4 py-3">
-                        <span className={cn("font-medium text-sm", ar.daysOverdue > 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400")}>{ar.daysOverdue > 0 ? `+${ar.daysOverdue}d` : "On time"}</span>
+                        <span className={cn("font-medium text-sm", ar.daysOverdue > 0 ? "text-red-600" : "text-emerald-600")}>{ar.daysOverdue > 0 ? `+${ar.daysOverdue}d` : "On time"}</span>
                       </td>
                       <td className="px-4 py-3"><span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", getARStatusColor(ar.status))}>{ar.status}</span></td>
                       <td className="px-4 py-3">
@@ -497,22 +436,24 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
                 </tbody>
               </table>
             </div>
+            </PageShell>
           </motion.div>
         )}
 
         {/* ACCOUNTS PAYABLE */}
         {activeSubmenu === "Payables" && (
-          <motion.div key="Payables" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Accounts Payable</h2>
-                <p className="text-muted-foreground text-sm">BHD {totalAP.toLocaleString()} due — {apEntries.filter(a => a.status === "Pending").length} pending approval</p>
-              </div>
-              <div className="flex gap-2">
-                <button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm text-muted-foreground"><Download className="w-4 h-4" /> AP Report</button>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><Plus className="w-4 h-4" /> New Bill</button>
-              </div>
-            </div>
+          <motion.div key="Payables" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }}>
+            <PageShell
+              search={<SectionSearch value={search} onChange={setSearch} placeholder="Search payables..." />}
+              header={<SectionHeader title="Accounts Payable" subtitle={`BHD ${totalAP.toLocaleString()} due — ${apEntries.filter(a => a.status === "Pending").length} pending approval`} icon={Wallet} actions={<div className="flex gap-2"><button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm text-muted-foreground"><Download className="w-4 h-4" /> AP Report</button><button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><Plus className="w-4 h-4" /> New Bill</button></div>} />}
+              kpi={<KpiStrip items={[
+                {color:"bg-red-500",value:`BHD ${totalAP.toLocaleString()}`,label:"Total Payable"},
+                {color:"bg-amber-500",value:apEntries.filter(a => a.status === "Pending").length,label:"Pending Approval"},
+                {color:"bg-blue-500",value:apEntries.filter(a => a.status === "Approved").length,label:"Approved to Pay"},
+                {color:"bg-emerald-500",value:apEntries.filter(a => a.status === "Paid").length,label:"Paid This Month"},
+                {color:"bg-rose-500",value:apEntries.filter(a => a.status === "Disputed").length,label:"Disputed"},
+              ]} />}
+            >
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
@@ -569,19 +510,20 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
                 </tbody>
               </table>
             </div>
+            </PageShell>
           </motion.div>
         )}
 
         {/* CASHIER */}
         {activeSubmenu === "Cashier" && (
-          <motion.div key="Cashier" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Cashier Balance</h2>
-                <p className="text-muted-foreground text-sm">April 2, 2026 — All shifts</p>
-              </div>
-              <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><Plus className="w-4 h-4" /> Open Float</button>
-            </div>
+          <motion.div key="Cashier" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }}>
+            <PageShell
+              search={<SectionSearch value={search} onChange={setSearch} placeholder="Search cashier..." />}
+              header={<SectionHeader title="Cashier Balance" subtitle="April 2, 2026 — All shifts" icon={Wallet} actions={<button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><Plus className="w-4 h-4" /> Open Float</button>} />}
+              kpi={<KpiStrip items={[
+                {color:"bg-emerald-500",value:cashierBalances.filter(c => c.status === "Balanced").length,label:"Balanced"},{color:"bg-blue-500",value:cashierBalances.filter(c => c.status === "Surplus").length,label:"Surplus"},{color:"bg-red-500",value:cashierBalances.filter(c => c.status === "Short").length,label:"Short"},{color:"bg-amber-500",value:cashierBalances.length,label:"Total Shifts"},{color:"bg-violet-500",value:`BHD ${cashierBalances.reduce((s,c) => s + c.closingBalance, 0).toLocaleString()}`,label:"Total Balance"},
+              ]} />}
+            >
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {cashierBalances.map(cb => (
@@ -591,7 +533,7 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
                       <p className="font-semibold text-foreground">{cb.cashier}</p>
                       <p className="text-xs text-muted-foreground">{cb.shift} Shift</p>
                     </div>
-                    <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", cb.status === "Balanced" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : cb.status === "Surplus" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400")}>{cb.status}</span>
+                    <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", cb.status === "Balanced" ? "bg-emerald-100 text-emerald-700" : cb.status === "Surplus" ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700")}>{cb.status}</span>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     {[
@@ -606,28 +548,32 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
                       </div>
                     ))}
                   </div>
-                  <div className={cn("rounded-xl p-3 flex items-center justify-between", cb.variance === 0 ? "bg-emerald-50 dark:bg-emerald-900/20" : cb.variance > 0 ? "bg-blue-50 dark:bg-blue-900/20" : "bg-red-50 dark:bg-red-900/20")}>
+                  <div className={cn("rounded-xl p-3 flex items-center justify-between", cb.variance === 0 ? "bg-emerald-50" : cb.variance > 0 ? "bg-blue-50" : "bg-red-50")}>
                     <span className="text-sm font-medium text-foreground">Variance</span>
-                    <span className={cn("text-sm font-bold", cb.variance === 0 ? "text-emerald-600 dark:text-emerald-400" : cb.variance > 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400")}>
+                    <span className={cn("text-sm font-bold", cb.variance === 0 ? "text-emerald-600" : cb.variance > 0 ? "text-blue-600" : "text-red-600")}>
                       {cb.variance > 0 ? "+" : ""}{cb.variance} BHD
                     </span>
                   </div>
                 </div>
               ))}
             </div>
+            </PageShell>
           </motion.div>
         )}
 
         {/* BUDGET VS ACTUAL */}
         {activeSubmenu === "Budget vs Actual" && (
-          <motion.div key="Budget vs Actual" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Budget vs Actual</h2>
-                <p className="text-muted-foreground text-sm">Q1 2026 — March close</p>
-              </div>
-              <button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm text-muted-foreground"><Download className="w-4 h-4" /> Export P&L</button>
-            </div>
+          <motion.div key="Budget vs Actual" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }}>
+            <PageShell
+              search={<SectionSearch value={search} onChange={setSearch} placeholder="Search budget..." />}
+              header={<SectionHeader title="Budget vs Actual" subtitle="Q1 2026 — March close" icon={Wallet} actions={<button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm text-muted-foreground"><Download className="w-4 h-4" /> Export P&L</button>} />}
+              kpi={<KpiStrip items={[
+                {color:"bg-blue-500",value:`BHD ${Math.abs(budgetVsActual.reduce((s,r) => s + r.budgeted, 0)).toLocaleString()}`,label:"Total Budget"},
+                {color:"bg-emerald-500",value:`BHD ${Math.abs(budgetVsActual.reduce((s,r) => s + r.actual, 0)).toLocaleString()}`,label:"Total Actual"},
+                {color:"bg-amber-500",value:`BHD ${budgetVsActual.reduce((s,r) => s + r.variance, 0).toLocaleString()}`,label:"Net Variance"},
+                {color:"bg-violet-500",value:budgetVsActual.filter(r => r.variance > 0).length,label:"Over Budget"},{color:"bg-rose-500",value:budgetVsActual.filter(r => r.variance < 0).length,label:"Under Budget"},
+              ]} />}
+            >
 
             <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
               <ResponsiveContainer width="100%" height={300}>
@@ -655,10 +601,10 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
                       <td className="px-4 py-3 font-medium text-foreground">{row.department}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">BHD {Math.abs(row.budgeted).toLocaleString()}</td>
                       <td className="px-4 py-3 font-semibold text-foreground">BHD {Math.abs(row.actual).toLocaleString()}</td>
-                      <td className={cn("px-4 py-3 font-medium", row.variance > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400")}>
+                      <td className={cn("px-4 py-3 font-medium", row.variance > 0 ? "text-emerald-600" : "text-red-600")}>
                         {row.variance > 0 ? "+" : ""}BHD {row.variance.toLocaleString()}
                       </td>
-                      <td className={cn("px-4 py-3", row.variancePct > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400")}>
+                      <td className={cn("px-4 py-3", row.variancePct > 0 ? "text-emerald-600" : "text-red-600")}>
                         <span className="flex items-center gap-1 text-sm font-medium">
                           {row.variancePct > 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                           {row.variancePct > 0 ? "+" : ""}{row.variancePct}%
@@ -669,23 +615,22 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
                 </tbody>
               </table>
             </div>
+            </PageShell>
           </motion.div>
         )}
 
         {/* FX RATES */}
         {activeSubmenu === "FX Rates" && (
-          <motion.div key="FX Rates" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Foreign Exchange Rates</h2>
-                <p className="text-muted-foreground text-sm">Base: BHD · Last updated: 02 Apr 2026 09:00</p>
-              </div>
-              <button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm text-muted-foreground"><RefreshCw className="w-4 h-4" /> Refresh Rates</button>
-            </div>
+          <motion.div key="FX Rates" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }}>
+            <PageShell
+              search={<SectionSearch value={search} onChange={setSearch} placeholder="Search currencies..." />}
+              header={<SectionHeader title="Foreign Exchange Rates" subtitle="Base: BHD · Last updated: 02 Apr 2026 09:00" icon={Wallet} actions={<button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm text-muted-foreground"><RefreshCw className="w-4 h-4" /> Refresh Rates</button>} />}
+              kpi={<KpiStrip items={[{color:"bg-blue-500",value:"0.376",label:"BHD/USD"},{color:"bg-emerald-500",value:"0.408",label:"BHD/EUR"},{color:"bg-amber-500",value:"0.474",label:"BHD/GBP"},{color:"bg-violet-500",value:"0.103",label:"BHD/SAR"},{color:"bg-rose-500",value:"0.0025",label:"BHD/JPY"}]} />}
+            >
 
             {/* FX Calculator */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-              <h3 className="font-semibold text-foreground mb-4">Quick Conversion Calculator</h3>
+              <SectionHeader title="Quick Conversion Calculator" />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <div>
                   <label className="text-xs text-muted-foreground mb-1.5 block">Amount</label>
@@ -713,7 +658,7 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
 
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
               <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-                <h3 className="font-semibold text-foreground">Exchange Rate Board</h3>
+                <SectionHeader title="Exchange Rate Board" />
                 <span className="text-xs text-muted-foreground">All rates per 1 BHD</span>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-0">
@@ -725,20 +670,20 @@ export function Finance({ aiEnabled, activeSubmenu = "Overview" }: FinanceProps)
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Buy</span>
-                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">{fx.buy.toFixed(3)}</span>
+                      <span className="font-semibold text-emerald-600">{fx.buy.toFixed(3)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Sell</span>
-                      <span className="font-semibold text-red-600 dark:text-red-400">{fx.sell.toFixed(3)}</span>
+                      <span className="font-semibold text-red-600">{fx.sell.toFixed(3)}</span>
                     </div>
                     <div className="text-xs text-muted-foreground">Spread: {((fx.buy - fx.sell) / fx.buy * 100).toFixed(2)}%</div>
                   </div>
                 ))}
               </div>
             </div>
+            </PageShell>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
   );
 }

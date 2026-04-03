@@ -29,6 +29,7 @@ import {
   Pie,
 } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
+import { KpiStrip, LegendBar, SectionSearch, SectionHeader, PageShell, RoomCard } from "../components/shared";
 
 interface HousekeepingProps {
   aiEnabled: boolean;
@@ -438,18 +439,24 @@ function StatCard({
 // ─── Overview ─────────────────────────────────────────────────────────────────
 
 function Overview() {
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard title="Rooms to Clean" value={12} sub="8 checkout · 4 stayover" icon={Home} gradient="bg-gradient-to-br from-red-400 to-red-500" />
-        <StatCard title="In Progress" value={7} sub="4 attendants active" icon={Clock} gradient="bg-gradient-to-br from-orange-400 to-orange-500" />
-        <StatCard title="Completed" value={10} sub="Since 07:00" icon={CheckCircle2} gradient="bg-gradient-to-br from-emerald-400 to-emerald-500" />
-        <StatCard title="Inspected & Ready" value={8} sub="Awaiting arrivals" icon={Star} gradient="bg-gradient-to-br from-blue-400 to-blue-500" />
-      </div>
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search housekeeping..." />}
+      header={<SectionHeader icon={Home} title="Housekeeping Overview" subtitle="Live room status, tasks, and team performance" />}
+      kpi={<KpiStrip items={[{color:"bg-red-500",value:12,label:"Rooms to Clean"},{color:"bg-orange-500",value:7,label:"In Progress"},{color:"bg-emerald-500",value:10,label:"Completed"},{color:"bg-blue-500",value:8,label:"Inspected & Ready"},{color:"bg-purple-500",value:3,label:"Out of Service"}]} />}
+      legend={<LegendBar items={[
+        { color: "bg-red-100 border-red-200", label: "Dirty (12)" },
+        { color: "bg-orange-100 border-orange-200", label: "In Progress (7)" },
+        { color: "bg-emerald-100 border-emerald-200", label: "Clean (10)" },
+        { color: "bg-blue-100 border-blue-200", label: "Inspected (8)" },
+        { color: "bg-purple-100 border-purple-200", label: "OOS (3)" },
+      ]} />}
+    >
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <h3 className="mb-4 text-sm font-semibold text-foreground">Room Status Breakdown</h3>
+          <SectionHeader title="Room Status Breakdown" className="mb-4" />
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie data={PIE_DATA} cx="50%" cy="50%" innerRadius={60} outerRadius={95} paddingAngle={3} dataKey="value">
@@ -460,18 +467,10 @@ function Overview() {
               <Tooltip />
             </PieChart>
           </ResponsiveContainer>
-          <div className="mt-2 flex flex-wrap gap-3 justify-center">
-            {PIE_DATA.map((d) => (
-              <div key={d.name} className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ background: d.color }} />
-                <span className="text-xs text-muted-foreground">{d.name} ({d.value})</span>
-              </div>
-            ))}
-          </div>
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <h3 className="mb-4 text-sm font-semibold text-foreground">Rooms Completed by Hour</h3>
+          <SectionHeader title="Rooms Completed by Hour" className="mb-4" />
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={HOURLY_DATA} barSize={20}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -491,7 +490,7 @@ function Overview() {
       <div className="rounded-2xl border border-border bg-card shadow-sm">
         <div className="flex items-center gap-2 border-b border-border px-5 py-4">
           <AlertCircle className="h-4 w-4 text-red-500" />
-          <h3 className="text-sm font-semibold text-foreground">Priority Rooms</h3>
+          <SectionHeader title="Priority Rooms" />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -520,11 +519,27 @@ function Overview() {
           </table>
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }
 
 // ─── Room Status ──────────────────────────────────────────────────────────────
+
+const hkRoomBg: Record<RoomStatus, string> = {
+  Dirty: "bg-red-100 border-red-200 text-red-900",
+  "In Progress": "bg-orange-100 border-orange-200 text-orange-900",
+  Clean: "bg-emerald-100 border-emerald-200 text-emerald-900",
+  Inspected: "bg-blue-100 border-blue-200 text-blue-900",
+  OOS: "bg-purple-100 border-purple-200 text-purple-900",
+};
+
+const hkDotColors: Record<RoomStatus, string> = {
+  Dirty: "bg-red-500",
+  "In Progress": "bg-orange-500",
+  Clean: "bg-emerald-500",
+  Inspected: "bg-blue-500",
+  OOS: "bg-purple-500",
+};
 
 function RoomStatusView() {
   const [floorFilter, setFloorFilter] = useState<number | "all">("all");
@@ -537,83 +552,112 @@ function RoomStatusView() {
     ), [floorFilter, statusFilter]);
 
   const counts = useMemo(() =>
-    (["Dirty", "In Progress", "Clean", "Inspected", "OOS"] as RoomStatus[]).map((s) => ({
-      status: s,
-      count: ROOMS.filter((r) => r.status === s).length,
-    })), []);
+    (["Dirty", "In Progress", "Clean", "Inspected", "OOS"] as RoomStatus[]).reduce(
+      (acc, s) => ({ ...acc, [s]: ROOMS.filter((r) => r.status === s).length }),
+      {} as Record<RoomStatus, number>
+    ), []);
 
   const floors = [1, 2, 3, 4];
+  const hkStatuses = ["Dirty", "In Progress", "Clean", "Inspected", "OOS"] as RoomStatus[];
 
+  const legendLabels: Record<RoomStatus, string> = {
+    Dirty: "Dirty",
+    "In Progress": "In Progress",
+    Clean: "Clean",
+    Inspected: "Inspected",
+    OOS: "Out of Service",
+  };
+
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap gap-3">
-        {counts.map(({ status, count }) => (
-          <button
-            key={status}
-            onClick={() => setStatusFilter(statusFilter === status ? "all" : status)}
-            className={cn(
-              "flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium transition-all",
-              statusFilter === status
-                ? cn(statusColors[status], "border-current")
-                : "border-border bg-card text-muted-foreground hover:bg-muted/40"
-            )}
-          >
-            <span>{status}</span>
-            <span className="rounded-full bg-black/10 px-1.5 py-0.5 font-bold">{count}</span>
-          </button>
-        ))}
-      </div>
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search rooms..." />}
+      header={<SectionHeader icon={Home} title="Room Status" subtitle="Real-time housekeeping status by floor" />}
+      kpi={<KpiStrip items={hkStatuses.map((s) => ({
+        color: hkDotColors[s],
+        value: counts[s],
+        label: s,
+      }))} />}
+      legend={<LegendBar items={hkStatuses.map((s) => ({
+        color: hkRoomBg[s].split(" ").slice(0, 2).join(" "),
+        label: legendLabels[s],
+      }))} />}
+    >
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <Layers className="h-4 w-4 text-muted-foreground" />
-        <span className="text-xs font-medium text-muted-foreground">Floor:</span>
-        <button onClick={() => setFloorFilter("all")} className={cn("rounded-xl px-3 py-1 text-xs font-medium transition-colors", floorFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>All</button>
-        {floors.map((f) => (
-          <button key={f} onClick={() => setFloorFilter(f)} className={cn("rounded-xl px-3 py-1 text-xs font-medium transition-colors", floorFilter === f ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70")}>Floor {f}</button>
-        ))}
-        <span className="ml-auto text-xs text-muted-foreground">{filtered.length} rooms</span>
-      </div>
-
-      {floors.filter((f) => floorFilter === "all" || f === floorFilter).map((floor) => {
-        const floorRooms = filtered.filter((r) => r.floor === floor);
-        if (!floorRooms.length) return null;
-        return (
-          <div key={floor}>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Floor {floor}</p>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {floorRooms.map((room) => (
-                <div key={room.id} className={cn("rounded-xl border border-border bg-card p-3 shadow-sm transition-shadow hover:shadow-md", statusCardBorders[room.status])}>
-                  <div className="flex items-start justify-between">
-                    <span className="text-lg font-bold text-foreground">{room.id}</span>
-                    {room.vip && <Star className="h-3.5 w-3.5 text-amber-500" fill="currentColor" />}
-                  </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{room.type}</p>
-                  <span className={cn("mt-2 inline-block rounded-full border px-2 py-0.5 text-[10px] font-semibold", statusColors[room.status])}>
-                    {room.status}
-                  </span>
-                  <div className="mt-2 space-y-0.5">
-                    <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <User className="h-3 w-3 shrink-0" />
-                      <span className="truncate">{room.housekeeper}</span>
-                    </p>
-                    <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <Clock className="h-3 w-3 shrink-0" />
-                      {formatMins(room.updatedMins)}
-                    </p>
-                  </div>
-                  {(room.checkIn || room.checkOut) && (
-                    <div className="mt-2 flex gap-1">
-                      {room.checkOut && <span className="rounded bg-orange-100 px-1.5 py-0.5 text-[9px] font-semibold text-orange-700">CO</span>}
-                      {room.checkIn && <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[9px] font-semibold text-blue-700">CI</span>}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+      {/* Floor plan card */}
+      <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
+        {/* Floor tabs + status filter */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setFloorFilter("all")}
+              className={cn("px-4 py-2 rounded-xl text-sm font-medium transition-colors", floorFilter === "all" ? "bg-violet-600 text-white" : "bg-secondary text-secondary-foreground hover:bg-secondary/80")}
+            >All Floors</button>
+            {floors.map(f => (
+              <button
+                key={f}
+                onClick={() => setFloorFilter(f)}
+                className={cn("px-4 py-2 rounded-xl text-sm font-medium transition-colors", floorFilter === f ? "bg-violet-600 text-white" : "bg-secondary text-secondary-foreground hover:bg-secondary/80")}
+              >Floor {f}</button>
+            ))}
           </div>
-        );
-      })}
-    </div>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setStatusFilter("all")}
+              className={cn("px-3 py-1.5 rounded-xl text-xs font-medium transition-colors", statusFilter === "all" ? "bg-violet-600 text-white" : "bg-secondary text-secondary-foreground hover:bg-secondary/80")}
+            >All</button>
+            {hkStatuses.map(s => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(statusFilter === s ? "all" : s)}
+                className={cn("px-3 py-1.5 rounded-xl text-xs font-medium transition-colors", statusFilter === s ? "bg-violet-600 text-white" : "bg-secondary text-secondary-foreground hover:bg-secondary/80")}
+              >{s}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* Status legend */}
+        <LegendBar items={[
+          { color: "bg-red-100 border-red-200", label: "Dirty" },
+          { color: "bg-orange-100 border-orange-200", label: "In Progress" },
+          { color: "bg-emerald-100 border-emerald-200", label: "Clean" },
+          { color: "bg-blue-100 border-blue-200", label: "Inspected" },
+          { color: "bg-purple-100 border-purple-200", label: "Out of Service" },
+        ]} className="mb-5" />
+
+        {/* Room grid by floor */}
+        {floors.filter(f => floorFilter === "all" || f === floorFilter).map(floor => {
+          const floorRooms = filtered.filter(r => r.floor === floor);
+          if (!floorRooms.length) return null;
+          return (
+            <div key={floor} className="mb-6 last:mb-0">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Floor {floor}</p>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-9 gap-3">
+                {floorRooms.map(room => (
+                  <RoomCard
+                    key={room.id}
+                    roomNumber={room.id}
+                    roomType={room.type}
+                    status={room.status}
+                    statusColor={hkRoomBg[room.status]}
+                    details={[
+                      { icon: User, text: room.housekeeper },
+                      { icon: Clock, text: formatMins(room.updatedMins) },
+                    ]}
+                    badges={[
+                      ...(room.vip ? [{ label: "VIP" }] : []),
+                      ...(room.checkOut ? [{ label: "CO" }] : []),
+                      ...(room.checkIn ? [{ label: "CI" }] : []),
+                    ]}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+        <p className="mt-2 text-right text-xs text-muted-foreground">{filtered.length} rooms</p>
+      </div>
+    </PageShell>
   );
 }
 
@@ -638,22 +682,19 @@ function TaskListView() {
     completed: TASKS.filter((t) => t.status === "Completed").length,
   }), []);
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-4 gap-3">
-        {[
-          { label: "Total Tasks", val: statCounts.total, color: "text-foreground" },
-          { label: "Pending", val: statCounts.pending, color: "text-slate-600" },
-          { label: "In Progress", val: statCounts.inProgress, color: "text-orange-600" },
-          { label: "Completed", val: statCounts.completed, color: "text-emerald-600" },
-        ].map((s) => (
-          <div key={s.label} className="rounded-xl border border-border bg-card p-4 shadow-sm">
-            <p className="text-xs text-muted-foreground">{s.label}</p>
-            <p className={cn("mt-1 text-2xl font-bold", s.color)}>{s.val}</p>
-          </div>
-        ))}
-      </div>
-
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search tasks..." />}
+      header={<SectionHeader icon={Home} title="Task List" subtitle="Housekeeping tasks and assignments" />}
+      kpi={<KpiStrip items={[
+        { color: "bg-slate-500", value: statCounts.total, label: "Total Tasks" },
+        { color: "bg-slate-500", value: statCounts.pending, label: "Pending" },
+        { color: "bg-orange-500", value: statCounts.inProgress, label: "In Progress" },
+        { color: "bg-emerald-500", value: statCounts.completed, label: "Completed" },
+        { color: "bg-blue-500", value: TASKS.filter(t => t.status === "Skipped").length, label: "Skipped" },
+      ]} />}
+    >
       <div className="flex flex-wrap gap-3">
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-medium text-muted-foreground">Status:</span>
@@ -739,7 +780,7 @@ function TaskListView() {
           </table>
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -758,12 +799,24 @@ function SupervisorDashboard() {
   const unassignedRooms = ROOMS.filter((r) => r.housekeeper === "Unassigned" && (r.status === "Dirty" || r.status === "Clean"));
   const availableStaff = STAFF.filter((s) => s.status === "Active");
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div className="space-y-6">
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search team..." />}
+      header={<SectionHeader icon={Home} title="Supervisor Dashboard" subtitle="Team performance and inspection queue" />}
+      kpi={<KpiStrip items={[
+        { color: "bg-blue-500", value: STAFF.filter(s => s.status === "Active").length, label: "Active Staff" },
+        { color: "bg-amber-500", value: STAFF.filter(s => s.status === "Break").length, label: "On Break" },
+        { color: "bg-slate-500", value: STAFF.filter(s => s.status === "Off").length, label: "Off Duty" },
+        { color: "bg-emerald-500", value: inspectionQueue.length, label: "Pending Inspection" },
+        { color: "bg-red-500", value: unassignedRooms.length, label: "Unassigned" },
+      ]} />}
+    >
+      <div className="space-y-6">
       <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
         <div className="flex items-center gap-2 border-b border-border px-5 py-4">
           <User className="h-4 w-4 text-blue-500" />
-          <h3 className="text-sm font-semibold text-foreground">Attendant Performance — Today</h3>
+          <SectionHeader title="Attendant Performance — Today" />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -813,7 +866,7 @@ function SupervisorDashboard() {
         <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
           <div className="flex items-center gap-2 border-b border-border px-5 py-4">
             <ClipboardList className="h-4 w-4 text-violet-500" />
-            <h3 className="text-sm font-semibold text-foreground">Inspection Queue</h3>
+            <SectionHeader title="Inspection Queue" />
             <span className="ml-auto rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-700">{inspectionQueue.length} rooms</span>
           </div>
           <div className="divide-y divide-border">
@@ -840,7 +893,7 @@ function SupervisorDashboard() {
         <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
           <div className="flex items-center gap-2 border-b border-border px-5 py-4">
             <Wrench className="h-4 w-4 text-violet-500" />
-            <h3 className="text-sm font-semibold text-foreground">Room Reassignment</h3>
+            <SectionHeader title="Room Reassignment" />
           </div>
           <div className="p-4 space-y-3">
             <p className="text-xs text-muted-foreground">Assign unassigned rooms to available attendants.</p>
@@ -869,7 +922,8 @@ function SupervisorDashboard() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </PageShell>
   );
 }
 
@@ -891,19 +945,14 @@ function TurndownService() {
     "Do Not Disturb sign checked",
   ];
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
-        <StatCard title="Pending" value={TURNDOWN.filter((t) => t.status === "Pending").length} icon={Clock} gradient="bg-gradient-to-br from-slate-400 to-slate-500" />
-        <StatCard title="In Progress" value={TURNDOWN.filter((t) => t.status === "In Progress").length} icon={Wind} gradient="bg-gradient-to-br from-amber-400 to-amber-500" />
-        <StatCard title="Completed" value={TURNDOWN.filter((t) => t.status === "Completed").length} icon={CheckCircle2} gradient="bg-gradient-to-br from-emerald-400 to-emerald-500" />
-      </div>
-
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search turndown..." />}
+      header={<SectionHeader icon={Home} title="Evening Turndown Service" subtitle="Room-by-room turndown progress" />}
+      kpi={<KpiStrip items={[{color:"bg-slate-500",value:TURNDOWN.filter((t) => t.status === "Pending").length,label:"Pending"},{color:"bg-amber-500",value:TURNDOWN.filter((t) => t.status === "In Progress").length,label:"In Progress"},{color:"bg-emerald-500",value:TURNDOWN.filter((t) => t.status === "Completed").length,label:"Completed"},{color:"bg-purple-500",value:TURNDOWN.filter((t) => t.vip).length,label:"VIP Rooms"},{color:"bg-red-500",value:TURNDOWN.filter((t) => t.assigned === "Unassigned").length,label:"Unassigned"}]} />}
+    >
       <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2 border-b border-border px-5 py-4">
-          <Coffee className="h-4 w-4 text-amber-500" />
-          <h3 className="text-sm font-semibold text-foreground">Evening Turndown Service</h3>
-        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/40">
@@ -945,7 +994,7 @@ function TurndownService() {
       <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
         <div className="flex items-center gap-2 border-b border-border px-5 py-4">
           <ClipboardList className="h-4 w-4 text-violet-500" />
-          <h3 className="text-sm font-semibold text-foreground">Standard Turndown Amenity Placement</h3>
+          <SectionHeader title="Standard Turndown Amenity Placement" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-5">
           {amenityChecklist.map((item, i) => (
@@ -956,7 +1005,7 @@ function TurndownService() {
           ))}
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -981,15 +1030,13 @@ function LostAndFound() {
     disposed: LOST_FOUND.filter((i) => i.status === "Disposed" || i.status === "Donated").length,
   };
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-4 gap-3">
-        <StatCard title="Total Items" value={stats.total} icon={Package} gradient="bg-gradient-to-br from-slate-400 to-slate-500" />
-        <StatCard title="Claimed" value={stats.claimed} icon={CheckCircle2} gradient="bg-gradient-to-br from-emerald-400 to-emerald-500" />
-        <StatCard title="Unclaimed" value={stats.unclaimed} icon={AlertCircle} gradient="bg-gradient-to-br from-orange-400 to-orange-500" />
-        <StatCard title="Disposed / Donated" value={stats.disposed} icon={Wind} gradient="bg-gradient-to-br from-gray-400 to-gray-500" />
-      </div>
-
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search lost & found..." />}
+      header={<SectionHeader icon={Home} title="Lost & Found" subtitle="Track and manage found items" />}
+      kpi={<KpiStrip items={[{color:"bg-slate-500",value:stats.total,label:"Total Items"},{color:"bg-emerald-500",value:stats.claimed,label:"Claimed"},{color:"bg-orange-500",value:stats.unclaimed,label:"Unclaimed"},{color:"bg-slate-500",value:stats.disposed,label:"Disposed / Donated"},{color:"bg-blue-500",value:categories.length,label:"Categories"}]} />}
+    >
       <div className="flex flex-wrap gap-2">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-xs font-medium text-muted-foreground">Category:</span>
@@ -1047,7 +1094,7 @@ function LostAndFound() {
           </table>
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -1063,8 +1110,19 @@ function InventorySupplies() {
 
   const supplyCategories = [...new Set(SUPPLIES.map((s) => s.category))];
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div className="space-y-5">
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search inventory..." />}
+      header={<SectionHeader icon={Home} title="Linen & Inventory" subtitle="Par levels, supplies, and stock management" />}
+      kpi={<KpiStrip items={[
+        { color: "bg-emerald-500", value: LINENS.length, label: "Linen Items" },
+        { color: "bg-blue-500", value: SUPPLIES.length, label: "Supply Items" },
+        { color: "bg-red-500", value: SUPPLIES.filter(s => s.status === "Critical").length, label: "Critical" },
+        { color: "bg-amber-500", value: SUPPLIES.filter(s => s.status === "Low").length, label: "Low Stock" },
+        { color: "bg-slate-500", value: SUPPLIES.filter(s => s.status === "Adequate").length, label: "Adequate" },
+      ]} />}
+    >
       <div className="flex gap-2 rounded-2xl border border-border bg-card p-1.5 w-fit">
         <button onClick={() => setActiveTab("linen")} className={cn("rounded-xl px-5 py-2 text-sm font-medium transition-all", activeTab === "linen" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Linen Par Levels</button>
         <button onClick={() => setActiveTab("supplies")} className={cn("rounded-xl px-5 py-2 text-sm font-medium transition-all", activeTab === "supplies" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Supplies</button>
@@ -1074,7 +1132,7 @@ function InventorySupplies() {
         <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
           <div className="flex items-center gap-2 border-b border-border px-5 py-4">
             <Layers className="h-4 w-4 text-blue-500" />
-            <h3 className="text-sm font-semibold text-foreground">Linen Par Levels</h3>
+            <SectionHeader title="Linen Par Levels" />
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -1178,7 +1236,7 @@ function InventorySupplies() {
           </div>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
 
@@ -1217,8 +1275,19 @@ function InspectionChecklist() {
     });
   };
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div className="space-y-5">
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search inspections..." />}
+      header={<SectionHeader icon={Home} title="Inspection Checklist" subtitle="Room inspection verification" />}
+      kpi={<KpiStrip items={[
+        { color: "bg-emerald-500", value: counts.pass, label: "Pass" },
+        { color: "bg-red-500", value: counts.fail, label: "Fail" },
+        { color: "bg-slate-500", value: counts.na, label: "N/A" },
+        { color: "bg-blue-500", value: counts.total, label: "Total Checks" },
+        { color: "bg-violet-500", value: inspectableRooms.length, label: "Inspectable Rooms" },
+      ]} />}
+    >
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
           <ClipboardList className="h-4 w-4 text-violet-600" />
@@ -1247,7 +1316,7 @@ function InspectionChecklist() {
           </div>
           <div className="h-2 rounded-full bg-muted overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 transition-all duration-300"
+              className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-violet-600 transition-all duration-300"
               style={{ width: `${((counts.pass + counts.fail + counts.na) / counts.total) * 100}%` }}
             />
           </div>
@@ -1286,7 +1355,7 @@ function InspectionChecklist() {
                     <tr key={item} className={cn("transition-colors hover:bg-muted/20",
                       current === "Pass" ? "bg-emerald-50/40" :
                       current === "Fail" ? "bg-red-50/40" :
-                      current === "N/A" ? "bg-gray-50/40" : ""
+                      current === "N/A" ? "bg-muted/40" : ""
                     )}>
                       <td className="px-5 py-2.5 text-foreground">{item}</td>
                       {(["Pass", "Fail", "N/A"] as CheckResult[]).map((v) => (
@@ -1298,7 +1367,7 @@ function InspectionChecklist() {
                             checked={current === v}
                             onChange={() => setCheck(cat.name, item, v)}
                             className={cn("h-4 w-4 cursor-pointer",
-                              v === "Pass" ? "accent-emerald-500" : v === "Fail" ? "accent-red-500" : "accent-gray-400"
+                              v === "Pass" ? "accent-emerald-500" : v === "Fail" ? "accent-red-500" : "accent-slate-400"
                             )}
                           />
                         </td>
@@ -1325,7 +1394,7 @@ function InspectionChecklist() {
           {counts.fail > 0 ? `${counts.fail} Fail(s) — Cannot Approve` : "Approve Room"}
         </button>
       </div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -1337,20 +1406,14 @@ function MinibarRestocking() {
   const completed = MINIBAR.filter((m) => m.status === "Completed").length;
   const noCharge = MINIBAR.filter((m) => m.status === "No Charge").length;
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard title="Total Revenue" value={`$${totalRevenue.toFixed(2)}`} sub="Today's minibar charges" icon={BarChart2} gradient="bg-gradient-to-br from-violet-400 to-violet-500" />
-        <StatCard title="Restocked" value={completed} sub="Completed today" icon={CheckCircle2} gradient="bg-gradient-to-br from-emerald-400 to-emerald-500" />
-        <StatCard title="Pending Check" value={pending} sub="Awaiting inventory" icon={Clock} gradient="bg-gradient-to-br from-orange-400 to-orange-500" />
-        <StatCard title="No Charge" value={noCharge} sub="Nothing consumed" icon={Home} gradient="bg-gradient-to-br from-blue-400 to-blue-500" />
-      </div>
-
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search minibar..." />}
+      header={<SectionHeader icon={Home} title="Minibar Restocking Log" subtitle="Daily minibar consumption and restocking" />}
+      kpi={<KpiStrip items={[{color:"bg-violet-500",value:`$${totalRevenue.toFixed(2)}`,label:"Total Revenue"},{color:"bg-emerald-500",value:completed,label:"Restocked"},{color:"bg-orange-500",value:pending,label:"Pending Check"},{color:"bg-blue-500",value:noCharge,label:"No Charge"},{color:"bg-slate-500",value:MINIBAR.length,label:"Total Rooms"}]} />}
+    >
       <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2 border-b border-border px-5 py-4">
-          <Coffee className="h-4 w-4 text-violet-500" />
-          <h3 className="text-sm font-semibold text-foreground">Minibar Restocking Log</h3>
-        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/40">
@@ -1387,7 +1450,7 @@ function MinibarRestocking() {
           <span className="text-lg font-bold text-emerald-600">${totalRevenue.toFixed(2)}</span>
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -1424,11 +1487,11 @@ export function Housekeeping({ aiEnabled, activeSubmenu }: HousekeepingProps) {
       >
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-400 to-teal-500 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 shadow-sm">
               <Icon className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">{current.label}</h1>
+              <SectionHeader title={current.label} />
               <p className="text-xs text-muted-foreground">
                 Housekeeping &rsaquo; {current.label} &mdash;{" "}
                 {new Date().toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}

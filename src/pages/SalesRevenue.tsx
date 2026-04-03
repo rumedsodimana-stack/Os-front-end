@@ -10,6 +10,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
+import { KpiStrip, LegendBar, SectionSearch, SectionHeader, PageShell } from "../components/shared";
 
 // ─── Interfaces ────────────────────────────────────────────────────────────────
 
@@ -388,9 +389,9 @@ function channelBadge(channel: string) {
     OTA: "bg-orange-100 text-orange-700",
     Direct: "bg-green-100 text-green-700",
     GDS: "bg-purple-100 text-purple-700",
-    "Walk-in": "bg-gray-100 text-gray-700",
+    "Walk-in": "bg-muted text-foreground",
   };
-  return map[channel] ?? "bg-gray-100 text-gray-600";
+  return map[channel] ?? "bg-muted text-muted-foreground";
 }
 
 function statusBadge(status: string) {
@@ -411,13 +412,13 @@ function statusBadge(status: string) {
     "Proposal Sent": "bg-blue-100 text-blue-700",
     Negotiating: "bg-orange-100 text-orange-700",
     Lost: "bg-red-100 text-red-700",
-    "At Market": "bg-gray-100 text-gray-700",
+    "At Market": "bg-muted text-foreground",
     "Above Market": "bg-red-100 text-red-700",
     "Below Market": "bg-green-100 text-green-700",
     Upcoming: "bg-indigo-100 text-indigo-700",
-    Expired2: "bg-gray-100 text-gray-500",
+    Expired2: "bg-muted text-muted-foreground",
   };
-  return map[status] ?? "bg-gray-100 text-gray-600";
+  return map[status] ?? "bg-muted text-muted-foreground";
 }
 
 function Badge({ label }: { label: string }) {
@@ -446,67 +447,40 @@ function rateColor(rate: number, base: number) {
   if (pct > 0) return "bg-orange-100 text-orange-800";
   if (pct < -10) return "bg-green-100 text-green-800";
   if (pct < 0) return "bg-blue-100 text-blue-800";
-  return "bg-gray-100 text-gray-700";
+  return "bg-muted text-foreground";
 }
 
 // ─── Sub-view: Overview ─────────────────────────────────────────────────────────
 
 function Overview() {
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key="overview"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        className="space-y-6"
-      >
-        {/* Stat Cards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard
-            label="Total Revenue YTD"
-            value="$4.13M"
-            subtext="12 months rolling"
-            trend={12.4}
-            gradient="bg-gradient-to-r from-emerald-400 to-emerald-500"
-            icon={<DollarSign className="h-5 w-5 text-white" />}
-          />
-          <StatCard
-            label="Average Daily Rate"
-            value="$268"
-            subtext="Per occupied room"
-            trend={6.8}
-            gradient="bg-gradient-to-r from-blue-400 to-blue-500"
-            icon={<TrendingUp className="h-5 w-5 text-white" />}
-          />
-          <StatCard
-            label="RevPAR"
-            value="$214"
-            subtext="Revenue per available room"
-            trend={9.2}
-            gradient="bg-gradient-to-r from-violet-400 to-violet-500"
-            icon={<BarChart2 className="h-5 w-5 text-white" />}
-          />
-          <StatCard
-            label="Occupancy Rate"
-            value="79.8%"
-            subtext="Rooms occupied"
-            trend={2.1}
-            gradient="bg-gradient-to-r from-amber-400 to-amber-500"
-            icon={<Percent className="h-5 w-5 text-white" />}
-          />
-        </div>
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search sales..." />}
+      header={<SectionHeader icon={TrendingUp} title="Sales & Revenue Overview" subtitle="Key performance indicators and revenue trends" />}
+      kpi={<KpiStrip
+        items={[
+          { color: "bg-emerald-500", value: "$4.13M", label: "Total Revenue YTD" },
+          { color: "bg-blue-500", value: "$268", label: "Average Daily Rate" },
+          { color: "bg-violet-500", value: "$214", label: "RevPAR" },
+          { color: "bg-amber-500", value: "79.8%", label: "Occupancy Rate" },
+          { color: "bg-rose-500", value: "+5.6%", label: "vs Budget" },
+        ]}
+      />}
+    >
 
         {/* Revenue vs Budget Line Chart */}
         <div className="rounded-2xl bg-card border border-border shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="font-semibold text-foreground">Revenue vs Budget — Last 12 Months</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Monthly actual revenue compared to budget targets</p>
-            </div>
-            <button className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary/50 transition-colors">
-              <Download className="h-3.5 w-3.5" /> Export
-            </button>
+            <SectionHeader
+              title="Revenue vs Budget — Last 12 Months"
+              subtitle="Monthly actual revenue compared to budget targets"
+              actions={
+                <button className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary/50 transition-colors">
+                  <Download className="h-3.5 w-3.5" /> Export
+                </button>
+              }
+            />
           </div>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={revenueByMonth} margin={{ top: 5, right: 20, left: -5, bottom: 5 }}>
@@ -526,10 +500,7 @@ function Overview() {
 
         {/* Revenue by Source Bar Chart */}
         <div className="rounded-2xl bg-card border border-border shadow-sm p-5">
-          <div className="mb-4">
-            <h3 className="font-semibold text-foreground">Revenue by Source</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">Annual contribution by booking channel</p>
-          </div>
+          <SectionHeader title="Revenue by Source" subtitle="Annual contribution by booking channel" />
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={revenueBySource} margin={{ top: 5, right: 20, left: -5, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -544,10 +515,14 @@ function Overview() {
         {/* Top Producing Accounts */}
         <div className="rounded-2xl bg-card border border-border shadow-sm overflow-hidden">
           <div className="flex items-center justify-between p-5 border-b border-border">
-            <h3 className="font-semibold text-foreground">Top Producing Accounts</h3>
-            <button className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary/50 transition-colors">
-              <Filter className="h-3.5 w-3.5" /> Filter
-            </button>
+            <SectionHeader
+              title="Top Producing Accounts"
+              actions={
+                <button className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary/50 transition-colors">
+                  <Filter className="h-3.5 w-3.5" /> Filter
+                </button>
+              }
+            />
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -587,8 +562,7 @@ function Overview() {
             </table>
           </div>
         </div>
-      </motion.div>
-    </AnimatePresence>
+    </PageShell>
   );
 }
 
@@ -604,21 +578,25 @@ function RevenueAnalysis() {
   const avgAdr = Math.round(totals.totalRevenue / totals.sold);
   const avgRevpar = Math.round(totals.totalRevenue / totals.available);
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <AnimatePresence mode="wait">
-      <motion.div key="analysis" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Revenue vs Budget" value="+5.6%" subtext="YTD ahead of budget" trend={5.6} gradient="bg-gradient-to-r from-emerald-400 to-emerald-500" icon={<TrendingUp className="h-5 w-5 text-white" />} />
-          <StatCard label="YOY Growth" value="+12.4%" subtext="vs same period last year" trend={12.4} gradient="bg-gradient-to-r from-blue-400 to-blue-500" icon={<BarChart2 className="h-5 w-5 text-white" />} />
-          <StatCard label="Best Month" value="March" subtext="$408K — 4.7% above budget" gradient="bg-gradient-to-r from-violet-400 to-violet-500" icon={<Calendar className="h-5 w-5 text-white" />} />
-          <StatCard label="Room Rev Share" value="82.3%" subtext="of total hotel revenue" gradient="bg-gradient-to-r from-amber-400 to-amber-500" icon={<Percent className="h-5 w-5 text-white" />} />
-        </div>
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search revenue..." />}
+      header={<SectionHeader icon={TrendingUp} title="Revenue Analysis" subtitle="Year-over-year performance and room type breakdown" />}
+      kpi={<KpiStrip
+        items={[
+          { color: "bg-emerald-500", value: "+5.6%", label: "Revenue vs Budget" },
+          { color: "bg-blue-500", value: "+12.4%", label: "YOY Growth" },
+          { color: "bg-violet-500", value: "March", label: "Best Month" },
+          { color: "bg-amber-500", value: "82.3%", label: "Room Rev Share" },
+          { color: "bg-rose-500", value: `$${avgAdr}`, label: "Avg Daily Rate" },
+        ]}
+      />}
+    >
 
         {/* Year over Year Area Chart */}
         <div className="rounded-2xl bg-card border border-border shadow-sm p-5">
-          <h3 className="font-semibold text-foreground mb-1">This Year vs Last Year</h3>
-          <p className="text-xs text-muted-foreground mb-4">Monthly revenue comparison</p>
+          <SectionHeader title="This Year vs Last Year" subtitle="Monthly revenue comparison" />
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={yearOverYear} margin={{ top: 5, right: 20, left: -5, bottom: 5 }}>
               <defs>
@@ -643,7 +621,7 @@ function RevenueAnalysis() {
 
         {/* Revenue by Room Type Bar */}
         <div className="rounded-2xl bg-card border border-border shadow-sm p-5">
-          <h3 className="font-semibold text-foreground mb-4">Revenue by Room Type</h3>
+          <SectionHeader title="Revenue by Room Type" />
           <ResponsiveContainer width="100%" height={220}>
             <BarChart
               data={roomTypeData.map((r) => ({ name: r.roomType, revenue: r.totalRevenue }))}
@@ -661,7 +639,7 @@ function RevenueAnalysis() {
         {/* Room Type Detail Table */}
         <div className="rounded-2xl bg-card border border-border shadow-sm overflow-hidden">
           <div className="p-5 border-b border-border">
-            <h3 className="font-semibold text-foreground">Room Type Performance</h3>
+            <SectionHeader title="Room Type Performance" />
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -708,8 +686,7 @@ function RevenueAnalysis() {
             </table>
           </div>
         </div>
-      </motion.div>
-    </AnimatePresence>
+    </PageShell>
   );
 }
 
@@ -733,23 +710,21 @@ function ReservationsPipeline() {
   const totalValue = filtered.reduce((s, r) => s + r.value, 0);
   const confirmed = filtered.filter((r) => r.status === "Confirmed").length;
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search pipeline..." />}
+      header={<SectionHeader icon={TrendingUp} title="Reservations Pipeline" subtitle="Booking flow and pipeline value" />}
+      kpi={<KpiStrip items={[
+        { color: "bg-blue-500", value: filtered.length.toString(), label: "Total Bookings" },
+        { color: "bg-emerald-500", value: confirmed.toString(), label: "Confirmed" },
+        { color: "bg-violet-500", value: fmt(totalValue), label: "Pipeline Value" },
+        { color: "bg-amber-500", value: filtered.length ? `$${Math.round(totalValue / filtered.length).toLocaleString()}` : "$0", label: "Avg Booking" },
+        { color: "bg-rose-500", value: filtered.filter(r => r.status === "Pending").length.toString(), label: "Pending" },
+      ]} />}
+    >
     <AnimatePresence mode="wait">
       <motion.div key="pipeline" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
-        {/* Summary cards */}
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {[
-            { label: "Total Bookings", value: filtered.length.toString(), gradient: "bg-gradient-to-r from-blue-400 to-blue-500" },
-            { label: "Confirmed", value: confirmed.toString(), gradient: "bg-gradient-to-r from-emerald-400 to-emerald-500" },
-            { label: "Pipeline Value", value: fmt(totalValue), gradient: "bg-gradient-to-r from-violet-400 to-violet-500" },
-            { label: "Avg Booking Value", value: filtered.length ? `$${Math.round(totalValue / filtered.length).toLocaleString()}` : "$0", gradient: "bg-gradient-to-r from-amber-400 to-amber-500" },
-          ].map((c) => (
-            <div key={c.label} className={cn("rounded-2xl p-4 text-white shadow-sm", c.gradient)}>
-              <p className="text-xs text-white/80">{c.label}</p>
-              <p className="mt-1 text-2xl font-bold">{c.value}</p>
-            </div>
-          ))}
-        </div>
 
         {/* Filters */}
         <div className="flex flex-wrap gap-3">
@@ -827,6 +802,7 @@ function ReservationsPipeline() {
         </div>
       </motion.div>
     </AnimatePresence>
+    </PageShell>
   );
 }
 
@@ -846,7 +822,19 @@ function CorporateAccounts() {
     });
   }, [search, statusFilter]);
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search accounts..." />}
+      header={<SectionHeader icon={TrendingUp} title="Corporate Accounts" subtitle="Manage corporate client accounts and contracts" />}
+      kpi={<KpiStrip items={[
+        { color: "bg-blue-500", value: corporateAccounts.length.toString(), label: "Total Accounts" },
+        { color: "bg-emerald-500", value: corporateAccounts.filter(c => c.status === "Active").length.toString(), label: "Active" },
+        { color: "bg-amber-500", value: corporateAccounts.filter(c => c.status === "Renewal Due").length.toString(), label: "Renewal Due" },
+        { color: "bg-red-500", value: corporateAccounts.filter(c => c.status === "Expired").length.toString(), label: "Expired" },
+        { color: "bg-violet-500", value: fmt(corporateAccounts.reduce((s, c) => s + c.revenueYtd, 0)), label: "Total Revenue" },
+      ]} />}
+    >
     <AnimatePresence mode="wait">
       <motion.div key="corporate" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-5">
         {/* Header Controls */}
@@ -919,6 +907,7 @@ function CorporateAccounts() {
         </div>
       </motion.div>
     </AnimatePresence>
+    </PageShell>
   );
 }
 
@@ -932,7 +921,19 @@ function RateManagement() {
     { key: "promotions" as const, label: "Promotions" },
   ];
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search rates..." />}
+      header={<SectionHeader icon={TrendingUp} title="Rate Management" subtitle="Rate codes, BAR grid, and promotions" />}
+      kpi={<KpiStrip items={[
+        { color: "bg-blue-500", value: rateCodes.length.toString(), label: "Rate Codes" },
+        { color: "bg-emerald-500", value: rateCodes.filter(r => r.active).length.toString(), label: "Active" },
+        { color: "bg-amber-500", value: rateCodes.filter(r => !r.active).length.toString(), label: "Inactive" },
+        { color: "bg-violet-500", value: "3", label: "Promotions" },
+        { color: "bg-rose-500", value: "5", label: "Room Types" },
+      ]} />}
+    >
     <AnimatePresence mode="wait">
       <motion.div key="rates" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-5">
         {/* Tabs */}
@@ -954,7 +955,7 @@ function RateManagement() {
         {activeTab === "codes" && (
           <div className="rounded-2xl bg-card border border-border shadow-sm overflow-hidden">
             <div className="p-5 border-b border-border flex items-center justify-between">
-              <h3 className="font-semibold text-foreground">Rate Code Directory</h3>
+              <SectionHeader title="Rate Code Directory" />
               <button className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary/50 transition-colors">
                 <Tag className="h-3.5 w-3.5" /> Add Rate Code
               </button>
@@ -986,7 +987,7 @@ function RateManagement() {
                       <td className="px-4 py-3 text-right font-mono text-foreground">${rc.corporate}</td>
                       <td className="px-4 py-3 text-right font-mono text-foreground">{rc.ota > 0 ? `$${rc.ota}` : "—"}</td>
                       <td className="px-4 py-3">
-                        <span className={cn("px-3 py-1 rounded-full text-xs font-medium", rc.active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500")}>
+                        <span className={cn("px-3 py-1 rounded-full text-xs font-medium", rc.active ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground")}>
                           {rc.active ? "Active" : "Inactive"}
                         </span>
                       </td>
@@ -1001,7 +1002,7 @@ function RateManagement() {
         {activeTab === "bar" && (
           <div className="rounded-2xl bg-card border border-border shadow-sm overflow-hidden">
             <div className="p-5 border-b border-border">
-              <h3 className="font-semibold text-foreground">Best Available Rate Grid — Next 7 Days</h3>
+              <SectionHeader title="Best Available Rate Grid — Next 7 Days" />
               <p className="text-xs text-muted-foreground mt-0.5">Color-coded by pricing relative to base: green = below, orange = above, red = significantly above</p>
             </div>
             <div className="overflow-x-auto p-5">
@@ -1039,7 +1040,7 @@ function RateManagement() {
         {activeTab === "promotions" && (
           <div className="rounded-2xl bg-card border border-border shadow-sm overflow-hidden">
             <div className="p-5 border-b border-border flex items-center justify-between">
-              <h3 className="font-semibold text-foreground">Promotions</h3>
+              <SectionHeader title="Promotions" />
               <button className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary/50 transition-colors">
                 <Tag className="h-3.5 w-3.5" /> New Promotion
               </button>
@@ -1082,6 +1083,7 @@ function RateManagement() {
         )}
       </motion.div>
     </AnimatePresence>
+    </PageShell>
   );
 }
 
@@ -1099,22 +1101,34 @@ function ChannelManager() {
   const totalRevenue = channels.reduce((s, c) => s + c.revenueMtd, 0);
   const connected = channels.filter((c) => c.status === "Connected").length;
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search channels..." />}
+      header={<SectionHeader icon={TrendingUp} title="Channel Manager" subtitle="Distribution channel connections and performance" />}
+      kpi={<KpiStrip
+        items={[
+          { color: "bg-emerald-500", value: `${connected}/${channels.length}`, label: "Channels Connected" },
+          { color: "bg-blue-500", value: totalBookings.toString(), label: "Bookings MTD" },
+          { color: "bg-violet-500", value: fmt(totalRevenue), label: "Revenue MTD" },
+          { color: "bg-amber-500", value: channels.filter(c => c.status === "Disconnected").length.toString(), label: "Disconnected" },
+          { color: "bg-rose-500", value: syncing ? "Syncing..." : "Idle", label: "Sync Status" },
+        ]}
+      />}
+    >
     <AnimatePresence mode="wait">
       <motion.div key="channels" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
-        {/* Summary */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard label="Channels Connected" value={`${connected}/${channels.length}`} gradient="bg-gradient-to-r from-emerald-400 to-emerald-500" icon={<Wifi className="h-5 w-5 text-white" />} />
-          <StatCard label="Bookings MTD (all channels)" value={totalBookings.toString()} gradient="bg-gradient-to-r from-blue-400 to-blue-500" icon={<Calendar className="h-5 w-5 text-white" />} />
-          <StatCard label="Revenue MTD (all channels)" value={fmt(totalRevenue)} gradient="bg-gradient-to-r from-violet-400 to-violet-500" icon={<DollarSign className="h-5 w-5 text-white" />} />
-        </div>
 
         <div className="rounded-2xl bg-card border border-border shadow-sm overflow-hidden">
           <div className="p-5 border-b border-border flex items-center justify-between">
-            <h3 className="font-semibold text-foreground">Channel Connections</h3>
-            <button className="flex items-center gap-1.5 rounded-lg bg-blue-500 px-3 py-1.5 text-xs text-white hover:bg-blue-600 transition-colors">
-              <RefreshCw className="h-3.5 w-3.5" /> Sync All
-            </button>
+            <SectionHeader
+              title="Channel Connections"
+              actions={
+                <button className="flex items-center gap-1.5 rounded-lg bg-blue-500 px-3 py-1.5 text-xs text-white hover:bg-blue-600 transition-colors">
+                  <RefreshCw className="h-3.5 w-3.5" /> Sync All
+                </button>
+              }
+            />
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -1171,20 +1185,33 @@ function ChannelManager() {
         </div>
       </motion.div>
     </AnimatePresence>
+    </PageShell>
   );
 }
 
 // ─── Sub-view: Forecast ──────────────────────────────────────────────────────────
 
 function Forecast() {
+  const [searchQuery, setSearchQuery] = useState("");
   return (
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search forecast..." />}
+      header={<SectionHeader icon={TrendingUp} title="12-Month Demand Forecast" subtitle="Forecasted vs Budget vs Actual revenue" />}
+      kpi={<KpiStrip items={[
+        { color: "bg-blue-500", value: "$3.8M", label: "Forecasted Rev" },
+        { color: "bg-violet-500", value: "$3.6M", label: "Budget" },
+        { color: "bg-emerald-500", value: "$3.9M", label: "Actual" },
+        { color: "bg-amber-500", value: "+5.2%", label: "vs Budget" },
+        { color: "bg-rose-500", value: "82%", label: "Avg Occupancy" },
+      ]} />}
+    >
     <AnimatePresence mode="wait">
       <motion.div key="forecast" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
         {/* Forecast Area Chart */}
         <div className="rounded-2xl bg-card border border-border shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="font-semibold text-foreground">12-Month Demand Forecast</h3>
+              <SectionHeader title="12-Month Demand Forecast" />
               <p className="text-xs text-muted-foreground mt-0.5">Forecasted vs Budget vs Actual revenue</p>
             </div>
             <button className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary/50 transition-colors">
@@ -1218,7 +1245,7 @@ function Forecast() {
         {/* Forecast Table */}
         <div className="rounded-2xl bg-card border border-border shadow-sm overflow-hidden">
           <div className="p-5 border-b border-border">
-            <h3 className="font-semibold text-foreground">Monthly Forecast Detail</h3>
+            <SectionHeader title="Monthly Forecast Detail" />
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -1258,6 +1285,7 @@ function Forecast() {
         </div>
       </motion.div>
     </AnimatePresence>
+    </PageShell>
   );
 }
 
@@ -1275,15 +1303,23 @@ function GroupQuotes() {
   const confirmed = groupQuotes.filter((g) => g.status === "Confirmed").reduce((s, g) => s + g.totalValue, 0);
   const pipeline = groupQuotes.filter((g) => ["Prospect", "Proposal Sent", "Negotiating"].includes(g.status)).reduce((s, g) => s + g.totalValue, 0);
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search quotes..." />}
+      header={<SectionHeader icon={TrendingUp} title="Group Quotes" subtitle="RFP pipeline and group booking management" />}
+      kpi={<KpiStrip
+        items={[
+          { color: "bg-emerald-500", value: fmt(confirmed), label: "Confirmed Value" },
+          { color: "bg-blue-500", value: fmt(pipeline), label: "Active Pipeline" },
+          { color: "bg-violet-500", value: filtered.length.toString(), label: "Showing RFPs" },
+          { color: "bg-amber-500", value: groupQuotes.filter(g => g.status === "Negotiating").length.toString(), label: "Negotiating" },
+          { color: "bg-red-500", value: groupQuotes.filter(g => g.status === "Lost").length.toString(), label: "Lost" },
+        ]}
+      />}
+    >
     <AnimatePresence mode="wait">
       <motion.div key="groups" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
-        {/* Summary */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard label="Confirmed Group Value" value={fmt(confirmed)} gradient="bg-gradient-to-r from-emerald-400 to-emerald-500" icon={<DollarSign className="h-5 w-5 text-white" />} />
-          <StatCard label="Active Pipeline" value={fmt(pipeline)} gradient="bg-gradient-to-r from-blue-400 to-blue-500" icon={<TrendingUp className="h-5 w-5 text-white" />} />
-          <StatCard label="Showing RFPs" value={filtered.length.toString()} subtext={`Total value: ${fmt(totalValue)}`} gradient="bg-gradient-to-r from-violet-400 to-violet-500" icon={<Building2 className="h-5 w-5 text-white" />} />
-        </div>
 
         {/* Status filter */}
         <div className="flex flex-wrap gap-2">
@@ -1331,7 +1367,7 @@ function GroupQuotes() {
                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{g.checkOut}</td>
                     <td className="px-4 py-3 text-right font-mono text-foreground">{g.roomsRequired}</td>
                     <td className="px-4 py-3">
-                      <span className={cn("px-2.5 py-0.5 rounded-full text-xs font-medium", g.fbIncluded ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500")}>
+                      <span className={cn("px-2.5 py-0.5 rounded-full text-xs font-medium", g.fbIncluded ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground")}>
                         {g.fbIncluded ? "Yes" : "No"}
                       </span>
                     </td>
@@ -1347,32 +1383,43 @@ function GroupQuotes() {
         </div>
       </motion.div>
     </AnimatePresence>
+    </PageShell>
   );
 }
 
 // ─── Sub-view: Competitor Rate Intelligence ──────────────────────────────────────
 
 function CompetitorIntelligence() {
+  const [searchQuery, setSearchQuery] = useState("");
   return (
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search competitors..." />}
+      header={<SectionHeader icon={TrendingUp} title="Competitor Rate Intelligence" subtitle="Comp set rate comparison and market positioning" />}
+      kpi={<KpiStrip
+        items={[
+          { color: "bg-blue-500", value: "$248", label: "Our Rate Tonight" },
+          { color: "bg-violet-500", value: "$245", label: "Market Average" },
+          { color: "bg-emerald-500", value: "At Market", label: "Our Positioning" },
+          { color: "bg-amber-500", value: competitors.length.toString(), label: "Comp Set Size" },
+          { color: "bg-rose-500", value: "+1.2%", label: "vs Market" },
+        ]}
+      />}
+    >
     <AnimatePresence mode="wait">
       <motion.div key="comp" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
-        {/* Summary KPIs */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard label="Our Rate Tonight" value="$248" subtext="Deluxe King" gradient="bg-gradient-to-r from-blue-400 to-blue-500" icon={<Tag className="h-5 w-5 text-white" />} />
-          <StatCard label="Market Average" value="$245" subtext="5-property comp set" gradient="bg-gradient-to-r from-violet-400 to-violet-500" icon={<BarChart2 className="h-5 w-5 text-white" />} />
-          <StatCard label="Our Positioning" value="At Market" subtext="+1.2% above midpoint" gradient="bg-gradient-to-r from-emerald-400 to-emerald-500" icon={<TrendingUp className="h-5 w-5 text-white" />} />
-        </div>
 
         {/* Comp Set Rate Table */}
         <div className="rounded-2xl bg-card border border-border shadow-sm overflow-hidden">
           <div className="p-5 border-b border-border flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold text-foreground">Competitor Rate Comparison</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Sandton CBD comp set — rates for Deluxe / Standard room type</p>
-            </div>
-            <button className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary/50 transition-colors">
-              <RefreshCw className="h-3.5 w-3.5" /> Refresh Rates
-            </button>
+            <SectionHeader
+              title="Competitor Rate Comparison"
+              subtitle="Sandton CBD comp set — rates for Deluxe / Standard room type"
+              actions={
+                <button className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary/50 transition-colors">
+                  <RefreshCw className="h-3.5 w-3.5" /> Refresh Rates
+                </button>
+              }
+            />
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -1394,13 +1441,13 @@ function CompetitorIntelligence() {
                     key={c.id}
                     className={cn(
                       "transition-colors",
-                      c.isOurHotel ? "bg-blue-50/50 hover:bg-blue-50/80 dark:bg-blue-950/20" : "hover:bg-secondary/30"
+                      c.isOurHotel ? "bg-blue-50/50 hover:bg-blue-50/80" : "hover:bg-secondary/30"
                     )}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {c.isOurHotel && <ChevronRight className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />}
-                        <span className={cn("font-medium truncate max-w-[180px]", c.isOurHotel ? "text-blue-700 dark:text-blue-400" : "text-foreground")} title={c.hotelName}>
+                        <span className={cn("font-medium truncate max-w-[180px]", c.isOurHotel ? "text-blue-700" : "text-foreground")} title={c.hotelName}>
                           {c.hotelName}
                         </span>
                         {c.isOurHotel && <span className="px-1.5 py-0.5 rounded text-xs bg-blue-100 text-blue-700 font-medium">Us</span>}
@@ -1422,8 +1469,7 @@ function CompetitorIntelligence() {
 
         {/* Rate Trend Chart */}
         <div className="rounded-2xl bg-card border border-border shadow-sm p-5">
-          <h3 className="font-semibold text-foreground mb-1">7-Day Rate Trend — Top 3 Comp Set</h3>
-          <p className="text-xs text-muted-foreground mb-4">Nightly rate tracking for Singularity, Michelangelo, and Sandton Sun</p>
+          <SectionHeader title="7-Day Rate Trend — Top 3 Comp Set" subtitle="Nightly rate tracking for Singularity, Michelangelo, and Sandton Sun" />
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={compTrendData} margin={{ top: 5, right: 20, left: -5, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -1443,6 +1489,7 @@ function CompetitorIntelligence() {
         </div>
       </motion.div>
     </AnimatePresence>
+    </PageShell>
   );
 }
 
@@ -1467,19 +1514,17 @@ export function SalesRevenue({ aiEnabled, activeSubmenu = "Overview" }: SalesRev
   const currentView = subviewMap[activeSubmenu] ?? subviewMap["Overview"];
 
   return (
-    <div className="p-6">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeSubmenu}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.18 }}
-        >
-          {currentView}
-        </motion.div>
-      </AnimatePresence>
-    </div>
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={activeSubmenu}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.18 }}
+      >
+        {currentView}
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
@@ -1602,27 +1647,32 @@ function GroupManagementView() {
       case "Confirmed": return "bg-green-100 text-green-700";
       case "Tentative": return "bg-amber-100 text-amber-700";
       case "Cancelled": return "bg-red-100 text-red-700 line-through";
-      default: return "bg-gray-100 text-gray-700";
+      default: return "bg-muted text-foreground";
     }
   };
 
   const pickupPercentage = (picked: number, blocked: number) =>
     Math.round((picked / blocked) * 100);
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Group Management</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">Manage group bookings and block allocations</p>
-        </div>
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search groups..." />}
+      header={<SectionHeader icon={TrendingUp} title="Group Management" subtitle="Manage group bookings and block allocations" actions={
         <button className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors inline-flex items-center gap-2">
           <span>+</span> New Group Block
         </button>
-      </div>
-
+      } />}
+      kpi={<KpiStrip items={[
+        { color: "bg-violet-500", value: "8", label: "Active Groups" },
+        { color: "bg-blue-500", value: "142", label: "Rooms Blocked" },
+        { color: "bg-emerald-500", value: "73%", label: "Pick-up Rate" },
+        { color: "bg-amber-500", value: "BHD 48,200", label: "Group Rev MTD" },
+        { color: "bg-rose-500", value: "+18%", label: "Growth" },
+      ]} />}
+    >
       {/* Stat Cards */}
+      <div className="space-y-6">
       <div className="grid grid-cols-4 gap-4">
         {statCards.map((card) => {
           const Icon = card.icon;
@@ -1647,7 +1697,7 @@ function GroupManagementView() {
       {/* Group Blocks Table */}
       <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
         <div className="px-6 py-4 border-b border-border">
-          <h3 className="font-semibold text-foreground">Group Blocks</h3>
+          <SectionHeader title="Group Blocks" />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -1768,7 +1818,8 @@ function GroupManagementView() {
           </table>
         </div>
       </div>
-    </div>
+      </div>
+    </PageShell>
   );
 }
 

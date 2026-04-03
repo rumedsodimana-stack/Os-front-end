@@ -13,6 +13,7 @@ import {
   Coffee, Music, Video, Wifi, Projector, Volume2,
   Award, TrendingUp, BarChart2, FileText, Settings, Package
 } from "lucide-react";
+import { KpiStrip, LegendBar, SectionSearch, SectionHeader, PageShell } from "../components/shared";
 
 interface EventsProps {
   aiEnabled: boolean;
@@ -208,25 +209,25 @@ const venueUtilization = [
 // ── Helper Components ────────────────────────────────────────
 const StatusBadge = ({ status }: { status: EventStatus }) => {
   const map: Record<EventStatus, string> = {
-    Confirmed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    Tentative: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    Cancelled: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-    Completed: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    "In Progress": "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    Confirmed: "bg-emerald-100 text-emerald-700",
+    Tentative: "bg-amber-100 text-amber-700",
+    Cancelled: "bg-red-100 text-red-700",
+    Completed: "bg-blue-100 text-blue-700",
+    "In Progress": "bg-purple-100 text-purple-700",
   };
   return <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", map[status])}>{status}</span>;
 };
 
 const TypeBadge = ({ type }: { type: EventType }) => {
   const map: Record<EventType, string> = {
-    Wedding: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
-    Conference: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    Gala: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-    Meeting: "bg-slate-100 text-slate-700 dark:bg-slate-700/30 dark:text-slate-400",
-    Birthday: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-    Corporate: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
-    Exhibition: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
-    Seminar: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400",
+    Wedding: "bg-pink-100 text-pink-700",
+    Conference: "bg-blue-100 text-blue-700",
+    Gala: "bg-purple-100 text-purple-700",
+    Meeting: "bg-slate-100 text-slate-700",
+    Birthday: "bg-orange-100 text-orange-700",
+    Corporate: "bg-indigo-100 text-indigo-700",
+    Exhibition: "bg-violet-100 text-violet-600",
+    Seminar: "bg-cyan-100 text-cyan-700",
   };
   return <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", map[type])}>{type}</span>;
 };
@@ -268,39 +269,27 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <AnimatePresence mode="wait">
+    <AnimatePresence mode="wait">
 
         {/* ── OVERVIEW ── */}
         {activeSubmenu === "Overview" && (
-          <motion.div key="overview" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "Total Event Revenue", value: `BHD ${(totalRevenue / 1000).toFixed(1)}k`, sub: "Apr projected", icon: DollarSign, gradient: "from-indigo-400 to-indigo-500" },
-                { label: "Confirmed Events", value: confirmed, sub: `${tentative} tentative`, icon: CheckCircle2, gradient: "from-emerald-400 to-emerald-500" },
-                { label: "Total Attendees", value: totalAttendees.toLocaleString(), sub: "Across all events", icon: Users, gradient: "from-blue-400 to-blue-500" },
-                { label: "Venue Utilisation", value: "74%", sub: "Apr average", icon: MapPin, gradient: "from-pink-400 to-pink-500" },
-              ].map(({ label, value, sub, icon: Icon, gradient }) => (
-                <div key={label} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white", gradient)}>
-                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-white/80 text-sm">{label}</p>
-                      <p className="text-3xl font-bold mt-1">{value}</p>
-                      <p className="text-white/70 text-xs mt-1">{sub}</p>
-                    </div>
-                    <div className="bg-white/20 p-2.5 rounded-xl"><Icon size={20} /></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <motion.div key="overview" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="h-full">
+          <PageShell
+            search={<SectionSearch value={search} onChange={setSearch} placeholder="Search events..." />}
+            header={<SectionHeader icon={Calendar} title="Events Overview" subtitle="Live event metrics and schedules" />}
+            kpi={<KpiStrip items={[
+              {color:"bg-indigo-500",value:`BHD ${(totalRevenue/1000).toFixed(1)}k`,label:"Total Event Revenue"},
+              {color:"bg-emerald-500",value:confirmed,label:"Confirmed Events"},
+              {color:"bg-blue-500",value:totalAttendees.toLocaleString(),label:"Total Attendees"},
+              {color:"bg-pink-500",value:"74%",label:"Venue Utilisation"},
+              {color:"bg-amber-500",value:tentative,label:"Tentative"},
+            ]} />}
+          >
 
             {/* Revenue Chart + Pie */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2 bg-card rounded-2xl shadow-sm border border-border p-5">
-                <h3 className="font-semibold text-foreground mb-4">Revenue by Event Type (6 Months)</h3>
+                <SectionHeader title="Revenue by Event Type (6 Months)" />
                 <ResponsiveContainer width="100%" height={240}>
                   <BarChart data={revenueByMonth}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -316,7 +305,7 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                 </ResponsiveContainer>
               </div>
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <h3 className="font-semibold text-foreground mb-4">Event Mix</h3>
+                <SectionHeader title="Event Mix" />
                 <ResponsiveContainer width="100%" height={160}>
                   <PieChart>
                     <Pie data={eventTypePie} dataKey="value" cx="50%" cy="50%" outerRadius={65} innerRadius={35}>
@@ -342,7 +331,7 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
             {/* Upcoming Events */}
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
               <div className="p-5 border-b border-border flex items-center justify-between">
-                <h3 className="font-semibold text-foreground">Upcoming & Active Events</h3>
+                <SectionHeader title="Upcoming & Active Events" />
                 <button className="text-xs text-primary flex items-center gap-1">View All <ChevronRight size={14} /></button>
               </div>
               <div className="overflow-x-auto">
@@ -366,20 +355,29 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                 </table>
               </div>
             </div>
+          </PageShell>
           </motion.div>
         )}
 
         {/* ── EVENT TIMELINE ── */}
         {activeSubmenu === "Event Timeline" && (
-          <motion.div key="timeline" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Event Timeline — April 2026</h2>
-              <div className="flex gap-2">
+          <motion.div key="timeline" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="h-full">
+          <PageShell
+            search={<SectionSearch value={search} onChange={setSearch} placeholder="Search timeline..." />}
+            header={<SectionHeader icon={Calendar} title="Event Timeline — April 2026" subtitle="Calendar view of scheduled events" />}
+            kpi={<KpiStrip items={[
+              {color:"bg-indigo-500",value:eventsData.length,label:"Total Events"},
+              {color:"bg-emerald-500",value:confirmed,label:"Confirmed"},
+              {color:"bg-amber-500",value:tentative,label:"Tentative"},
+              {color:"bg-blue-500",value:eventsData.filter(e=>e.status==="In Progress").length,label:"In Progress"},
+              {color:"bg-rose-500",value:eventsData.filter(e=>e.status==="Cancelled").length,label:"Cancelled"},
+            ]} />}
+          >
+            <div className="flex gap-2 mb-4">
                 {["Week", "Month", "Quarter"].map(v => (
                   <button key={v} className={cn("px-3 py-1.5 rounded-lg text-sm font-medium transition-colors", v === "Month" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/70")}>{v}</button>
                 ))}
               </div>
-            </div>
 
             {/* Gantt-style grid */}
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
@@ -426,12 +424,14 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                   })}
                 </div>
               </div>
-              <div className="p-4 flex items-center gap-6 border-t border-border bg-secondary/20">
-                {[{ label: "Confirmed", color: "bg-emerald-400" }, { label: "Tentative", color: "bg-amber-400" }, { label: "In Progress", color: "bg-purple-400" }, { label: "Completed", color: "bg-blue-400" }, { label: "Cancelled", color: "bg-red-400" }].map(l => (
-                  <div key={l.label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <div className={cn("w-3 h-3 rounded", l.color)} />{l.label}
-                  </div>
-                ))}
+              <div className="p-4 border-t border-border bg-secondary/20">
+                <LegendBar items={[
+                  { label: "Confirmed", color: "bg-emerald-100 border-emerald-200" },
+                  { label: "Tentative", color: "bg-amber-100 border-amber-200" },
+                  { label: "In Progress", color: "bg-purple-100 border-purple-200" },
+                  { label: "Completed", color: "bg-blue-100 border-blue-200" },
+                  { label: "Cancelled", color: "bg-red-100 border-red-200" },
+                ]} />
               </div>
             </div>
 
@@ -458,16 +458,24 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                 </div>
               )}
             </div>
+          </PageShell>
           </motion.div>
         )}
 
         {/* ── FLOOR PLAN ── */}
         {activeSubmenu === "Floor Plan" && (
-          <motion.div key="floorplan" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Floor Plan & Layout Editor</h2>
-              <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"><Download size={16} /> Export Layout</button>
-            </div>
+          <motion.div key="floorplan" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="h-full">
+          <PageShell
+            search={<SectionSearch value={search} onChange={setSearch} placeholder="Search venues..." />}
+            header={<SectionHeader icon={Calendar} title="Floor Plan & Layout Editor" subtitle="Venue layout and seating management" />}
+            kpi={<KpiStrip items={[
+              {color:"bg-indigo-500",value:venues.length,label:"Total Venues"},
+              {color:"bg-emerald-500",value:floorPlanSeats[activeFloor]?.cap ?? 0,label:"Selected Capacity"},
+              {color:"bg-blue-500",value:floorPlanSeats[activeFloor]?.tables ?? 0,label:"Tables"},
+              {color:"bg-amber-500",value:eventsData.filter(e=>e.venue===activeFloor).length,label:"Booked Events"},
+              {color:"bg-pink-500",value:"74%",label:"Avg Utilisation"},
+            ]} />}
+          >
 
             {/* Venue Selector */}
             <div className="flex gap-2 flex-wrap">
@@ -491,8 +499,8 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                 <div className="relative bg-secondary/30 rounded-xl border-2 border-dashed border-border" style={{ height: 340 }}>
                   {/* Stage area */}
                   {(activeFloor === "Grand Ballroom" || activeFloor === "Convention Hall A") && (
-                    <div className="absolute top-4 left-1/2 -translate-x-1/2 w-48 h-12 bg-purple-200 dark:bg-purple-900/40 border-2 border-purple-400 rounded-lg flex items-center justify-center">
-                      <span className="text-xs font-medium text-purple-700 dark:text-purple-300">STAGE</span>
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 w-48 h-12 bg-purple-200 border-2 border-purple-400 rounded-lg flex items-center justify-center">
+                      <span className="text-xs font-medium text-purple-700">STAGE</span>
                     </div>
                   )}
                   {/* Tables grid */}
@@ -503,7 +511,7 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                     const isOccupied = bookedEventToday && i < Math.floor(bookedEventToday.attendees / 8);
                     return (
                       <div key={i} className={cn("absolute w-14 h-14 rounded-full border-2 flex items-center justify-center cursor-pointer transition-colors",
-                        isOccupied ? "bg-emerald-100 border-emerald-400 dark:bg-emerald-900/30" : "bg-white dark:bg-card border-border hover:border-primary"
+                        isOccupied ? "bg-emerald-100 border-emerald-400" : "bg-white border-border hover:border-primary"
                       )} style={{ left: 40 + col * 90, top: 80 + row * 80 }}>
                         <span className="text-xs font-medium text-foreground">{i + 1}</span>
                       </div>
@@ -511,13 +519,15 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                   })}
                   {/* Dance floor */}
                   {activeFloor === "Grand Ballroom" && (
-                    <div className="absolute bottom-12 right-8 w-32 h-24 bg-amber-100 dark:bg-amber-900/20 border-2 border-amber-400 rounded-lg flex items-center justify-center">
-                      <span className="text-xs font-medium text-amber-700 dark:text-amber-400">DANCE FLOOR</span>
+                    <div className="absolute bottom-12 right-8 w-32 h-24 bg-amber-100 border-2 border-amber-400 rounded-lg flex items-center justify-center">
+                      <span className="text-xs font-medium text-amber-700">DANCE FLOOR</span>
                     </div>
                   )}
-                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-4 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1"><div className="w-4 h-4 rounded-full bg-emerald-100 border border-emerald-400" /> Occupied</div>
-                    <div className="flex items-center gap-1"><div className="w-4 h-4 rounded-full bg-white dark:bg-card border border-border" /> Available</div>
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
+                    <LegendBar items={[
+                      { label: "Occupied", color: "bg-emerald-100 border-emerald-200" },
+                      { label: "Available", color: "bg-white border-border" },
+                    ]} />
                   </div>
                 </div>
               </div>
@@ -525,7 +535,7 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
               {/* Venue Details */}
               <div className="space-y-4">
                 <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                  <h3 className="font-semibold text-foreground mb-4">Venue Specs</h3>
+                  <SectionHeader title="Venue Specs" />
                   <div className="space-y-3 text-sm">
                     {[
                       ["Capacity", `${floorPlanSeats[activeFloor]?.cap ?? 0} guests`],
@@ -559,37 +569,24 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                 </div>
               </div>
             </div>
+          </PageShell>
           </motion.div>
         )}
 
         {/* ── AV & EQUIPMENT ── */}
         {activeSubmenu === "AV & Equipment" && (
-          <motion.div key="av" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">AV & Equipment Management</h2>
-              <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"><Plus size={16} /> Add Equipment</button>
-            </div>
-
-            {/* Summary cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "Total Items", value: avEquipment.reduce((s, a) => s + a.quantity, 0), gradient: "from-indigo-400 to-indigo-500", icon: Package },
-                { label: "Currently Available", value: avEquipment.reduce((s, a) => s + a.available, 0), gradient: "from-emerald-400 to-emerald-500", icon: CheckCircle2 },
-                { label: "In Use / Assigned", value: avEquipment.reduce((s, a) => s + (a.quantity - a.available), 0), gradient: "from-amber-400 to-amber-500", icon: Award },
-                { label: "Needs Service", value: avEquipment.filter(a => a.condition === "Needs Service").length, gradient: "from-red-400 to-red-500", icon: AlertCircle },
-              ].map(({ label, value, gradient, icon: Icon }) => (
-                <div key={label} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white", gradient)}>
-                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-white/80 text-sm">{label}</p>
-                      <p className="text-3xl font-bold mt-1">{value}</p>
-                    </div>
-                    <div className="bg-white/20 p-2.5 rounded-xl"><Icon size={20} /></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <motion.div key="av" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="h-full">
+          <PageShell
+            search={<SectionSearch value={search} onChange={setSearch} placeholder="Search equipment..." />}
+            header={<SectionHeader icon={Calendar} title="AV & Equipment Management" subtitle="Audio-visual inventory and allocation" />}
+            kpi={<KpiStrip items={[
+              {color:"bg-indigo-500",value:avEquipment.reduce((s,a)=>s+a.quantity,0),label:"Total Items"},
+              {color:"bg-emerald-500",value:avEquipment.reduce((s,a)=>s+a.available,0),label:"Available"},
+              {color:"bg-amber-500",value:avEquipment.reduce((s,a)=>s+(a.quantity-a.available),0),label:"In Use"},
+              {color:"bg-rose-500",value:avEquipment.filter(a=>a.condition==="Needs Service").length,label:"Needs Service"},
+              {color:"bg-blue-500",value:avEquipment.filter(a=>a.condition==="Excellent"||a.condition==="Good").length,label:"Good Condition"},
+            ]} />}
+          >
 
             {/* Equipment table */}
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
@@ -607,10 +604,10 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                   <tbody className="divide-y divide-border/50">
                     {avEquipment.map(item => {
                       const condColor: Record<string, string> = {
-                        Excellent: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-                        Good: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-                        Fair: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                        "Needs Service": "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+                        Excellent: "bg-emerald-100 text-emerald-700",
+                        Good: "bg-blue-100 text-blue-700",
+                        Fair: "bg-amber-100 text-amber-700",
+                        "Needs Service": "bg-red-100 text-red-700",
                       };
                       return (
                         <tr key={item.id} className="hover:bg-secondary/30 transition-colors">
@@ -644,7 +641,7 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                     </div>
                     <div className="flex gap-2">
                       {[{ icon: Video, label: "Visual" }, { icon: Volume2, label: "Audio" }, { icon: Wifi, label: "Network" }].map(({ icon: Icon, label }) => (
-                        <div key={label} className="flex items-center gap-1 px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg text-xs text-emerald-700 dark:text-emerald-400">
+                        <div key={label} className="flex items-center gap-1 px-2.5 py-1 bg-emerald-100 rounded-lg text-xs text-emerald-700">
                           <Icon size={12} />{label}
                         </div>
                       ))}
@@ -654,18 +651,26 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                 ))}
               </div>
             </div>
+          </PageShell>
           </motion.div>
         )}
 
         {/* ── CATERING ORDERS ── */}
         {activeSubmenu === "Catering Orders" && (
-          <motion.div key="catering" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Catering Orders</h2>
-              <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"><Plus size={16} /> New Order</button>
-            </div>
+          <motion.div key="catering" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="h-full">
+          <PageShell
+            search={<SectionSearch value={search} onChange={setSearch} placeholder="Search catering orders..." />}
+            header={<SectionHeader icon={Calendar} title="Catering Orders" subtitle="Food and beverage event orders" />}
+            kpi={<KpiStrip items={[
+              {color:"bg-indigo-500",value:cateringOrders.length,label:"Total Orders"},
+              {color:"bg-emerald-500",value:`BHD ${cateringOrders.reduce((s,o)=>s+o.totalValue,0).toLocaleString()}`,label:"Catering Revenue"},
+              {color:"bg-blue-500",value:cateringOrders.reduce((s,o)=>s+o.guestCount,0).toLocaleString(),label:"Guests to Serve"},
+              {color:"bg-amber-500",value:cateringOrders.filter(o=>o.status==="Draft").length,label:"Pending Confirmation"},
+              {color:"bg-rose-500",value:cateringOrders.filter(o=>o.status==="In Prep").length,label:"In Prep"},
+            ]} />}
+          >
 
-            {/* Summary KPIs */}
+            {/* Summary KPIs kept as inline cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
                 { label: "Total Orders", value: cateringOrders.length, color: "text-indigo-600" },
@@ -684,11 +689,11 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
             <div className="space-y-4">
               {cateringOrders.map(order => {
                 const statusColor: Record<string, string> = {
-                  Draft: "bg-slate-100 text-slate-700 dark:bg-slate-700/30 dark:text-slate-400",
-                  Confirmed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-                  "In Prep": "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                  Served: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-                  Billed: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+                  Draft: "bg-slate-100 text-slate-700",
+                  Confirmed: "bg-emerald-100 text-emerald-700",
+                  "In Prep": "bg-amber-100 text-amber-700",
+                  Served: "bg-blue-100 text-blue-700",
+                  Billed: "bg-purple-100 text-purple-700",
                 };
                 return (
                   <div key={order.id} className="bg-card rounded-2xl shadow-sm border border-border p-5">
@@ -723,7 +728,7 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                       </table>
                     </div>
                     {order.specialRequests && (
-                      <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800 text-sm text-amber-800 dark:text-amber-300">
+                      <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-sm text-amber-800">
                         <strong>Special Requests:</strong> {order.specialRequests}
                       </div>
                     )}
@@ -737,46 +742,33 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                 );
               })}
             </div>
+          </PageShell>
           </motion.div>
         )}
 
         {/* ── ATTENDANCE ── */}
         {activeSubmenu === "Attendance" && (
-          <motion.div key="attendance" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Attendance & Guest Check-In</h2>
-              <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"><Send size={16} /> Send Invites</button>
-            </div>
+          <motion.div key="attendance" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="h-full">
+          <PageShell
+            search={<SectionSearch value={search} onChange={setSearch} placeholder="Search attendees..." />}
+            header={<SectionHeader icon={Calendar} title="Attendance & Guest Check-In" subtitle="RSVP tracking and event check-in" />}
+            kpi={<KpiStrip items={[
+              {color:"bg-blue-500",value:attendees.length,label:"Total RSVPs"},
+              {color:"bg-emerald-500",value:attendees.filter(a=>a.checkedIn).length,label:"Checked In"},
+              {color:"bg-amber-500",value:attendees.filter(a=>a.vip).length,label:"VIP Guests"},
+              {color:"bg-rose-500",value:attendees.filter(a=>!a.checkedIn&&a.rsvpStatus==="Confirmed").length,label:"No-Shows"},
+              {color:"bg-indigo-500",value:attendees.filter(a=>a.rsvpStatus==="Pending").length,label:"Pending RSVP"},
+            ]} />}
+          >
 
             {/* Event selector */}
-            <div className="bg-card rounded-2xl shadow-sm border border-border p-4">
+            <div className="bg-card rounded-2xl shadow-sm border border-border p-4 mb-4">
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-sm font-medium text-muted-foreground">Filter by Event:</span>
                 {eventsData.map(ev => (
                   <button key={ev.id} className="px-3 py-1.5 bg-secondary text-secondary-foreground rounded-lg text-xs font-medium hover:bg-secondary/70 transition-colors">{ev.name.substring(0, 20)}...</button>
                 ))}
               </div>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "Total RSVPs", value: attendees.length, color: "text-blue-600" },
-                { label: "Checked In", value: attendees.filter(a => a.checkedIn).length, color: "text-emerald-600" },
-                { label: "VIP Guests", value: attendees.filter(a => a.vip).length, gradient: "from-amber-400 to-amber-500", icon: Star },
-                { label: "No-Shows (Today)", value: attendees.filter(a => !a.checkedIn && a.rsvpStatus === "Confirmed").length, gradient: "from-red-400 to-red-500", icon: AlertCircle },
-              ].map(({ label, value, gradient, icon: Icon }) => (
-                <div key={label} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white", gradient)}>
-                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-white/80 text-sm">{label}</p>
-                      <p className="text-3xl font-bold mt-1">{value}</p>
-                    </div>
-                    <div className="bg-white/20 p-2.5 rounded-xl"><Icon size={20} /></div>
-                  </div>
-                </div>
-              ))}
             </div>
 
             {/* Attendee table */}
@@ -802,7 +794,7 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                         <td className="px-4 py-3 text-muted-foreground text-xs">{eventsData.find(e => e.id === att.eventId)?.name.substring(0, 22)}...</td>
                         <td className="px-4 py-3 text-muted-foreground">{att.company}</td>
                         <td className="px-4 py-3">
-                          <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", att.rsvpStatus === "Confirmed" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : att.rsvpStatus === "Declined" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400")}>{att.rsvpStatus}</span>
+                          <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", att.rsvpStatus === "Confirmed" ? "bg-emerald-100 text-emerald-700" : att.rsvpStatus === "Declined" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700")}>{att.rsvpStatus}</span>
                         </td>
                         <td className="px-4 py-3">
                           {att.checkedIn ? (
@@ -813,52 +805,40 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">{att.tableNo || "–"}</td>
                         <td className="px-4 py-3 text-muted-foreground text-xs">{att.dietaryReq || "None"}</td>
-                        <td className="px-4 py-3">{att.vip ? <span className="px-2 py-0.5 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 rounded-full text-xs font-medium">VIP</span> : "–"}</td>
+                        <td className="px-4 py-3">{att.vip ? <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">VIP</span> : "–"}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             </div>
+          </PageShell>
           </motion.div>
         )}
 
         {/* ── BANQUET SETUP ── */}
         {activeSubmenu === "Banquet Setup" && (
-          <motion.div key="banquet" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Banquet Setup Management</h2>
-              <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"><Plus size={16} /> Create Setup Brief</button>
-            </div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "Total Setups", value: banquetSetups.length, color: "text-indigo-600" },
-                { label: "Ready", value: banquetSetups.filter(b => b.status === "Ready").length, color: "text-emerald-600" },
-                { label: "In Progress", value: banquetSetups.filter(b => b.status === "In Progress").length, gradient: "from-amber-400 to-amber-500", icon: Clock },
-                { label: "Pending", value: banquetSetups.filter(b => b.status === "Pending").length, gradient: "from-blue-400 to-blue-500", icon: AlertCircle },
-              ].map(({ label, value, gradient, icon: Icon }) => (
-                <div key={label} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white", gradient)}>
-                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-white/80 text-sm">{label}</p>
-                      <p className="text-3xl font-bold mt-1">{value}</p>
-                    </div>
-                    <div className="bg-white/20 p-2.5 rounded-xl"><Icon size={20} /></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <motion.div key="banquet" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="h-full">
+          <PageShell
+            search={<SectionSearch value={search} onChange={setSearch} placeholder="Search setups..." />}
+            header={<SectionHeader icon={Calendar} title="Banquet Setup Management" subtitle="Setup briefs and checklists" />}
+            kpi={<KpiStrip items={[
+              {color:"bg-indigo-500",value:banquetSetups.length,label:"Total Setups"},
+              {color:"bg-emerald-500",value:banquetSetups.filter(b=>b.status==="Ready").length,label:"Ready"},
+              {color:"bg-amber-500",value:banquetSetups.filter(b=>b.status==="In Progress").length,label:"In Progress"},
+              {color:"bg-blue-500",value:banquetSetups.filter(b=>b.status==="Pending").length,label:"Pending"},
+              {color:"bg-rose-500",value:banquetSetups.filter(b=>b.status==="Struck").length||0,label:"Struck"},
+            ]} />}
+          >
 
             {banquetSetups.map(setup => {
               const doneCount = setup.checklist.filter(t => t.done).length;
               const pct = Math.round((doneCount / setup.checklist.length) * 100);
               const statusMap: Record<string, string> = {
-                Ready: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-                "In Progress": "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                Pending: "bg-slate-100 text-slate-700 dark:bg-slate-700/30 dark:text-slate-400",
-                Struck: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                Ready: "bg-emerald-100 text-emerald-700",
+                "In Progress": "bg-amber-100 text-amber-700",
+                Pending: "bg-slate-100 text-slate-700",
+                Struck: "bg-blue-100 text-blue-700",
               };
               return (
                 <div key={setup.id} className="bg-card rounded-2xl shadow-sm border border-border p-5">
@@ -886,7 +866,7 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                     ))}
                   </div>
                   {setup.dressing && (
-                    <div className="mb-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800 text-sm text-purple-800 dark:text-purple-300">
+                    <div className="mb-4 p-3 bg-purple-50 rounded-xl border border-purple-200 text-sm text-purple-800">
                       <strong>Décor/Dressing:</strong> {setup.dressing}
                     </div>
                   )}
@@ -901,25 +881,33 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {setup.checklist.map((task, i) => (
-                      <div key={i} className={cn("flex items-center gap-2 p-2.5 rounded-lg text-sm", task.done ? "bg-emerald-50 dark:bg-emerald-900/20" : "bg-secondary/30")}>
+                      <div key={i} className={cn("flex items-center gap-2 p-2.5 rounded-lg text-sm", task.done ? "bg-emerald-50" : "bg-secondary/30")}>
                         {task.done ? <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" /> : <AlertCircle size={16} className="text-muted-foreground flex-shrink-0" />}
-                        <span className={task.done ? "text-emerald-700 dark:text-emerald-400 line-through" : "text-foreground"}>{task.task}</span>
+                        <span className={task.done ? "text-emerald-700 line-through" : "text-foreground"}>{task.task}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               );
             })}
+          </PageShell>
           </motion.div>
         )}
 
         {/* ── POST-EVENT DEBRIEF ── */}
         {activeSubmenu === "Post-Event" && (
-          <motion.div key="postevent" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Post-Event Debrief & Billing</h2>
-              <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"><Plus size={16} /> New Debrief</button>
-            </div>
+          <motion.div key="postevent" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="h-full">
+          <PageShell
+            search={<SectionSearch value={search} onChange={setSearch} placeholder="Search debriefs..." />}
+            header={<SectionHeader icon={Calendar} title="Post-Event Debrief & Billing" subtitle="Event reviews and financial reconciliation" />}
+            kpi={<KpiStrip items={[
+              {color:"bg-indigo-500",value:postEventDebriefs.length,label:"Total Debriefs"},
+              {color:"bg-emerald-500",value:postEventDebriefs.filter(d=>d.clientRating>=4).length,label:"High Rated"},
+              {color:"bg-blue-500",value:`BHD ${postEventDebriefs.reduce((s,d)=>s+d.totalBilled,0).toLocaleString()}`,label:"Total Billed"},
+              {color:"bg-amber-500",value:`BHD ${postEventDebriefs.reduce((s,d)=>s+d.totalCollected,0).toLocaleString()}`,label:"Total Collected"},
+              {color:"bg-rose-500",value:`BHD ${postEventDebriefs.reduce((s,d)=>s+(d.totalBilled-d.totalCollected),0).toLocaleString()}`,label:"Outstanding"},
+            ]} />}
+          >
 
             {postEventDebriefs.map(debrief => {
               const attendancePct = Math.round((debrief.attendedCount / debrief.expectedCount) * 100);
@@ -953,16 +941,16 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                     ))}
                   </div>
                   {debrief.coordinatorNotes && (
-                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 mb-4">
-                      <p className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">Coordinator Notes</p>
-                      <p className="text-sm text-blue-700 dark:text-blue-400">{debrief.coordinatorNotes}</p>
+                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-200 mb-4">
+                      <p className="text-sm font-medium text-blue-800 mb-1">Coordinator Notes</p>
+                      <p className="text-sm text-blue-700">{debrief.coordinatorNotes}</p>
                     </div>
                   )}
                   {debrief.issuesRaised.length > 0 && (
-                    <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800 mb-4">
-                      <p className="text-sm font-medium text-amber-800 dark:text-amber-300 mb-2">Issues Raised</p>
+                    <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 mb-4">
+                      <p className="text-sm font-medium text-amber-800 mb-2">Issues Raised</p>
                       {debrief.issuesRaised.map((issue, i) => (
-                        <div key={i} className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
+                        <div key={i} className="flex items-start gap-2 text-sm text-amber-700">
                           <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
                           {issue}
                         </div>
@@ -973,7 +961,7 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                     {!debrief.invoiceSent && <button className="px-3 py-1.5 bg-indigo-500 text-white rounded-lg text-sm font-medium hover:bg-indigo-600 transition-colors flex items-center gap-1"><Send size={14} /> Send Invoice</button>}
                     {debrief.outstanding > 0 && <button className="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition-colors">Chase Payment</button>}
                     <button className="px-3 py-1.5 bg-secondary text-secondary-foreground rounded-lg text-sm font-medium hover:bg-secondary/70 transition-colors">View Full Report</button>
-                    {debrief.followUpRequired && <span className="px-3 py-1.5 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-lg text-sm font-medium">Follow-Up Required</span>}
+                    {debrief.followUpRequired && <span className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm font-medium">Follow-Up Required</span>}
                   </div>
                 </div>
               );
@@ -981,7 +969,7 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
 
             {/* Empty state for events without debrief */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-              <h3 className="font-semibold text-foreground mb-3">Events Awaiting Debrief</h3>
+              <SectionHeader title="Events Awaiting Debrief" />
               <div className="space-y-2">
                 {eventsData.filter(e => e.status === "Confirmed" && !postEventDebriefs.find(d => d.eventId === e.id)).slice(0, 3).map(ev => (
                   <div key={ev.id} className="flex items-center justify-between p-3 bg-secondary/30 rounded-xl">
@@ -994,16 +982,24 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                 ))}
               </div>
             </div>
+          </PageShell>
           </motion.div>
         )}
 
         {/* ── ALL EVENTS (Event List) ── */}
         {activeSubmenu === "All Events" && (
-          <motion.div key="allevents" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">All Events</h2>
-              <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"><Plus size={16} /> New Event</button>
-            </div>
+          <motion.div key="allevents" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="h-full">
+          <PageShell
+            search={<SectionSearch value={search} onChange={setSearch} placeholder="Search all events..." />}
+            header={<SectionHeader icon={Calendar} title="All Events" subtitle="Complete event directory" />}
+            kpi={<KpiStrip items={[
+              {color:"bg-indigo-500",value:eventsData.length,label:"Total Events"},
+              {color:"bg-emerald-500",value:confirmed,label:"Confirmed"},
+              {color:"bg-amber-500",value:tentative,label:"Tentative"},
+              {color:"bg-blue-500",value:eventsData.filter(e=>e.status==="Completed").length,label:"Completed"},
+              {color:"bg-rose-500",value:eventsData.filter(e=>e.status==="Cancelled").length,label:"Cancelled"},
+            ]} />}
+          >
 
             {/* Filters */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-4">
@@ -1049,7 +1045,7 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                         </td>
                         <td className="px-4 py-3 font-medium text-foreground">BHD {ev.revenue.toLocaleString()}</td>
                         <td className="px-4 py-3">
-                          <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", ev.depositPaid ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400")}>{ev.depositPaid ? "Paid" : "Pending"}</span>
+                          <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", ev.depositPaid ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700")}>{ev.depositPaid ? "Paid" : "Pending"}</span>
                         </td>
                         <td className="px-4 py-3"><StatusBadge status={ev.status} /></td>
                         <td className="px-4 py-3">
@@ -1091,22 +1087,30 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                   ))}
                 </div>
                 {selectedEvent.notes && (
-                  <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800 text-sm text-amber-800 dark:text-amber-300">
+                  <div className="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-200 text-sm text-amber-800">
                     <strong>Notes:</strong> {selectedEvent.notes}
                   </div>
                 )}
               </div>
             )}
+          </PageShell>
           </motion.div>
         )}
 
         {/* ── REPORTS ── */}
         {activeSubmenu === "Reports" && (
-          <motion.div key="evtreports" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Events Reports & Analytics</h2>
-              <button className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-xl text-sm font-medium hover:bg-secondary/70 transition-colors"><Download size={16} /> Export PDF</button>
-            </div>
+          <motion.div key="evtreports" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="h-full">
+          <PageShell
+            search={<SectionSearch value={search} onChange={setSearch} placeholder="Search reports..." />}
+            header={<SectionHeader icon={Calendar} title="Events Reports & Analytics" subtitle="Performance metrics and trends" />}
+            kpi={<KpiStrip items={[
+              {color:"bg-indigo-500",value:"BHD 172,400",label:"YTD Events Revenue"},
+              {color:"bg-emerald-500",value:"BHD 17,200",label:"Avg Revenue/Event"},
+              {color:"bg-blue-500",value:"81%",label:"Avg Attendance Rate"},
+              {color:"bg-amber-500",value:"4.6/5",label:"Client Satisfaction"},
+              {color:"bg-pink-500",value:eventsData.length,label:"Total Events"},
+            ]} />}
+          >
 
             {/* KPI Summary */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1126,7 +1130,7 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
 
             {/* Revenue trend */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-              <h3 className="font-semibold text-foreground mb-4">Revenue by Event Category (6 Months)</h3>
+              <SectionHeader title="Revenue by Event Category (6 Months)" />
               <ResponsiveContainer width="100%" height={280}>
                 <AreaChart data={revenueByMonth}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -1143,7 +1147,7 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
 
             {/* Venue utilization */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-              <h3 className="font-semibold text-foreground mb-4">Venue Utilization by Month (%)</h3>
+              <SectionHeader title="Venue Utilization by Month (%)" />
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={venueUtilization}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -1162,7 +1166,7 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
             {/* Top events by revenue */}
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
               <div className="p-5 border-b border-border">
-                <h3 className="font-semibold text-foreground">Top Events by Revenue</h3>
+                <SectionHeader title="Top Events by Revenue" />
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -1178,7 +1182,7 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                         <td className="px-4 py-3 text-foreground">{ev.attendees}</td>
                         <td className="px-4 py-3 font-semibold text-foreground">BHD {ev.revenue.toLocaleString()}</td>
                         <td className="px-4 py-3">
-                          <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", ev.depositPaid ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400")}>{ev.depositPaid ? "Paid" : "Pending"}</span>
+                          <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", ev.depositPaid ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700")}>{ev.depositPaid ? "Paid" : "Pending"}</span>
                         </td>
                         <td className="px-4 py-3"><StatusBadge status={ev.status} /></td>
                       </tr>
@@ -1187,10 +1191,10 @@ export function Events({ aiEnabled, activeSubmenu = "Overview" }: EventsProps) {
                 </table>
               </div>
             </div>
+          </PageShell>
           </motion.div>
         )}
 
       </AnimatePresence>
-    </div>
   );
 }

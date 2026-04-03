@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Users,
   UserCheck,
@@ -41,6 +41,7 @@ import {
   Cell,
 } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
+import { KpiStrip, LegendBar, SectionSearch, SectionHeader, PageShell } from "../components/shared";
 
 interface TeamProps {
   aiEnabled: boolean;
@@ -323,47 +324,47 @@ const StatCard = ({
 );
 
 const badgeStyles: Record<string, string> = {
-  Active: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
-  "On Leave": "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
-  Probation: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400",
-  "Full-time": "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400",
-  "Part-time": "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400",
-  Casual: "bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-400",
-  Present: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
-  Late: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
-  Absent: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
-  "Half Day": "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400",
-  Holiday: "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400",
-  "On Duty": "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
-  Scheduled: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400",
-  Processed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
-  Pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
-  "On Hold": "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
-  Approved: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
-  Rejected: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
-  Annual: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400",
-  Sick: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
-  Emergency: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400",
-  Maternity: "bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-400",
-  Unpaid: "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
-  Valid: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
-  Expired: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
-  "Due Soon": "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
-  "Not Completed": "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
-  Completed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
-  Overdue: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
-  Mandatory: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
-  Skills: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400",
-  Compliance: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400",
-  Leadership: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400",
-  Warning: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
-  "Written Warning": "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400",
-  "Final Warning": "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
-  Termination: "bg-red-200 text-red-800 dark:bg-red-900/60 dark:text-red-300",
-  Resolved: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
-  "Under Review": "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400",
-  Open: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400",
-  Escalated: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+  Active: "bg-emerald-100 text-emerald-700",
+  "On Leave": "bg-amber-100 text-amber-700",
+  Probation: "bg-blue-100 text-blue-700",
+  "Full-time": "bg-indigo-100 text-indigo-700",
+  "Part-time": "bg-violet-100 text-violet-700",
+  Casual: "bg-pink-100 text-pink-700",
+  Present: "bg-emerald-100 text-emerald-700",
+  Late: "bg-amber-100 text-amber-700",
+  Absent: "bg-red-100 text-red-700",
+  "Half Day": "bg-orange-100 text-orange-700",
+  Holiday: "bg-sky-100 text-sky-700",
+  "On Duty": "bg-emerald-100 text-emerald-700",
+  Scheduled: "bg-blue-100 text-blue-700",
+  Processed: "bg-emerald-100 text-emerald-700",
+  Pending: "bg-amber-100 text-amber-700",
+  "On Hold": "bg-red-100 text-red-700",
+  Approved: "bg-emerald-100 text-emerald-700",
+  Rejected: "bg-red-100 text-red-700",
+  Annual: "bg-indigo-100 text-indigo-700",
+  Sick: "bg-red-100 text-red-700",
+  Emergency: "bg-orange-100 text-orange-700",
+  Maternity: "bg-pink-100 text-pink-700",
+  Unpaid: "bg-secondary text-foreground",
+  Valid: "bg-emerald-100 text-emerald-700",
+  Expired: "bg-red-100 text-red-700",
+  "Due Soon": "bg-amber-100 text-amber-700",
+  "Not Completed": "bg-secondary text-foreground",
+  Completed: "bg-emerald-100 text-emerald-700",
+  Overdue: "bg-red-100 text-red-700",
+  Mandatory: "bg-red-100 text-red-700",
+  Skills: "bg-blue-100 text-blue-700",
+  Compliance: "bg-orange-100 text-orange-700",
+  Leadership: "bg-purple-100 text-purple-700",
+  Warning: "bg-amber-100 text-amber-700",
+  "Written Warning": "bg-orange-100 text-orange-700",
+  "Final Warning": "bg-red-100 text-red-700",
+  Termination: "bg-red-200 text-red-800",
+  Resolved: "bg-emerald-100 text-emerald-700",
+  "Under Review": "bg-blue-100 text-blue-700",
+  Open: "bg-orange-100 text-orange-700",
+  Escalated: "bg-red-100 text-red-700",
 };
 
 const Badge = ({ label }: { label: string }) => (
@@ -379,11 +380,11 @@ const Badge = ({ label }: { label: string }) => (
 
 const ShiftCell = ({ code }: { code: string }) => {
   const styles: Record<string, string> = {
-    M: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300",
-    A: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
-    N: "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
+    M: "bg-indigo-100 text-indigo-700",
+    A: "bg-amber-100 text-amber-700",
+    N: "bg-slate-200 text-slate-700",
     O: "bg-muted text-muted-foreground",
-    L: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
+    L: "bg-rose-100 text-rose-700",
   };
   const labels: Record<string, string> = {
     M: "Morning 07:00–15:00",
@@ -484,7 +485,7 @@ const avatarColors = [
   "bg-amber-500",
   "bg-sky-500",
   "bg-rose-500",
-  "bg-teal-500",
+  "bg-violet-500",
 ];
 
 const Avatar = ({
@@ -542,7 +543,22 @@ const SelectFilter = ({
 
 // ─── Sub-views ───────────────────────────────────────────────────────────────
 
-const OverviewView = () => (
+const OverviewView = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  return (
+  <PageShell
+    search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search team..." />}
+    header={<SectionHeader icon={Users} title="Team Overview" subtitle="Live snapshot of staff, attendance, and scheduling" />}
+    kpi={<KpiStrip
+      items={[
+        { color: "bg-indigo-500", value: "114", label: "Total Staff" },
+        { color: "bg-emerald-500", value: "78", label: "On Duty Now" },
+        { color: "bg-amber-500", value: "9", label: "On Leave" },
+        { color: "bg-rose-500", value: "6", label: "Open Positions" },
+        { color: "bg-blue-500", value: "5", label: "Departments" },
+      ]}
+    />}
+  >
   <motion.div
     key="overview"
     initial={{ opacity: 0, y: 12 }}
@@ -550,42 +566,10 @@ const OverviewView = () => (
     exit={{ opacity: 0, y: -8 }}
     className="space-y-6"
   >
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-      <StatCard
-        title="Total Staff"
-        value="114"
-        sub="Full-time, Part-time & Casual"
-        icon={Users}
-        gradient="bg-gradient-to-br from-indigo-500 to-indigo-700"
-      />
-      <StatCard
-        title="On Duty Now"
-        value="78"
-        sub="Across all departments"
-        icon={UserCheck}
-        gradient="bg-gradient-to-br from-emerald-500 to-emerald-700"
-      />
-      <StatCard
-        title="On Leave"
-        value="9"
-        sub="Approved absences today"
-        icon={Calendar}
-        gradient="bg-gradient-to-br from-amber-500 to-amber-600"
-      />
-      <StatCard
-        title="Open Positions"
-        value="6"
-        sub="Actively recruiting"
-        icon={Activity}
-        gradient="bg-gradient-to-br from-rose-500 to-rose-700"
-      />
-    </div>
 
     <div className="grid gap-4 lg:grid-cols-3">
       <SectionCard className="lg:col-span-2 p-5">
-        <h3 className="mb-4 text-sm font-semibold text-foreground">
-          Attendance Trend — Last 30 Days
-        </h3>
+        <SectionHeader title="Attendance Trend — Last 30 Days" />
         <ResponsiveContainer width="100%" height={220}>
           <AreaChart
             data={attendanceTrend}
@@ -641,7 +625,7 @@ const OverviewView = () => (
       </SectionCard>
 
       <SectionCard className="p-5">
-        <h3 className="mb-4 text-sm font-semibold text-foreground">Staff by Department</h3>
+        <SectionHeader title="Staff by Department" />
         <ResponsiveContainer width="100%" height={200}>
           <PieChart>
             <Pie
@@ -686,7 +670,7 @@ const OverviewView = () => (
 
     <SectionCard>
       <div className="border-b border-border px-5 py-4">
-        <h3 className="text-sm font-semibold text-foreground">Today's Roster</h3>
+        <SectionHeader title="Today's Roster" />
       </div>
       <TableWrap>
         <thead>
@@ -721,7 +705,9 @@ const OverviewView = () => (
       </TableWrap>
     </SectionCard>
   </motion.div>
-);
+  </PageShell>
+  );
+};
 
 const StaffDirectoryView = () => {
   const [search, setSearch] = React.useState("");
@@ -744,7 +730,19 @@ const StaffDirectoryView = () => {
     [search, deptFilter, statusFilter]
   );
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search staff..." />}
+      header={<SectionHeader icon={Users} title="Staff Directory" subtitle="Complete employee directory with contact details" />}
+      kpi={<KpiStrip items={[
+        { color: "bg-indigo-500", value: staffDirectory.length, label: "Total Staff" },
+        { color: "bg-emerald-500", value: staffDirectory.filter(s => s.status === "Active").length, label: "Active" },
+        { color: "bg-amber-500", value: staffDirectory.filter(s => s.status === "On Leave").length, label: "On Leave" },
+        { color: "bg-violet-500", value: staffDirectory.filter(s => s.status === "Probation").length, label: "Probation" },
+        { color: "bg-blue-500", value: departments.length - 1, label: "Departments" },
+      ]} />}
+    >
     <motion.div
       key="directory"
       initial={{ opacity: 0, y: 12 }}
@@ -753,15 +751,11 @@ const StaffDirectoryView = () => {
       className="space-y-4"
     >
       <FilterBar>
-        <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2 text-sm">
-          <Users className="h-4 w-4 text-muted-foreground" />
-          <input
-            className="w-44 bg-transparent outline-none placeholder:text-muted-foreground"
-            placeholder="Search by name…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+        <SectionSearch
+          value={search}
+          onChange={setSearch}
+          placeholder="Search by name…"
+        />
         <SelectFilter
           value={deptFilter}
           onChange={setDeptFilter}
@@ -819,6 +813,7 @@ const StaffDirectoryView = () => {
         </TableWrap>
       </SectionCard>
     </motion.div>
+    </PageShell>
   );
 };
 
@@ -856,7 +851,19 @@ const AttendanceView = () => {
     };
   }, []);
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search attendance..." />}
+      header={<SectionHeader icon={Users} title="Attendance" subtitle="Daily attendance records and trends" />}
+      kpi={<KpiStrip items={[
+        {color:"bg-emerald-500",value:todayStats.present,label:"Present Today"},
+        {color:"bg-amber-500",value:todayStats.late,label:"Late Today"},
+        {color:"bg-rose-500",value:todayStats.absent,label:"Absent Today"},
+        {color:"bg-blue-500",value:attendanceRecords.length,label:"Total Records"},
+        {color:"bg-violet-500",value:`${Math.round((todayStats.present / (todayStats.present + todayStats.late + todayStats.absent)) * 100)}%`,label:"Attendance Rate"},
+      ]} />}
+    >
     <motion.div
       key="attendance"
       initial={{ opacity: 0, y: 12 }}
@@ -864,24 +871,6 @@ const AttendanceView = () => {
       exit={{ opacity: 0, y: -8 }}
       className="space-y-4"
     >
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: "Present Today", value: todayStats.present, icon: UserCheck, gradient: "from-emerald-400 to-emerald-500" },
-          { label: "Late Today", value: todayStats.late, icon: Clock, gradient: "from-amber-400 to-amber-500" },
-          { label: "Absent Today", value: todayStats.absent, icon: UserX, gradient: "from-red-400 to-red-500" },
-        ].map(({ label, value, icon: Icon, gradient }) => (
-          <div key={label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${gradient} p-5 text-white`}>
-            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-white/80 text-sm">{label}</p>
-                <p className="text-3xl font-bold mt-1">{value}</p>
-              </div>
-              <div className="bg-white/20 p-2.5 rounded-xl"><Icon className="h-5 w-5" /></div>
-            </div>
-          </div>
-        ))}
-      </div>
 
       <FilterBar>
         <SelectFilter value={dateFilter} onChange={setDateFilter} options={dates} />
@@ -930,7 +919,7 @@ const AttendanceView = () => {
                 </Td>
                 <Td className="font-mono text-xs">
                   {row.overtime > 0 ? (
-                    <span className="text-indigo-600 dark:text-indigo-400">+{row.overtime}h</span>
+                    <span className="text-indigo-600">+{row.overtime}h</span>
                   ) : (
                     "—"
                   )}
@@ -944,6 +933,7 @@ const AttendanceView = () => {
         </TableWrap>
       </SectionCard>
     </motion.div>
+    </PageShell>
   );
 };
 
@@ -961,7 +951,28 @@ const ShiftSchedulingView = () => {
     []
   );
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search shifts..." />}
+      header={<SectionHeader icon={Users} title="Shift Scheduling" subtitle="Weekly roster and shift assignments" />}
+      kpi={<KpiStrip items={[
+        { color: "bg-indigo-500", value: shiftStaff.length, label: "Total Staff" },
+        { color: "bg-emerald-500", value: shiftStaff.filter(s => s.dept === "Front Office").length, label: "Front Office" },
+        { color: "bg-amber-500", value: shiftStaff.filter(s => s.dept === "F&B").length, label: "F&B" },
+        { color: "bg-blue-500", value: shiftStaff.filter(s => s.dept === "Housekeeping").length, label: "Housekeeping" },
+        { color: "bg-violet-500", value: 7, label: "Days Shown" },
+      ]} />}
+      legend={<LegendBar
+        items={[
+          { color: "bg-indigo-100 border-indigo-200", label: "Morning 07:00–15:00" },
+          { color: "bg-amber-100 border-amber-200", label: "Afternoon 15:00–23:00" },
+          { color: "bg-slate-100 border-slate-200", label: "Night 23:00–07:00" },
+          { color: "bg-muted border-border", label: "Day Off" },
+          { color: "bg-rose-100 border-rose-200", label: "On Leave" },
+        ]}
+      />}
+    >
     <motion.div
       key="shifts"
       initial={{ opacity: 0, y: 12 }}
@@ -969,29 +980,6 @@ const ShiftSchedulingView = () => {
       exit={{ opacity: 0, y: -8 }}
       className="space-y-4"
     >
-      <SectionCard className="px-5 py-4">
-        <div className="flex flex-wrap items-center gap-4 text-xs">
-          {[
-            { code: "M", label: "Morning 07:00–15:00", cls: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300" },
-            { code: "A", label: "Afternoon 15:00–23:00", cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" },
-            { code: "N", label: "Night 23:00–07:00", cls: "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200" },
-            { code: "O", label: "Day Off", cls: "bg-muted text-muted-foreground" },
-            { code: "L", label: "On Leave", cls: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300" },
-          ].map((item) => (
-            <div key={item.code} className="flex items-center gap-1.5">
-              <span
-                className={cn(
-                  "inline-flex h-5 w-5 items-center justify-center rounded font-bold",
-                  item.cls
-                )}
-              >
-                {item.code}
-              </span>
-              <span className="text-muted-foreground">{item.label}</span>
-            </div>
-          ))}
-        </div>
-      </SectionCard>
 
       <SectionCard className="overflow-x-auto">
         <div className="min-w-[680px]">
@@ -1039,8 +1027,8 @@ const ShiftSchedulingView = () => {
                   className={cn(
                     "rounded-full px-2 py-0.5 text-xs font-bold",
                     count < 8
-                      ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400"
-                      : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-emerald-100 text-emerald-700"
                   )}
                 >
                   {count}
@@ -1052,14 +1040,14 @@ const ShiftSchedulingView = () => {
       </SectionCard>
 
       {shiftCounts.some((c) => c < 8) && (
-        <SectionCard className="border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+        <SectionCard className="border-amber-300 bg-amber-50 p-4">
           <div className="flex items-start gap-3">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
             <div>
-              <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+              <p className="text-sm font-semibold text-amber-800">
                 Understaffing Alert
               </p>
-              <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-400">
+              <p className="mt-0.5 text-xs text-amber-700">
                 {days.filter((_, di) => shiftCounts[di] < 8).join(", ")} have fewer than 8 active
                 staff members scheduled. Consider reassigning or calling in additional personnel.
               </p>
@@ -1068,6 +1056,7 @@ const ShiftSchedulingView = () => {
         </SectionCard>
       )}
     </motion.div>
+    </PageShell>
   );
 };
 
@@ -1105,7 +1094,21 @@ const PayrollView = () => {
   const fmt = (v: number) =>
     "₱" + v.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search payroll..." />}
+      header={<SectionHeader icon={Users} title="Payroll" subtitle="Monthly payroll processing and summary" />}
+      kpi={<KpiStrip
+        items={[
+          { color: "bg-indigo-500", value: fmt(totalPayroll), label: `${processedRows.length} employees` },
+          { color: "bg-emerald-500", value: fmt(totalPaid), label: `${processedRows.filter((r) => r.status === "Processed").length} processed` },
+          { color: "bg-amber-500", value: fmt(totalPending), label: `${processedRows.filter((r) => r.status === "Pending").length} awaiting` },
+          { color: "bg-blue-500", value: month, label: "Pay Period" },
+          { color: "bg-rose-500", value: `${processedRows.filter(r => r.status === "Error").length || 0}`, label: "Errors" },
+        ]}
+      />}
+    >
     <motion.div
       key="payroll"
       initial={{ opacity: 0, y: 12 }}
@@ -1119,30 +1122,6 @@ const PayrollView = () => {
           value={month}
           onChange={setMonth}
           options={["January 2026", "February 2026", "March 2026", "April 2026"]}
-        />
-      </div>
-
-      <div className="grid grid-cols-3 gap-4">
-        <StatCard
-          title="Total Payroll"
-          value={fmt(totalPayroll)}
-          sub={`${processedRows.length} employees`}
-          icon={DollarSign}
-          gradient="bg-gradient-to-br from-indigo-500 to-indigo-700"
-        />
-        <StatCard
-          title="Total Paid"
-          value={fmt(totalPaid)}
-          sub={`${processedRows.filter((r) => r.status === "Processed").length} processed`}
-          icon={TrendingUp}
-          gradient="bg-gradient-to-br from-emerald-500 to-emerald-700"
-        />
-        <StatCard
-          title="Pending"
-          value={fmt(totalPending)}
-          sub={`${processedRows.filter((r) => r.status === "Pending").length} awaiting`}
-          icon={Clock}
-          gradient="bg-gradient-to-br from-amber-500 to-amber-600"
         />
       </div>
 
@@ -1175,7 +1154,7 @@ const PayrollView = () => {
                 <Td className="text-right font-mono text-xs">{fmt(row.serviceCharge)}</Td>
                 <Td className="text-right font-mono text-xs">
                   {row.overtime > 0 ? (
-                    <span className="text-indigo-600 dark:text-indigo-400">
+                    <span className="text-indigo-600">
                       {fmt(row.overtime)}
                     </span>
                   ) : (
@@ -1183,7 +1162,7 @@ const PayrollView = () => {
                   )}
                 </Td>
                 <Td className="text-right font-mono text-xs">{fmt(row.transport)}</Td>
-                <Td className="text-right font-mono text-xs text-red-600 dark:text-red-400">
+                <Td className="text-right font-mono text-xs text-red-600">
                   ({fmt(row.tax + row.social)})
                 </Td>
                 <Td className="text-right font-mono text-xs font-semibold">{fmt(row.netPay)}</Td>
@@ -1196,6 +1175,7 @@ const PayrollView = () => {
         </TableWrap>
       </SectionCard>
     </motion.div>
+    </PageShell>
   );
 };
 
@@ -1223,7 +1203,19 @@ const LeaveManagementView = () => {
     .filter((r) => r.status === "Approved")
     .reduce((s, r) => s + r.days, 0);
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search leave..." />}
+      header={<SectionHeader icon={Users} title="Leave Management" subtitle="Employee leave requests and balances" />}
+      kpi={<KpiStrip items={[
+        {color:"bg-amber-500",value:pendingCount,label:"Pending Requests"},
+        {color:"bg-blue-500",value:`${annualAvgDays}d`,label:"Avg Annual Leave"},
+        {color:"bg-emerald-500",value:approvedCount,label:"Approved This Cycle"},
+        {color:"bg-violet-500",value:totalDaysTaken,label:"Total Days Approved"},
+        {color:"bg-rose-500",value:leaveRequests.filter(r => r.status === "Rejected").length,label:"Rejected"},
+      ]} />}
+    >
     <motion.div
       key="leave"
       initial={{ opacity: 0, y: 12 }}
@@ -1231,25 +1223,6 @@ const LeaveManagementView = () => {
       exit={{ opacity: 0, y: -8 }}
       className="space-y-4"
     >
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {[
-          { label: "Pending Requests", value: pendingCount, icon: Clock, gradient: "from-amber-400 to-amber-500" },
-          { label: "Avg Annual Leave Days", value: `${annualAvgDays}d`, icon: CalendarDays, gradient: "from-blue-400 to-blue-500" },
-          { label: "Approved This Cycle", value: approvedCount, icon: CheckCircle2, gradient: "from-emerald-400 to-emerald-500" },
-          { label: "Total Days Approved", value: totalDaysTaken, icon: Users, gradient: "from-violet-400 to-violet-500" },
-        ].map(({ label, value, icon: Icon, gradient }) => (
-          <div key={label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${gradient} p-5 text-white`}>
-            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-white/80 text-sm">{label}</p>
-                <p className="text-3xl font-bold mt-1">{value}</p>
-              </div>
-              <div className="bg-white/20 p-2.5 rounded-xl"><Icon className="h-5 w-5" /></div>
-            </div>
-          </div>
-        ))}
-      </div>
 
       <FilterBar>
         <SelectFilter
@@ -1311,6 +1284,7 @@ const LeaveManagementView = () => {
         </TableWrap>
       </SectionCard>
     </motion.div>
+    </PageShell>
   );
 };
 
@@ -1335,7 +1309,21 @@ const TrainingView = () => {
   const dueSoonCount = trainingRecords.filter((r) => r.status === "Due Soon").length;
   const notCompletedCount = trainingRecords.filter((r) => r.status === "Not Completed").length;
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search training..." />}
+      header={<SectionHeader icon={Users} title="Training & Certifications" subtitle="Compliance tracking and certification management" />}
+      kpi={<KpiStrip
+        items={[
+          { color: "bg-indigo-500", value: `${complianceRate}%`, label: "Compliance Rate" },
+          { color: "bg-red-500", value: expiredCount, label: "Expired Certs" },
+          { color: "bg-amber-500", value: dueSoonCount, label: "Due Soon" },
+          { color: "bg-slate-500", value: notCompletedCount, label: "Not Completed" },
+          { color: "bg-emerald-500", value: trainingRecords.filter(r => r.status === "Valid").length, label: "Valid" },
+        ]}
+      />}
+    >
     <motion.div
       key="training"
       initial={{ opacity: 0, y: 12 }}
@@ -1343,36 +1331,6 @@ const TrainingView = () => {
       exit={{ opacity: 0, y: -8 }}
       className="space-y-4"
     >
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard
-          title="Compliance Rate"
-          value={`${complianceRate}%`}
-          sub="Valid certifications"
-          icon={Shield}
-          gradient="bg-gradient-to-br from-indigo-500 to-indigo-700"
-        />
-        <StatCard
-          title="Expired Certs"
-          value={expiredCount}
-          sub="Require immediate renewal"
-          icon={AlertCircle}
-          gradient="bg-gradient-to-br from-red-500 to-red-700"
-        />
-        <StatCard
-          title="Due Soon"
-          value={dueSoonCount}
-          sub="Expiring within 90 days"
-          icon={Clock}
-          gradient="bg-gradient-to-br from-amber-500 to-amber-600"
-        />
-        <StatCard
-          title="Not Completed"
-          value={notCompletedCount}
-          sub="Courses pending"
-          icon={BookOpen}
-          gradient="bg-gradient-to-br from-slate-500 to-slate-700"
-        />
-      </div>
 
       <FilterBar>
         <SelectFilter
@@ -1427,10 +1385,10 @@ const TrainingView = () => {
                       className={cn(
                         "font-semibold",
                         row.score >= 90
-                          ? "text-emerald-600 dark:text-emerald-400"
+                          ? "text-emerald-600"
                           : row.score >= 75
                           ? "text-foreground"
-                          : "text-amber-600 dark:text-amber-400"
+                          : "text-amber-600"
                       )}
                     >
                       {row.score}%
@@ -1449,6 +1407,7 @@ const TrainingView = () => {
         </TableWrap>
       </SectionCard>
     </motion.div>
+    </PageShell>
   );
 };
 
@@ -1468,7 +1427,19 @@ const PerformanceView = () => {
     }));
   }, []);
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search performance..." />}
+      header={<SectionHeader icon={Users} title="Performance Reviews" subtitle="Employee performance scores and KPI tracking" />}
+      kpi={<KpiStrip items={[
+        { color: "bg-indigo-500", value: performanceReviews.length, label: "Total Reviews" },
+        { color: "bg-emerald-500", value: performanceReviews.filter(r => r.status === "Completed").length, label: "Completed" },
+        { color: "bg-amber-500", value: performanceReviews.filter(r => r.status === "Pending").length, label: "Pending" },
+        { color: "bg-blue-500", value: deptScores.length, label: "Departments" },
+        { color: "bg-violet-500", value: deptScores.length > 0 ? (deptScores.reduce((s, d) => s + d.avg, 0) / deptScores.length).toFixed(1) : "0", label: "Avg Score" },
+      ]} />}
+    >
     <motion.div
       key="performance"
       initial={{ opacity: 0, y: 12 }}
@@ -1477,9 +1448,7 @@ const PerformanceView = () => {
       className="space-y-4"
     >
       <SectionCard className="p-5">
-        <h3 className="mb-4 text-sm font-semibold text-foreground">
-          Average Performance Score by Department
-        </h3>
+        <SectionHeader title="Average Performance Score by Department" />
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={deptScores} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -1556,10 +1525,24 @@ const PerformanceView = () => {
         </TableWrap>
       </SectionCard>
     </motion.div>
+    </PageShell>
   );
 };
 
-const DisciplinaryView = () => (
+const DisciplinaryView = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  return (
+  <PageShell
+    search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search disciplinary..." />}
+    header={<SectionHeader icon={Users} title="Disciplinary & Grievances" subtitle="Employee disciplinary cases and grievance tracking" />}
+    kpi={<KpiStrip items={[
+      { color: "bg-red-500", value: disciplinaryRecords.length, label: "Disciplinary Cases" },
+      { color: "bg-violet-500", value: grievanceRecords.length, label: "Grievance Cases" },
+      { color: "bg-amber-500", value: disciplinaryRecords.filter(r => r.status === "Open").length, label: "Open Cases" },
+      { color: "bg-emerald-500", value: disciplinaryRecords.filter(r => r.status === "Closed").length, label: "Resolved" },
+      { color: "bg-blue-500", value: grievanceRecords.filter(r => r.status === "Under Review").length, label: "Under Review" },
+    ]} />}
+  >
   <motion.div
     key="disciplinary"
     initial={{ opacity: 0, y: 12 }}
@@ -1570,10 +1553,14 @@ const DisciplinaryView = () => (
     <div>
       <div className="mb-3 flex items-center gap-2">
         <Shield className="h-4 w-4 text-red-500" />
-        <h3 className="text-sm font-semibold text-foreground">Disciplinary Log</h3>
-        <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/40 dark:text-red-400">
-          {disciplinaryRecords.length} cases
-        </span>
+        <SectionHeader
+          title="Disciplinary Log"
+          actions={
+            <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+              {disciplinaryRecords.length} cases
+            </span>
+          }
+        />
       </div>
       <SectionCard>
         <TableWrap>
@@ -1621,10 +1608,14 @@ const DisciplinaryView = () => (
     <div>
       <div className="mb-3 flex items-center gap-2">
         <Heart className="h-4 w-4 text-violet-500" />
-        <h3 className="text-sm font-semibold text-foreground">Grievance Log</h3>
-        <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900/40 dark:text-violet-400">
-          {grievanceRecords.length} cases
-        </span>
+        <SectionHeader
+          title="Grievance Log"
+          actions={
+            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+              {grievanceRecords.length} cases
+            </span>
+          }
+        />
       </div>
       <SectionCard>
         <TableWrap>
@@ -1663,7 +1654,9 @@ const DisciplinaryView = () => (
       </SectionCard>
     </div>
   </motion.div>
-);
+  </PageShell>
+  );
+};
 
 // ─── Tab Configuration ───────────────────────────────────────────────────────
 
@@ -1711,23 +1704,21 @@ const Team: React.FC<TeamProps> = ({ aiEnabled, activeSubmenu }) => {
   const activeTab = submenuKeyMap[activeSubmenu ?? ""] ?? "overview";
 
   return (
-    <div className="space-y-5 px-1">
-      <AnimatePresence mode="wait">
-        {activeTab === "overview" && <OverviewView key="overview" />}
-        {activeTab === "directory" && <StaffDirectoryView key="directory" />}
-        {activeTab === "attendance" && <AttendanceView key="attendance" />}
-        {activeTab === "shifts" && <ShiftSchedulingView key="shifts" />}
-        {activeTab === "payroll" && <PayrollView key="payroll" />}
-        {activeTab === "leave" && <LeaveManagementView key="leave" />}
-        {activeTab === "training" && <TrainingView key="training" />}
-        {activeTab === "performance" && <PerformanceView key="performance" />}
-        {activeTab === "disciplinary" && <DisciplinaryView key="disciplinary" />}
-        {activeTab === "hire" && <HireWizardView key="hire" />}
-        {activeTab === "offboarding" && <OffboardingView key="offboarding" />}
-        {activeTab === "timeclock" && <TimeClockView key="timeclock" />}
-        {activeTab === "transfers" && <TransferView key="transfers" />}
-      </AnimatePresence>
-    </div>
+    <AnimatePresence mode="wait">
+      {activeTab === "overview" && <OverviewView key="overview" />}
+      {activeTab === "directory" && <StaffDirectoryView key="directory" />}
+      {activeTab === "attendance" && <AttendanceView key="attendance" />}
+      {activeTab === "shifts" && <ShiftSchedulingView key="shifts" />}
+      {activeTab === "payroll" && <PayrollView key="payroll" />}
+      {activeTab === "leave" && <LeaveManagementView key="leave" />}
+      {activeTab === "training" && <TrainingView key="training" />}
+      {activeTab === "performance" && <PerformanceView key="performance" />}
+      {activeTab === "disciplinary" && <DisciplinaryView key="disciplinary" />}
+      {activeTab === "hire" && <HireWizardView key="hire" />}
+      {activeTab === "offboarding" && <OffboardingView key="offboarding" />}
+      {activeTab === "timeclock" && <TimeClockView key="timeclock" />}
+      {activeTab === "transfers" && <TransferView key="transfers" />}
+    </AnimatePresence>
   );
 };
 
@@ -1767,13 +1758,11 @@ function HireWizardView() {
     }
   };
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Hiring Pipeline</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">Track candidates through recruitment stages</p>
-        </div>
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search hiring..." />}
+      header={<SectionHeader icon={Users} title="Hiring Pipeline" subtitle="Track candidates through recruitment stages" actions={
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -1783,15 +1772,22 @@ function HireWizardView() {
           <Plus size={16} />
           Post New Role
         </motion.button>
-      </div>
-
+      } />}
+      kpi={<KpiStrip items={[
+        { color: "bg-blue-500", value: "8", label: "Applications" },
+        { color: "bg-amber-500", value: "5", label: "Phone Screen" },
+        { color: "bg-violet-500", value: "3", label: "Interview" },
+        { color: "bg-emerald-500", value: "2", label: "Offer" },
+        { color: "bg-indigo-500", value: "1", label: "Hired" },
+      ]} />}
+    >
       {showPostForm && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-card rounded-2xl shadow-sm border border-border p-6"
         >
-          <h3 className="font-semibold text-foreground mb-4">Post New Job Opening</h3>
+          <SectionHeader title="Post New Job Opening" />
           <div className="grid grid-cols-2 gap-4">
             <input
               type="text"
@@ -1898,7 +1894,7 @@ function HireWizardView() {
           </tbody>
         </table>
       </div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -1948,13 +1944,11 @@ function OffboardingView() {
     }
   };
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Staff Offboarding</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">Manage staff exit processes</p>
-        </div>
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search offboarding..." />}
+      header={<SectionHeader icon={Users} title="Staff Offboarding" subtitle="Manage staff exit processes" actions={
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -1964,40 +1958,22 @@ function OffboardingView() {
           <Plus size={16} />
           Start Offboarding
         </motion.button>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-gradient-to-r from-amber-400 to-amber-500 rounded-2xl p-6 text-white relative overflow-hidden">
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-3">
-              <div className="bg-white/20 rounded-xl p-3"><AlertTriangle className="w-6 h-6 text-white" /></div>
-              <span className="text-sm text-white/70">offboarding</span>
-            </div>
-            <div className="text-3xl font-bold">2</div>
-            <div className="text-sm text-white/80 mt-1">Active Offboardings</div>
-          </div>
-          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-        </div>
-        <div className="bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-2xl p-6 text-white relative overflow-hidden">
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-3">
-              <div className="bg-white/20 rounded-xl p-3"><CheckCircle2 className="w-6 h-6 text-white" /></div>
-              <span className="text-sm text-white/70">this month</span>
-            </div>
-            <div className="text-3xl font-bold">4</div>
-            <div className="text-sm text-white/80 mt-1">Completed This Month</div>
-          </div>
-          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-        </div>
-      </div>
-
+      } />}
+      kpi={<KpiStrip items={[
+        {color:"bg-amber-500",value:"2",label:"Active Offboardings"},
+        {color:"bg-emerald-500",value:"4",label:"Completed This Month"},
+        {color:"bg-violet-500",value:"75%",label:"Avg Progress"},
+        {color:"bg-blue-500",value:"6",label:"Checklist Items"},
+        {color:"bg-slate-500",value:"3",label:"This Quarter"},
+      ]} />}
+    >
       {showStartForm && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-card rounded-2xl shadow-sm border border-border p-6"
         >
-          <h3 className="font-semibold text-foreground mb-4">Start New Offboarding</h3>
+          <SectionHeader title="Start New Offboarding" />
           <div className="space-y-4">
             <input
               type="text"
@@ -2062,7 +2038,7 @@ function OffboardingView() {
           </motion.div>
         ))}
       </div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -2102,13 +2078,11 @@ function TimeClockView() {
 
   const filtered = selectedDept === "All" ? attendanceData : attendanceData.filter((r) => r.dept === selectedDept);
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Time & Attendance</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">Today • April 2, 2026</p>
-        </div>
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search time clock..." />}
+      header={<SectionHeader icon={Users} title="Time & Attendance" subtitle="Today • April 2, 2026" actions={
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -2117,26 +2091,22 @@ function TimeClockView() {
           <Download size={16} />
           Export
         </motion.button>
-      </div>
+      } />}
+      kpi={<KpiStrip items={[
+        { color: "bg-emerald-500", value: "32", label: "Clocked In" },
+        { color: "bg-amber-500", value: "3", label: "Late Today" },
+        { color: "bg-rose-500", value: "2", label: "Absent" },
+        { color: "bg-violet-500", value: "4", label: "On Leave" },
+        { color: "bg-blue-500", value: filtered.length.toString(), label: "Showing" },
+      ]} />}
+    >
 
-      <div className="grid grid-cols-4 gap-4">
-        {todayStats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div key={stat.label} className={`bg-gradient-to-r ${stat.gradient} rounded-2xl p-6 text-white relative overflow-hidden`}>
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="bg-white/20 rounded-xl p-3"><Icon className="w-6 h-6 text-white" /></div>
-                  <span className="text-sm text-white/70">{stat.sub}</span>
-                </div>
-                <div className="text-3xl font-bold">{stat.value}</div>
-                <div className="text-sm text-white/80 mt-1">{stat.label}</div>
-              </div>
-              <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-            </div>
-          );
-        })}
-      </div>
+      <KpiStrip items={[
+        {color:"bg-emerald-500",value:"32",label:"Clocked In Now"},
+        {color:"bg-amber-500",value:"3",label:"Late Today"},
+        {color:"bg-rose-500",value:"2",label:"Absent"},
+        {color:"bg-violet-500",value:"4",label:"On Leave"},
+      ]} />
 
       <div className="bg-card rounded-2xl shadow-sm border border-border p-4 flex flex-wrap items-center gap-3">
         <label className="text-sm text-muted-foreground">Department:</label>
@@ -2193,7 +2163,7 @@ function TimeClockView() {
           </tbody>
         </table>
       </div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -2236,13 +2206,11 @@ function TransferView() {
     }
   };
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Staff Transfers</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">Manage internal staff movements</p>
-        </div>
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search transfers..." />}
+      header={<SectionHeader icon={Users} title="Staff Transfers" subtitle="Manage internal staff movements" actions={
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -2252,15 +2220,22 @@ function TransferView() {
           <Plus size={16} />
           Request Transfer
         </motion.button>
-      </div>
-
+      } />}
+      kpi={<KpiStrip items={[
+        { color: "bg-amber-500", value: activeTransfers.filter(t => t.status === "Pending").length.toString(), label: "Pending" },
+        { color: "bg-emerald-500", value: activeTransfers.filter(t => t.status === "Approved").length.toString(), label: "Approved" },
+        { color: "bg-blue-500", value: completedTransfers.length.toString(), label: "Completed" },
+        { color: "bg-violet-500", value: activeTransfers.length.toString(), label: "Active" },
+        { color: "bg-slate-500", value: (activeTransfers.length + completedTransfers.length).toString(), label: "Total" },
+      ]} />}
+    >
       {showRequestForm && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-card rounded-2xl shadow-sm border border-border p-6"
         >
-          <h3 className="font-semibold text-foreground mb-4">Request Staff Transfer</h3>
+          <SectionHeader title="Request Staff Transfer" />
           <div className="space-y-4">
             <input
               type="text"
@@ -2368,7 +2343,7 @@ function TransferView() {
         </div>
 
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-          <h3 className="font-semibold text-foreground mb-4">Completed Transfers This Month</h3>
+          <SectionHeader title="Completed Transfers This Month" />
           <div className="space-y-2">
             {completedTransfers.map((transfer, idx) => (
               <div key={idx} className="flex items-center justify-between p-3 bg-secondary/30 rounded-xl hover:bg-secondary/50 transition-colors">
@@ -2382,7 +2357,7 @@ function TransferView() {
           </div>
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }
 

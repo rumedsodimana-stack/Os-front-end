@@ -13,6 +13,7 @@ import {
   BarChart2, FileText, RefreshCw, ChevronRight, Send,
   Award, AlertTriangle, Archive, Layers
 } from "lucide-react";
+import { KpiStrip, LegendBar, SectionSearch, SectionHeader, PageShell } from "../components/shared";
 
 interface ProcurementProps {
   aiEnabled: boolean;
@@ -160,23 +161,23 @@ const categorySpendPie = [
 // ── Helper Components ─────────────────────────────────────────
 const POStatusBadge = ({ status }: { status: POStatus }) => {
   const map: Record<POStatus, string> = {
-    Draft: "bg-slate-100 text-slate-700 dark:bg-slate-700/30 dark:text-slate-400",
-    "Pending Approval": "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    Approved: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    Sent: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    Partial: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-    Received: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-    Cancelled: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    Draft: "bg-slate-100 text-slate-700",
+    "Pending Approval": "bg-amber-100 text-amber-700",
+    Approved: "bg-emerald-100 text-emerald-700",
+    Sent: "bg-blue-100 text-blue-700",
+    Partial: "bg-orange-100 text-orange-700",
+    Received: "bg-purple-100 text-purple-700",
+    Cancelled: "bg-red-100 text-red-700",
   };
   return <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", map[status])}>{status}</span>;
 };
 
 const SupplierStatusBadge = ({ status }: { status: SupplierStatus }) => {
   const map: Record<SupplierStatus, string> = {
-    Active: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    Preferred: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    Probation: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    Suspended: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    Active: "bg-blue-100 text-blue-700",
+    Preferred: "bg-emerald-100 text-emerald-700",
+    Probation: "bg-amber-100 text-amber-700",
+    Suspended: "bg-red-100 text-red-700",
   };
   return <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", map[status])}>{status}</span>;
 };
@@ -203,39 +204,27 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
   const activeSuppliers = suppliers.filter(s => s.status === "Active" || s.status === "Preferred").length;
 
   return (
-    <div className="p-6 space-y-6">
-      <AnimatePresence mode="wait">
+    <AnimatePresence mode="wait">
 
         {/* ── OVERVIEW ── */}
         {activeSubmenu === "Overview" && (
-          <motion.div key="procov" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-
-            {/* KPIs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "MTD Procurement Spend", value: `BHD ${(totalPOValue / 1000).toFixed(1)}k`, sub: "Apr month-to-date", icon: DollarSign, gradient: "from-indigo-400 to-indigo-500" },
-                { label: "Pending Approvals", value: pendingApproval, sub: "Awaiting GM sign-off", icon: Clock, gradient: "from-amber-400 to-amber-500" },
-                { label: "Low Stock Alerts", value: overdueItems, sub: "Below reorder point", icon: AlertTriangle, gradient: "from-red-400 to-red-500" },
-                { label: "Active Suppliers", value: activeSuppliers, sub: `${suppliers.filter(s => s.status === "Preferred").length} preferred`, icon: Truck, gradient: "from-emerald-400 to-emerald-500" },
-              ].map(({ label, value, sub, icon: Icon, gradient }) => (
-                <div key={label} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white", gradient)}>
-                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-white/80 text-sm">{label}</p>
-                      <p className="text-3xl font-bold mt-1">{value}</p>
-                      <p className="text-white/70 text-xs mt-1">{sub}</p>
-                    </div>
-                    <div className="bg-white/20 p-2.5 rounded-xl"><Icon size={20} /></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <motion.div key="procov" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="h-full">
+          <PageShell
+            search={<SectionSearch value={search} onChange={setSearch} placeholder="Search procurement..." />}
+            header={<SectionHeader icon={ShoppingCart} title="Procurement Overview" subtitle="Spending, suppliers, and stock metrics" />}
+            kpi={<KpiStrip items={[
+              {color:"bg-indigo-500",value:`BHD ${(totalPOValue/1000).toFixed(1)}k`,label:"MTD Spend"},
+              {color:"bg-amber-500",value:pendingApproval,label:"Pending Approvals"},
+              {color:"bg-rose-500",value:overdueItems,label:"Low Stock Alerts"},
+              {color:"bg-emerald-500",value:activeSuppliers,label:"Active Suppliers"},
+              {color:"bg-blue-500",value:purchaseOrders.length,label:"Total POs"},
+            ]} />}
+          >
 
             {/* Spend chart + pie */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2 bg-card rounded-2xl shadow-sm border border-border p-5">
-                <h3 className="font-semibold text-foreground mb-4">Procurement Spend by Category (6 Months)</h3>
+                <SectionHeader title="Procurement Spend by Category (6 Months)" />
                 <ResponsiveContainer width="100%" height={240}>
                   <BarChart data={spendByCategory}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -252,7 +241,7 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
                 </ResponsiveContainer>
               </div>
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <h3 className="font-semibold text-foreground mb-4">Spend Mix</h3>
+                <SectionHeader title="Spend Mix" />
                 <ResponsiveContainer width="100%" height={160}>
                   <PieChart>
                     <Pie data={categorySpendPie} dataKey="value" cx="50%" cy="50%" outerRadius={65} innerRadius={35}>
@@ -261,24 +250,20 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
                     <Tooltip formatter={(v: number) => [`${v}%`, ""]} />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="space-y-1.5 mt-2">
-                  {categorySpendPie.map(item => (
-                    <div key={item.name} className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span className="text-muted-foreground">{item.name}</span>
-                      </div>
-                      <span className="font-medium text-foreground">{item.value}%</span>
-                    </div>
-                  ))}
-                </div>
+                <LegendBar items={[
+                  { label: "Food & Beverage", color: "bg-emerald-100 border-emerald-200" },
+                  { label: "Housekeeping", color: "bg-indigo-100 border-indigo-200" },
+                  { label: "Linen", color: "bg-sky-100 border-sky-200" },
+                  { label: "Amenities", color: "bg-amber-100 border-amber-200" },
+                  { label: "Maintenance", color: "bg-pink-100 border-pink-200" },
+                ]} />
               </div>
             </div>
 
             {/* Low stock alerts */}
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
               <div className="p-5 border-b border-border flex items-center justify-between">
-                <h3 className="font-semibold text-foreground flex items-center gap-2"><AlertTriangle size={16} className="text-red-500" /> Low Stock Alerts</h3>
+                <SectionHeader title="Low Stock Alerts" />
                 <button className="text-xs text-primary flex items-center gap-1">View All <ChevronRight size={14} /></button>
               </div>
               <div className="overflow-x-auto">
@@ -298,9 +283,9 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
                         <td className="px-4 py-3 text-muted-foreground">{item.parLevel} {item.unit}</td>
                         <td className="px-4 py-3">
                           {item.currentStock <= item.reorderPoint ? (
-                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Critical</span>
+                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">Critical</span>
                           ) : (
-                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Low</span>
+                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Low</span>
                           )}
                         </td>
                         <td className="px-4 py-3">
@@ -320,7 +305,7 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
             {/* Recent POs */}
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
               <div className="p-5 border-b border-border">
-                <h3 className="font-semibold text-foreground">Recent Purchase Orders</h3>
+                <SectionHeader title="Recent Purchase Orders" />
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -342,16 +327,24 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
                 </table>
               </div>
             </div>
+          </PageShell>
           </motion.div>
         )}
 
         {/* ── PURCHASE ORDERS ── */}
         {activeSubmenu === "Purchase Orders" && (
-          <motion.div key="polist" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Purchase Orders</h2>
-              <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"><Plus size={16} /> New PO</button>
-            </div>
+          <motion.div key="polist" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="h-full">
+          <PageShell
+            search={<SectionSearch value={search} onChange={setSearch} placeholder="Search purchase orders..." />}
+            header={<SectionHeader icon={ShoppingCart} title="Purchase Orders" subtitle="Order tracking and management" />}
+            kpi={<KpiStrip items={[
+              {color:"bg-indigo-500",value:purchaseOrders.length,label:"Total POs"},
+              {color:"bg-amber-500",value:pendingApproval,label:"Pending Approval"},
+              {color:"bg-emerald-500",value:purchaseOrders.filter(p=>p.status==="Approved").length,label:"Approved"},
+              {color:"bg-blue-500",value:purchaseOrders.filter(p=>p.status==="Received").length,label:"Received"},
+              {color:"bg-rose-500",value:purchaseOrders.filter(p=>p.status==="Cancelled").length,label:"Cancelled"},
+            ]} />}
+          >
 
             {/* Filters */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-4">
@@ -390,7 +383,7 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
                         <td className="px-4 py-3">
                           <div className="flex gap-1">
                             {po.status === "Pending Approval" && (
-                              <button className="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-lg text-xs font-medium hover:bg-emerald-200 transition-colors">Approve</button>
+                              <button className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium hover:bg-emerald-200 transition-colors">Approve</button>
                             )}
                             <button className="p-1.5 hover:bg-secondary rounded-lg transition-colors text-muted-foreground hover:text-foreground"><Eye size={14} /></button>
                             <button className="p-1.5 hover:bg-secondary rounded-lg transition-colors text-muted-foreground hover:text-foreground"><Edit2 size={14} /></button>
@@ -441,7 +434,7 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
                   </table>
                 </div>
                 {selectedPO.notes && (
-                  <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800 text-sm text-amber-800 dark:text-amber-300 mb-4">
+                  <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-sm text-amber-800 mb-4">
                     <strong>Notes:</strong> {selectedPO.notes}
                   </div>
                 )}
@@ -453,23 +446,31 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
                 </div>
               </div>
             )}
+          </PageShell>
           </motion.div>
         )}
 
         {/* ── GRN / RECEIVING ── */}
         {activeSubmenu === "GRN & Receiving" && (
-          <motion.div key="grn" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Goods Received Notes (GRN)</h2>
-              <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"><Plus size={16} /> New GRN</button>
-            </div>
+          <motion.div key="grn" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="h-full">
+          <PageShell
+            search={<SectionSearch value={search} onChange={setSearch} placeholder="Search GRNs..." />}
+            header={<SectionHeader icon={ShoppingCart} title="Goods Received Notes (GRN)" subtitle="Delivery receiving and quality control" />}
+            kpi={<KpiStrip items={[
+              {color:"bg-indigo-500",value:grnRecords.length,label:"Total GRNs"},
+              {color:"bg-emerald-500",value:grnRecords.filter(g=>g.status==="Complete").length,label:"Complete"},
+              {color:"bg-amber-500",value:grnRecords.filter(g=>g.status==="Pending").length,label:"Pending"},
+              {color:"bg-orange-500",value:grnRecords.filter(g=>g.status==="Partial").length,label:"Partial"},
+              {color:"bg-rose-500",value:grnRecords.filter(g=>g.status==="Rejected").length,label:"Rejected"},
+            ]} />}
+          >
 
             {grnRecords.map(grn => {
               const statusMap: Record<GRNStatus, string> = {
-                Pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                Partial: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-                Complete: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-                Rejected: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+                Pending: "bg-amber-100 text-amber-700",
+                Partial: "bg-orange-100 text-orange-700",
+                Complete: "bg-emerald-100 text-emerald-700",
+                Rejected: "bg-red-100 text-red-700",
               };
               return (
                 <div key={grn.id} className="bg-card rounded-2xl shadow-sm border border-border p-5">
@@ -478,7 +479,7 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold text-foreground">{grn.id}</h3>
                         <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", statusMap[grn.status])}>{grn.status}</span>
-                        {grn.qcPassed && <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 flex items-center gap-1"><CheckCircle2 size={11} /> QC Passed</span>}
+                        {grn.qcPassed && <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 flex items-center gap-1"><CheckCircle2 size={11} /> QC Passed</span>}
                       </div>
                       <p className="text-sm text-muted-foreground">{grn.supplier} · Ref: {grn.poId} · Inv: {grn.invoice}</p>
                       <p className="text-sm text-muted-foreground">Received: {grn.receivedDate} by {grn.receivedBy}</p>
@@ -496,9 +497,9 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
                         {grn.items.map((item, i) => {
                           const variance = item.received - item.ordered;
                           const condMap: Record<string, string> = {
-                            Good: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-                            Damaged: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-                            Short: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+                            Good: "bg-emerald-100 text-emerald-700",
+                            Damaged: "bg-red-100 text-red-700",
+                            Short: "bg-amber-100 text-amber-700",
                           };
                           return (
                             <tr key={i}>
@@ -521,7 +522,7 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
                     </table>
                   </div>
                   {grn.notes && (
-                    <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800 text-sm text-amber-800 dark:text-amber-300">
+                    <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-sm text-amber-800">
                       <strong>Notes:</strong> {grn.notes}
                     </div>
                   )}
@@ -531,7 +532,7 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
 
             {/* Pending GRNs */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-              <h3 className="font-semibold text-foreground mb-4">Pending Deliveries (Awaiting GRN)</h3>
+              <SectionHeader title="Pending Deliveries (Awaiting GRN)" />
               <div className="space-y-3">
                 {purchaseOrders.filter(po => po.status === "Sent" || po.status === "Partial").map(po => (
                   <div key={po.id} className="flex items-center justify-between p-4 bg-secondary/30 rounded-xl border border-border">
@@ -547,36 +548,24 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
                 ))}
               </div>
             </div>
+          </PageShell>
           </motion.div>
         )}
 
         {/* ── SUPPLIERS ── */}
         {activeSubmenu === "Suppliers" && (
-          <motion.div key="suppliers" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Supplier Directory</h2>
-              <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"><Plus size={16} /> Add Supplier</button>
-            </div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "Total Suppliers", value: suppliers.length, gradient: "from-indigo-400 to-indigo-500", icon: Package },
-                { label: "Preferred", value: suppliers.filter(s => s.status === "Preferred").length, gradient: "from-emerald-400 to-emerald-500", icon: Star },
-                { label: "On Probation", value: suppliers.filter(s => s.status === "Probation").length, gradient: "from-amber-400 to-amber-500", icon: AlertTriangle },
-                { label: "Avg On-Time Delivery", value: `${Math.round(suppliers.reduce((s, sup) => s + sup.onTimeDelivery, 0) / suppliers.length)}%`, gradient: "from-blue-400 to-blue-500", icon: Clock },
-              ].map(({ label, value, gradient, icon: Icon }) => (
-                <div key={label} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white", gradient)}>
-                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-white/80 text-sm">{label}</p>
-                      <p className="text-3xl font-bold mt-1">{value}</p>
-                    </div>
-                    <div className="bg-white/20 p-2.5 rounded-xl"><Icon size={20} /></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <motion.div key="suppliers" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="h-full">
+          <PageShell
+            search={<SectionSearch value={search} onChange={setSearch} placeholder="Search suppliers..." />}
+            header={<SectionHeader icon={ShoppingCart} title="Supplier Directory" subtitle="Vendor management and performance" />}
+            kpi={<KpiStrip items={[
+              {color:"bg-indigo-500",value:suppliers.length,label:"Total Suppliers"},
+              {color:"bg-emerald-500",value:suppliers.filter(s=>s.status==="Preferred").length,label:"Preferred"},
+              {color:"bg-amber-500",value:suppliers.filter(s=>s.status==="Probation").length,label:"On Probation"},
+              {color:"bg-blue-500",value:`${Math.round(suppliers.reduce((s,sup)=>s+sup.onTimeDelivery,0)/suppliers.length)}%`,label:"On-Time Delivery"},
+              {color:"bg-rose-500",value:suppliers.filter(s=>s.status==="Suspended").length,label:"Suspended"},
+            ]} />}
+          >
 
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
               <div className="p-5 border-b border-border">
@@ -650,13 +639,24 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
                 </div>
               </div>
             )}
+          </PageShell>
           </motion.div>
         )}
 
         {/* ── SUPPLIER SCORECARD ── */}
         {activeSubmenu === "Supplier Scorecard" && (
-          <motion.div key="scorecard" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <h2 className="text-xl font-semibold text-foreground">Supplier Performance Scorecard</h2>
+          <motion.div key="scorecard" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="h-full">
+          <PageShell
+            search={<SectionSearch value={search} onChange={setSearch} placeholder="Search scorecards..." />}
+            header={<SectionHeader icon={ShoppingCart} title="Supplier Performance Scorecard" subtitle="Vendor performance ratings and metrics" />}
+            kpi={<KpiStrip items={[
+              {color:"bg-indigo-500",value:suppliers.length,label:"Suppliers Rated"},
+              {color:"bg-emerald-500",value:suppliers.filter(s=>s.rating>=4).length,label:"Top Rated (4+)"},
+              {color:"bg-blue-500",value:`${Math.round(suppliers.reduce((s,sup)=>s+sup.qualityScore,0)/suppliers.length)}%`,label:"Avg Quality"},
+              {color:"bg-amber-500",value:`${Math.round(suppliers.reduce((s,sup)=>s+sup.onTimeDelivery,0)/suppliers.length)}%`,label:"Avg On-Time"},
+              {color:"bg-rose-500",value:suppliers.filter(s=>s.rating<3).length,label:"Underperforming"},
+            ]} />}
+          >
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {suppliers.map(sup => {
@@ -708,16 +708,24 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
                 );
               })}
             </div>
+          </PageShell>
           </motion.div>
         )}
 
         {/* ── SUPPLIER COMPARISON ── */}
         {activeSubmenu === "Supplier Comparison" && (
-          <motion.div key="comparison" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Supplier Comparison</h2>
-              <button className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-xl text-sm font-medium hover:bg-secondary/70"><Plus size={16} /> Add Item for Comparison</button>
-            </div>
+          <motion.div key="comparison" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="h-full">
+          <PageShell
+            search={<SectionSearch value={search} onChange={setSearch} placeholder="Search comparisons..." />}
+            header={<SectionHeader icon={ShoppingCart} title="Supplier Comparison" subtitle="Side-by-side vendor analysis" />}
+            kpi={<KpiStrip items={[
+              {color:"bg-indigo-500",value:supplierComparisons.length,label:"Items Compared"},
+              {color:"bg-emerald-500",value:suppliers.filter(s=>s.status==="Preferred").length,label:"Preferred Suppliers"},
+              {color:"bg-blue-500",value:suppliers.length,label:"Total Suppliers"},
+              {color:"bg-amber-500",value:`${Math.round(suppliers.reduce((s,sup)=>s+sup.rating,0)/suppliers.length*20)}%`,label:"Avg Rating"},
+              {color:"bg-rose-500",value:activeSuppliers,label:"Active Suppliers"},
+            ]} />}
+          >
             {supplierComparisons.map(comp => (
               <div key={comp.item} className="bg-card rounded-2xl shadow-sm border border-border p-5">
                 <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Package size={16} className="text-primary" /> {comp.item}</h3>
@@ -732,14 +740,14 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
                       {comp.suppliers.map((s, i) => {
                         const isBest = i === comp.suppliers.reduce((bi, s2, i2) => s2.price < comp.suppliers[bi].price ? i2 : bi, 0);
                         return (
-                          <tr key={s.name} className={cn("transition-colors", isBest ? "bg-emerald-50 dark:bg-emerald-900/10" : "")}>
+                          <tr key={s.name} className={cn("transition-colors", isBest ? "bg-emerald-50" : "")}>
                             <td className="py-2.5 font-medium text-foreground flex items-center gap-2">
                               {isBest && <Award size={14} className="text-emerald-600" />}{s.name}
                             </td>
                             <td className={cn("py-2.5 font-semibold", isBest ? "text-emerald-600" : "text-foreground")}>BHD {s.price}</td>
                             <td className="py-2.5 text-foreground">{s.leadTime} days</td>
                             <td className="py-2.5 text-foreground">{s.minOrder} units</td>
-                            <td className="py-2.5">{isBest ? <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Best Value</span> : <span className="text-muted-foreground text-xs">Alternative</span>}</td>
+                            <td className="py-2.5">{isBest ? <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">Best Value</span> : <span className="text-muted-foreground text-xs">Alternative</span>}</td>
                           </tr>
                         );
                       })}
@@ -748,39 +756,24 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
                 </div>
               </div>
             ))}
+          </PageShell>
           </motion.div>
         )}
 
         {/* ── STOCK LEVELS / INVENTORY ── */}
         {activeSubmenu === "Stock Levels" && (
-          <motion.div key="stock" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Stock Levels & Inventory</h2>
-              <div className="flex gap-2">
-                <button className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-xl text-sm font-medium hover:bg-secondary/70"><Download size={16} /> Export</button>
-                <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90"><RefreshCw size={16} /> Sync Stock</button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "Total SKUs", value: stockItems.length, gradient: "from-indigo-400 to-indigo-500", icon: Package },
-                { label: "Critical (Below Reorder)", value: stockItems.filter(s => s.currentStock <= s.reorderPoint).length, gradient: "from-red-400 to-red-500", icon: AlertTriangle },
-                { label: "Auto-Reorder Enabled", value: stockItems.filter(s => s.autoReorder).length, gradient: "from-emerald-400 to-emerald-500", icon: CheckCircle2 },
-                { label: "Est. Stock Value", value: `BHD ${stockItems.reduce((s, i) => s + i.currentStock * i.unitCost, 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, gradient: "from-blue-400 to-blue-500", icon: DollarSign },
-              ].map(({ label, value, gradient, icon: Icon }) => (
-                <div key={label} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white", gradient)}>
-                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-white/80 text-sm">{label}</p>
-                      <p className="text-3xl font-bold mt-1">{value}</p>
-                    </div>
-                    <div className="bg-white/20 p-2.5 rounded-xl"><Icon size={20} /></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <motion.div key="stock" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="h-full">
+          <PageShell
+            search={<SectionSearch value={search} onChange={setSearch} placeholder="Search stock items..." />}
+            header={<SectionHeader icon={ShoppingCart} title="Stock Levels & Inventory" subtitle="Inventory tracking and reorder management" />}
+            kpi={<KpiStrip items={[
+              {color:"bg-indigo-500",value:stockItems.length,label:"Total SKUs"},
+              {color:"bg-rose-500",value:stockItems.filter(s=>s.currentStock<=s.reorderPoint).length,label:"Critical"},
+              {color:"bg-emerald-500",value:stockItems.filter(s=>s.autoReorder).length,label:"Auto-Reorder"},
+              {color:"bg-blue-500",value:`BHD ${stockItems.reduce((s,i)=>s+i.currentStock*i.unitCost,0).toLocaleString(undefined,{maximumFractionDigits:0})}`,label:"Stock Value"},
+              {color:"bg-amber-500",value:stockItems.filter(s=>s.currentStock<=s.parLevel&&s.currentStock>s.reorderPoint).length,label:"Below Par"},
+            ]} />}
+          >
 
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
               <div className="p-5 border-b border-border flex items-center gap-3">
@@ -802,7 +795,7 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
                     {stockItems.map(item => {
                       const pct = Math.round((item.currentStock / item.parLevel) * 100);
                       const statusLabel = item.currentStock <= item.reorderPoint ? "Critical" : pct < 50 ? "Low" : "OK";
-                      const statusColor = item.currentStock <= item.reorderPoint ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : pct < 50 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400";
+                      const statusColor = item.currentStock <= item.reorderPoint ? "bg-red-100 text-red-700" : pct < 50 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700";
                       return (
                         <tr key={item.id} className="hover:bg-secondary/30 transition-colors">
                           <td className="px-4 py-3 font-medium text-foreground">{item.name}</td>
@@ -829,16 +822,24 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
                 </table>
               </div>
             </div>
+          </PageShell>
           </motion.div>
         )}
 
         {/* ── REPORTS ── */}
         {activeSubmenu === "Reports" && (
-          <motion.div key="procrep" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Procurement Reports</h2>
-              <button className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-xl text-sm font-medium hover:bg-secondary/70"><Download size={16} /> Export Report</button>
-            </div>
+          <motion.div key="procrep" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="h-full">
+          <PageShell
+            search={<SectionSearch value={search} onChange={setSearch} placeholder="Search reports..." />}
+            header={<SectionHeader icon={ShoppingCart} title="Procurement Reports" subtitle="Spending analysis and supplier performance" />}
+            kpi={<KpiStrip items={[
+              {color:"bg-indigo-500",value:"BHD 284,000",label:"YTD Spend"},
+              {color:"bg-emerald-500",value:"BHD 18,500",label:"Cost Savings"},
+              {color:"bg-blue-500",value:"7.2 days",label:"Avg Lead Time"},
+              {color:"bg-amber-500",value:"82",label:"Supplier NPS"},
+              {color:"bg-rose-500",value:purchaseOrders.length,label:"Total POs"},
+            ]} />}
+          >
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
@@ -857,7 +858,7 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <h3 className="font-semibold text-foreground mb-4">Monthly Spend Trend</h3>
+                <SectionHeader title="Monthly Spend Trend" />
                 <ResponsiveContainer width="100%" height={220}>
                   <AreaChart data={spendByCategory}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -873,7 +874,7 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
 
               {/* Supplier performance table */}
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <h3 className="font-semibold text-foreground mb-4">Top Suppliers by Spend</h3>
+                <SectionHeader title="Top Suppliers by Spend" />
                 <div className="space-y-3">
                   {[...suppliers].sort((a, b) => b.totalSpend - a.totalSpend).slice(0, 6).map((sup, i) => (
                     <div key={sup.id} className="flex items-center gap-3">
@@ -897,7 +898,7 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
             {/* PO Summary Table */}
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
               <div className="p-5 border-b border-border">
-                <h3 className="font-semibold text-foreground">Purchase Order Summary</h3>
+                <SectionHeader title="Purchase Order Summary" />
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -920,10 +921,10 @@ export function Procurement({ aiEnabled, activeSubmenu = "Overview" }: Procureme
                 </table>
               </div>
             </div>
+          </PageShell>
           </motion.div>
         )}
 
       </AnimatePresence>
-    </div>
   );
 }

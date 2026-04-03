@@ -1,8 +1,9 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Users, DoorOpen, Key, DollarSign, TrendingUp, TrendingDown, Bed, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { cn } from "../lib/utils";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
+import { KpiStrip, LegendBar, SectionSearch, SectionHeader, PageShell, RoomCard } from "../components/shared";
 
 const getBadgeColor = (status: string) => {
   switch (status) {
@@ -74,36 +75,21 @@ const mockRooms: Room[] = [
 ];
 
 function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-foreground">Analytic Overview</h1>
-      </div>
-
-      {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { label: "Arrivals", value: "45", change: "+4% Last Month", icon: DoorOpen, bg: "bg-gradient-to-r from-pink-400 to-pink-500" },
-          { label: "In-House", value: "128", change: "+1% Last Month", icon: Users, bg: "bg-gradient-to-r from-violet-400 to-violet-500" },
-          { label: "Departures", value: "32", change: "-2% Last Month", icon: Key, bg: "bg-gradient-to-r from-emerald-400 to-emerald-500" },
-          { label: "Revenue", value: "$12,896", change: "+8% Last Month", icon: DollarSign, bg: "bg-gradient-to-r from-yellow-400 to-yellow-500" },
-        ].map((stat, i) => (
-          <div key={i} className={cn("rounded-2xl p-6 shadow-sm text-white relative overflow-hidden", stat.bg)}>
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 bg-white/20 rounded-xl">
-                  <stat.icon className="w-6 h-6 text-white" />
-                </div>
-                <p className="text-lg font-medium text-white/90">{stat.label}</p>
-              </div>
-              <h3 className="text-3xl font-bold mb-1">{stat.value}</h3>
-              <p className="text-sm text-white/80">{stat.change}</p>
-            </div>
-            {/* Decorative background shape */}
-            <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-          </div>
-        ))}
-      </div>
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search front desk..." />}
+      header={<SectionHeader icon={DoorOpen} title="Front Desk Overview" subtitle="Live hotel metrics and daily activity" />}
+      kpi={<KpiStrip
+        items={[
+          { color: "bg-pink-500", value: "45", label: "Arrivals" },
+          { color: "bg-violet-500", value: "128", label: "In-House" },
+          { color: "bg-emerald-500", value: "32", label: "Departures" },
+          { color: "bg-amber-500", value: "$12,896", label: "Revenue" },
+          { color: "bg-blue-500", value: "60%", label: "Occupancy" },
+        ]}
+      />}
+    >
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -111,16 +97,12 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
         {/* Area Chart */}
         <div className="lg:col-span-2 bg-card rounded-2xl p-6 shadow-sm border border-border">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="font-semibold text-lg">Revenue</h2>
+            <SectionHeader title="Revenue" />
             <div className="flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-pink-500"></div>
-                <span className="text-muted-foreground">Room Rev</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                <span className="text-muted-foreground">F&B Rev</span>
-              </div>
+              <LegendBar items={[
+                { color: "bg-pink-100 border-pink-200", label: "Room Rev" },
+                { color: "bg-emerald-100 border-emerald-200", label: "F&B Rev" },
+              ]} />
               <select className="bg-secondary text-secondary-foreground border-none rounded-xl px-3 py-1.5 outline-none cursor-pointer text-xs font-medium ml-2">
                 <option>This Month</option>
               </select>
@@ -155,7 +137,7 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
         {/* Donut Chart */}
         <div className="bg-card rounded-2xl p-6 shadow-sm border border-border flex flex-col">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="font-semibold text-lg">Status</h2>
+            <SectionHeader title="Status" />
             <select className="bg-secondary text-secondary-foreground border-none rounded-xl px-3 py-1.5 outline-none cursor-pointer text-xs font-medium">
               <option>Today</option>
             </select>
@@ -210,7 +192,7 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
         {/* Main Table */}
         <div className="lg:col-span-2 bg-card rounded-2xl p-6 shadow-sm border border-border">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="font-semibold text-lg">Recent Bookings</h2>
+            <SectionHeader title="Recent Bookings" />
             <select className="bg-secondary text-secondary-foreground border-none rounded-xl px-3 py-1.5 outline-none cursor-pointer text-xs font-medium">
               <option>This Week</option>
             </select>
@@ -254,7 +236,7 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
         {/* Secondary Table */}
         <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="font-semibold text-lg">Top Regions</h2>
+            <SectionHeader title="Top Regions" />
             <select className="bg-secondary text-secondary-foreground border-none rounded-xl px-3 py-1.5 outline-none cursor-pointer text-xs font-medium">
               <option>This Year</option>
             </select>
@@ -286,7 +268,7 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
         </div>
 
       </div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -354,73 +336,29 @@ function FrontDeskRooms() {
 
   const selectedRoomData = selectedRoom ? mockRooms.find(r => r.number === selectedRoom) : null;
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div className="space-y-6">
-      {/* KPI Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        <div className="bg-gradient-to-r from-violet-400 to-violet-500 rounded-2xl p-6 text-white relative overflow-hidden">
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-3">
-              <div className="bg-white/20 rounded-xl p-3"><Bed className="w-6 h-6 text-white" /></div>
-              <span className="text-sm text-white/70">Total</span>
-            </div>
-            <div className="text-3xl font-bold">{stats.total}</div>
-            <div className="text-sm text-white/80 mt-1">Total Rooms</div>
-          </div>
-          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-        </div>
-        <div className="bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-2xl p-6 text-white relative overflow-hidden">
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-3">
-              <div className="bg-white/20 rounded-xl p-3"><DoorOpen className="w-6 h-6 text-white" /></div>
-              <span className="text-sm text-white/70">Clean</span>
-            </div>
-            <div className="text-3xl font-bold">{stats.available}</div>
-            <div className="text-sm text-white/80 mt-1">Available</div>
-          </div>
-          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-        </div>
-        <div className="bg-gradient-to-r from-blue-400 to-blue-500 rounded-2xl p-6 text-white relative overflow-hidden">
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-3">
-              <div className="bg-white/20 rounded-xl p-3"><Users className="w-6 h-6 text-white" /></div>
-              <span className="text-sm text-white/70">Rate</span>
-            </div>
-            <div className="text-3xl font-bold">{Math.round((stats.occupied / stats.total) * 100)}%</div>
-            <div className="text-sm text-white/80 mt-1">Occupancy</div>
-          </div>
-          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-        </div>
-        <div className="bg-gradient-to-r from-amber-400 to-amber-500 rounded-2xl p-6 text-white relative overflow-hidden">
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-3">
-              <div className="bg-white/20 rounded-xl p-3"><Key className="w-6 h-6 text-white" /></div>
-              <span className="text-sm text-white/70">Today</span>
-            </div>
-            <div className="text-3xl font-bold">{stats.arrivals}</div>
-            <div className="text-sm text-white/80 mt-1">Arrivals</div>
-          </div>
-          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-        </div>
-        <div className="bg-gradient-to-r from-rose-400 to-rose-500 rounded-2xl p-6 text-white relative overflow-hidden">
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-3">
-              <div className="bg-white/20 rounded-xl p-3"><TrendingDown className="w-6 h-6 text-white" /></div>
-              <span className="text-sm text-white/70">Today</span>
-            </div>
-            <div className="text-3xl font-bold">{stats.departures}</div>
-            <div className="text-sm text-white/80 mt-1">Departures</div>
-          </div>
-          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-        </div>
-      </div>
-
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search rooms..." />}
+      header={<SectionHeader icon={DoorOpen} title="Room Plan" subtitle="Floor plan view with room status" />}
+      kpi={<KpiStrip items={[
+        { color: "bg-violet-500", value: stats.total, label: "Total Rooms" },
+        { color: "bg-emerald-500", value: stats.available, label: "Available" },
+        { color: "bg-blue-500", value: `${Math.round((stats.occupied / stats.total) * 100)}%`, label: "Occupancy" },
+        { color: "bg-amber-500", value: stats.arrivals, label: "Arrivals" },
+        { color: "bg-rose-500", value: stats.departures, label: "Departures" },
+      ]} />}
+      legend={<LegendBar items={[
+        { color: "bg-emerald-100 border-emerald-200", label: "Available (Clean)" },
+        { color: "bg-amber-100 border-amber-200", label: "Available (Dirty)" },
+        { color: "bg-rose-100 border-rose-200", label: "Occupied" },
+        { color: "bg-violet-100 border-violet-200", label: "Arriving Today" },
+        { color: "bg-blue-100 border-blue-200", label: "Departing Today" },
+        { color: "bg-slate-100 border-slate-200", label: "Out of Service" },
+      ]} />}
+    >
       {/* Floor plan card */}
       <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold">Room Plan</h2>
-        </div>
-
         {/* Floor tabs */}
         <div className="flex gap-2 mb-5">
           {floors.map(floor => (
@@ -439,53 +377,19 @@ function FrontDeskRooms() {
           ))}
         </div>
 
-        {/* Status legend */}
-        <div className="flex flex-wrap gap-4 items-center text-xs mb-5">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded border-2 border-emerald-200 bg-emerald-100"></div>
-            <span className="text-muted-foreground">Available (Clean)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded border-2 border-amber-200 bg-amber-100"></div>
-            <span className="text-muted-foreground">Available (Dirty)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded border-2 border-rose-200 bg-rose-100"></div>
-            <span className="text-muted-foreground">Occupied</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded border-2 border-violet-200 bg-violet-100"></div>
-            <span className="text-muted-foreground">Arriving Today</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded border-2 border-blue-200 bg-blue-100"></div>
-            <span className="text-muted-foreground">Departing Today</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded border-2 border-slate-200 bg-slate-100"></div>
-            <span className="text-muted-foreground">Out of Service</span>
-          </div>
-        </div>
-
         {/* Room grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-9 gap-3">
           {floorRooms.map(room => (
-            <motion.button
+            <RoomCard
               key={room.number}
+              roomNumber={room.number}
+              roomType={room.type}
+              status={getStatusLabel(room.status, room.hkStatus)}
+              statusColor={getRoomStatusColor(room.status, room.hkStatus)}
+              guestName={room.guest}
+              selected={selectedRoom === room.number}
               onClick={() => setSelectedRoom(room.number)}
-              className={cn(
-                "rounded-xl border p-3 cursor-pointer hover:shadow-md transition-all text-left",
-                getRoomStatusColor(room.status, room.hkStatus),
-                selectedRoom === room.number && "ring-2 ring-violet-500"
-              )}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <div className="text-xl font-bold mb-1">{room.number}</div>
-              <div className="text-xs opacity-70 mb-1 line-clamp-1">{room.type}</div>
-              {room.guest && <div className="text-xs font-medium mb-1 line-clamp-1">{room.guest}</div>}
-              <div className="text-xs font-medium opacity-80">{getStatusLabel(room.status, room.hkStatus)}</div>
-            </motion.button>
+            />
           ))}
         </div>
       </div>
@@ -555,7 +459,7 @@ function FrontDeskRooms() {
           </>
         )}
       </AnimatePresence>
-    </div>
+    </PageShell>
   );
 }
 
@@ -582,42 +486,35 @@ function FrontDeskArrivals() {
     });
   }, [statusFilter]);
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div>
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold text-foreground">Arrival List</h1>
-        </div>
-
-        {/* Legend & Filters */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
-          <div className="flex flex-wrap items-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Checked In</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-amber-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Pending</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-purple-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">VIP</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <select 
-              className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option>All Arrivals</option>
-              <option>Pending</option>
-              <option>Checked In</option>
-              <option>VIP Only</option>
-            </select>
-          </div>
-        </div>
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search arrivals..." />}
+      header={<SectionHeader icon={DoorOpen} title="Arrival List" subtitle="Today's expected guest arrivals" />}
+      kpi={<KpiStrip items={[
+        { color: "bg-violet-500", value: mockArrivals.length, label: "Total Arrivals" },
+        { color: "bg-emerald-500", value: mockArrivals.filter(a => a.status === "Checked In").length, label: "Checked In" },
+        { color: "bg-amber-500", value: mockArrivals.filter(a => a.status === "Confirmed").length, label: "Confirmed" },
+        { color: "bg-purple-500", value: mockArrivals.filter(a => a.vip).length, label: "VIP" },
+        { color: "bg-red-500", value: mockArrivals.filter(a => a.hkStatus === "Dirty").length, label: "HK Pending" },
+      ]} />}
+      legend={<LegendBar items={[
+        { color: "bg-emerald-100 border-emerald-200", label: "Checked In" },
+        { color: "bg-amber-100 border-amber-200", label: "Pending" },
+        { color: "bg-purple-100 border-purple-200", label: "VIP" },
+      ]} />}
+    >
+      <div className="flex items-center gap-2 mb-4">
+        <select
+          className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option>All Arrivals</option>
+          <option>Pending</option>
+          <option>Checked In</option>
+          <option>VIP Only</option>
+        </select>
       </div>
 
       {/* Arrivals List */}
@@ -684,7 +581,7 @@ function FrontDeskArrivals() {
           </table>
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -706,43 +603,36 @@ function FrontDeskDepartures() {
     });
   }, [statusFilter]);
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div>
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold text-foreground">Departure List</h1>
-        </div>
-
-        {/* Legend & Filters */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
-          <div className="flex flex-wrap items-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Checked Out</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-amber-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Pending</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-400"></div>
-              <span className="text-sm font-medium text-muted-foreground">Has Balance</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <select 
-              className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option>All Departures</option>
-              <option>Pending</option>
-              <option>Checked Out</option>
-              <option>Has Balance</option>
-              <option>VIP Only</option>
-            </select>
-          </div>
-        </div>
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search departures..." />}
+      header={<SectionHeader icon={DoorOpen} title="Departure List" subtitle="Today's guest departures" />}
+      kpi={<KpiStrip items={[
+        { color: "bg-violet-500", value: mockDepartures.length, label: "Total Departures" },
+        { color: "bg-emerald-500", value: mockDepartures.filter(d => d.status === "Checked Out").length, label: "Checked Out" },
+        { color: "bg-amber-500", value: mockDepartures.filter(d => d.status === "Pending").length, label: "Pending" },
+        { color: "bg-red-500", value: mockDepartures.filter(d => d.balance !== "$0.00").length, label: "Has Balance" },
+        { color: "bg-purple-500", value: mockDepartures.filter(d => d.vip).length, label: "VIP" },
+      ]} />}
+      legend={<LegendBar items={[
+        { color: "bg-emerald-100 border-emerald-200", label: "Checked Out" },
+        { color: "bg-amber-100 border-amber-200", label: "Pending" },
+        { color: "bg-red-100 border-red-200", label: "Has Balance" },
+      ]} />}
+    >
+      <div className="flex items-center gap-2 mb-4">
+        <select
+          className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option>All Departures</option>
+          <option>Pending</option>
+          <option>Checked Out</option>
+          <option>Has Balance</option>
+          <option>VIP Only</option>
+        </select>
       </div>
 
       {/* Departures List */}
@@ -805,7 +695,7 @@ function FrontDeskDepartures() {
           </table>
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -898,34 +788,32 @@ function FrontDeskReservations() {
     }
   };
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-foreground">Reservations</h1>
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search reservations..." />}
+      header={<SectionHeader icon={DoorOpen} title="Reservations" subtitle="Manage bookings and new reservations" actions={
         <button
           onClick={handleNewBooking}
           className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
         >
           New Booking
         </button>
-      </div>
-
-      {/* Legend & Filters */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
-        <div className="flex flex-wrap items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
-            <span className="text-sm font-medium text-muted-foreground">Confirmed</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-amber-400"></div>
-            <span className="text-sm font-medium text-muted-foreground">Pending</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-400"></div>
-            <span className="text-sm font-medium text-muted-foreground">Cancelled</span>
-          </div>
-        </div>
+      } />}
+      kpi={<KpiStrip items={[
+        { color: "bg-violet-500", value: mockReservations.length, label: "Total Reservations" },
+        { color: "bg-emerald-500", value: mockReservations.filter(r => r.status === "Confirmed").length, label: "Confirmed" },
+        { color: "bg-amber-500", value: mockReservations.filter(r => r.status === "Pending").length, label: "Pending" },
+        { color: "bg-red-500", value: mockReservations.filter(r => r.status === "Cancelled").length, label: "Cancelled" },
+        { color: "bg-blue-500", value: mockReservations.filter(r => r.source === "Direct").length, label: "Direct" },
+      ]} />}
+      legend={<LegendBar items={[
+        { color: "bg-emerald-100 border-emerald-200", label: "Confirmed" },
+        { color: "bg-amber-100 border-amber-200", label: "Pending" },
+        { color: "bg-red-100 border-red-200", label: "Cancelled" },
+      ]} />}
+    >
+      <div className="flex items-center gap-2 mb-4">
         <select
           className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer"
           value={statusFilter}
@@ -1215,7 +1103,7 @@ function FrontDeskReservations() {
                     {bookingStep === 4 && (
                       <div className="space-y-6">
                         <div className="bg-card rounded-2xl shadow-sm border border-border p-6 space-y-3">
-                          <h3 className="font-semibold text-base mb-4">Booking Summary</h3>
+                          <SectionHeader title="Booking Summary" />
                           <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Guest:</span>
                             <span className="font-medium">{guestDetails.fullName}</span>
@@ -1285,7 +1173,7 @@ function FrontDeskReservations() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </PageShell>
   );
 }
 
@@ -1334,46 +1222,25 @@ function FrontDeskTimeline() {
     { room: "206", guest: "Brie Larson", startIdx: 2, duration: 3, status: "Confirmed", color: "bg-emerald-500" },
   ], []);
 
+  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)]">
-      <div className="flex-none mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold text-foreground">Timeline</h1>
-        </div>
-
-        {/* Legend & Filters */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
-          <div className="flex flex-wrap items-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <span className="text-sm font-medium text-muted-foreground">Stay Over</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-              <span className="text-sm font-medium text-muted-foreground">Arrival / Confirmed</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-              <span className="text-sm font-medium text-muted-foreground">Departure</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <span className="text-sm font-medium text-muted-foreground">Out of Order</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer hover:bg-secondary/80 transition-colors">
-              Today
-            </button>
-            <select className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer">
-              <option>14 Days</option>
-              <option>7 Days</option>
-              <option>30 Days</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
+    <PageShell
+      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search timeline..." />}
+      header={<SectionHeader icon={DoorOpen} title="Timeline" subtitle="14-day reservation timeline view" />}
+      kpi={<KpiStrip items={[
+        { color: "bg-blue-500", value: bookings.filter(b => b.status === "Stay Over").length, label: "Stay Over" },
+        { color: "bg-emerald-500", value: bookings.filter(b => b.status === "Confirmed").length, label: "Confirmed" },
+        { color: "bg-amber-500", value: bookings.filter(b => b.status === "Departure").length, label: "Departures" },
+        { color: "bg-violet-500", value: bookings.filter(b => b.status === "Arrival").length, label: "Arrivals" },
+        { color: "bg-red-500", value: bookings.filter(b => b.status === "OOS").length, label: "Out of Order" },
+      ]} />}
+      legend={<LegendBar items={[
+        { color: "bg-blue-100 border-blue-200", label: "Stay Over" },
+        { color: "bg-emerald-100 border-emerald-200", label: "Arrival / Confirmed" },
+        { color: "bg-amber-100 border-amber-200", label: "Departure" },
+        { color: "bg-red-100 border-red-200", label: "Out of Order" },
+      ]} />}
+    >
       {/* Timeline Grid */}
       <div className="flex-1 bg-card rounded-2xl shadow-sm border border-border overflow-hidden relative">
         <div className="absolute inset-0 overflow-auto">
@@ -1435,7 +1302,7 @@ function FrontDeskTimeline() {
           </table>
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -1460,7 +1327,7 @@ export function FrontDesk({ aiEnabled, activeSubmenu = "Overview" }: FrontDeskPr
             <div className="w-24 h-24 bg-secondary rounded-full flex items-center justify-center mb-6">
               <span className="text-4xl">🚧</span>
             </div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">Front Desk - {activeSubmenu}</h2>
+            <SectionHeader title={`Front Desk - ${activeSubmenu}`} />
             <p className="text-muted-foreground max-w-md">
               The {activeSubmenu} view is currently under construction.
             </p>
