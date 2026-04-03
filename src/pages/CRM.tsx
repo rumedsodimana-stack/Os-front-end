@@ -11,6 +11,7 @@ import {
   ChevronDown, XCircle, BarChart2, MapPin, Bell, BellOff,
 } from "lucide-react";
 import { cn } from "../lib/utils";
+import { KpiStrip, LegendBar, SectionSearch, SectionHeader } from "../components/shared";
 
 interface CRMProps {
   aiEnabled: boolean;
@@ -87,19 +88,19 @@ const tierData = [
 
 const getTierColor = (tier: Guest["tier"]) => {
   switch (tier) {
-    case "Platinum": return "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400";
-    case "Gold": return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
-    case "Silver": return "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300";
+    case "Platinum": return "bg-purple-100 text-purple-700";
+    case "Gold": return "bg-amber-100 text-amber-700";
+    case "Silver": return "bg-muted text-muted-foreground";
     case "Standard": return "bg-secondary text-muted-foreground";
   }
 };
 
 const getComplaintStatusColor = (s: Complaint["status"]) => {
   switch (s) {
-    case "Resolved": return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400";
-    case "In Progress": return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
-    case "Open": return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
-    case "Escalated": return "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400";
+    case "Resolved": return "bg-emerald-100 text-emerald-700";
+    case "In Progress": return "bg-blue-100 text-blue-700";
+    case "Open": return "bg-red-100 text-red-700";
+    case "Escalated": return "bg-orange-100 text-orange-700";
   }
 };
 
@@ -128,32 +129,18 @@ export function CRM({ aiEnabled, activeSubmenu = "Overview" }: CRMProps) {
           <motion.div key="Overview" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">CRM</h1>
+                <SectionHeader title="CRM" />
                 <p className="text-muted-foreground text-sm mt-0.5">Guest relationship management — {totalGuests} profiles active</p>
               </div>
               <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><Plus className="w-4 h-4" /> New Guest Profile</button>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: "Total Profiles", value: 300, icon: Users, color: "from-blue-400 to-blue-500" },
-                { label: "VIP (Gold+)", value: vipGuests, icon: Star, color: "from-amber-400 to-amber-500" },
-                { label: "Birthdays This Month", value: birthdayThisMonth, icon: Gift, color: "from-pink-400 to-pink-500" },
-                { label: "Open Complaints", value: openComplaints, icon: AlertTriangle, color: "from-red-400 to-red-500" },
-              ].map(c => (
-                <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-4 text-white relative overflow-hidden`}>
-                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                  <div className="bg-white/20 rounded-lg w-8 h-8 flex items-center justify-center mb-2"><c.icon className="w-4 h-4 text-white" /></div>
-                  <p className="text-2xl font-bold">{c.value}</p>
-                  <p className="text-white/80 text-xs">{c.label}</p>
-                </div>
-              ))}
-            </div>
+            <KpiStrip items={[{color:"bg-blue-500",value:300,label:"Total Profiles"},{color:"bg-amber-500",value:vipGuests,label:"VIP (Gold+)"},{color:"bg-pink-500",value:birthdayThisMonth,label:"Birthdays This Month"},{color:"bg-red-500",value:openComplaints,label:"Open Complaints"}]} />
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-                <h3 className="font-semibold text-foreground mb-4">Guest Tier Breakdown</h3>
+                <SectionHeader title="Guest Tier Breakdown" />
                 <div className="flex items-center gap-6">
                   <ResponsiveContainer width={160} height={160}>
                     <PieChart>
@@ -174,7 +161,7 @@ export function CRM({ aiEnabled, activeSubmenu = "Overview" }: CRMProps) {
               </div>
 
               <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-                <h3 className="font-semibold text-foreground mb-4">Upcoming Birthdays</h3>
+                <SectionHeader title="Upcoming Birthdays" />
                 <div className="space-y-3">
                   {guests.filter(g => g.birthday).slice(0, 5).map(g => {
                     const bday = new Date(g.birthday);
@@ -186,7 +173,7 @@ export function CRM({ aiEnabled, activeSubmenu = "Overview" }: CRMProps) {
                           <p className="font-medium text-foreground text-sm">{g.name}</p>
                           <p className="text-xs text-muted-foreground">{g.birthday.slice(5)} · {g.tier}</p>
                         </div>
-                        <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", daysUntil <= 7 ? "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400" : "bg-secondary text-muted-foreground")}>{daysUntil >= 0 ? `in ${daysUntil}d` : `${Math.abs(daysUntil)}d ago`}</span>
+                        <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", daysUntil <= 7 ? "bg-pink-100 text-pink-700" : "bg-secondary text-muted-foreground")}>{daysUntil >= 0 ? `in ${daysUntil}d` : `${Math.abs(daysUntil)}d ago`}</span>
                       </div>
                     );
                   })}
@@ -196,7 +183,7 @@ export function CRM({ aiEnabled, activeSubmenu = "Overview" }: CRMProps) {
 
             {/* In-House VIPs */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-              <h3 className="font-semibold text-foreground mb-4">In-House VIP Guests</h3>
+              <SectionHeader title="In-House VIP Guests" />
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {guests.filter(g => g.tier === "Platinum" || g.tier === "Gold").slice(0, 6).map(g => (
                   <div key={g.id} className="bg-secondary/30 rounded-xl p-4 space-y-3">
@@ -206,7 +193,7 @@ export function CRM({ aiEnabled, activeSubmenu = "Overview" }: CRMProps) {
                         <p className="font-semibold text-foreground text-sm truncate">{g.name}</p>
                         <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", getTierColor(g.tier))}>{g.tier}</span>
                       </div>
-                      {g.dnd && <BellOff className="w-4 h-4 text-amber-500 ml-auto flex-shrink-0" title="DND" />}
+                      {g.dnd && <BellOff className="w-4 h-4 text-amber-500 ml-auto flex-shrink-0" aria-label="DND" />}
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {g.preferences.slice(0, 3).map(p => <span key={p} className="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs">{p}</span>)}
@@ -224,7 +211,7 @@ export function CRM({ aiEnabled, activeSubmenu = "Overview" }: CRMProps) {
           <motion.div key="Guest Profiles" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <h2 className="text-xl font-bold text-foreground">Guest Profiles</h2>
+                <SectionHeader title="Guest Profiles" />
                 <p className="text-muted-foreground text-sm">{filteredGuests.length} profiles</p>
               </div>
               <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><Plus className="w-4 h-4" /> Add Guest</button>
@@ -265,7 +252,7 @@ export function CRM({ aiEnabled, activeSubmenu = "Overview" }: CRMProps) {
                       <td className="px-4 py-3 font-bold text-foreground">BHD {g.totalSpend.toLocaleString()}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{g.lastStay}</td>
                       <td className="px-4 py-3">
-                        {g.nextArrival ? <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">{g.nextArrival}</span> : <span className="text-sm text-muted-foreground">—</span>}
+                        {g.nextArrival ? <span className="text-sm text-blue-600 font-medium">{g.nextArrival}</span> : <span className="text-sm text-muted-foreground">—</span>}
                       </td>
                       <td className="px-4 py-3">
                         {g.dnd ? <BellOff className="w-4 h-4 text-amber-500" /> : <Bell className="w-4 h-4 text-muted-foreground" />}
@@ -321,7 +308,7 @@ export function CRM({ aiEnabled, activeSubmenu = "Overview" }: CRMProps) {
                     </div>
                   </div>
                 )}
-                {selectedGuest.notes && <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 text-sm text-amber-700 dark:text-amber-400">{selectedGuest.notes}</div>}
+                {selectedGuest.notes && <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-700">{selectedGuest.notes}</div>}
               </div>
             )}
           </motion.div>
@@ -332,26 +319,13 @@ export function CRM({ aiEnabled, activeSubmenu = "Overview" }: CRMProps) {
           <motion.div key="Campaigns" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <h2 className="text-xl font-bold text-foreground">Email & Campaign Manager</h2>
+                <SectionHeader title="Email & Campaign Manager" />
                 <p className="text-muted-foreground text-sm">{campaigns.length} campaigns · BHD {campaigns.reduce((s, c) => s + c.revenue, 0).toLocaleString()} attributed revenue</p>
               </div>
               <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><Plus className="w-4 h-4" /> Create Campaign</button>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: "Total Sent", value: campaigns.reduce((s, c) => s + c.sent, 0).toLocaleString(), color: "from-blue-400 to-blue-500" },
-                { label: "Avg Open Rate", value: `${Math.round(campaigns.filter(c => c.sent > 0).reduce((s, c) => s + (c.opened / c.sent * 100), 0) / campaigns.filter(c => c.sent > 0).length)}%`, color: "from-purple-400 to-purple-500" },
-                { label: "Avg Click Rate", value: `${Math.round(campaigns.filter(c => c.sent > 0).reduce((s, c) => s + (c.clicked / c.sent * 100), 0) / campaigns.filter(c => c.sent > 0).length)}%`, color: "from-emerald-400 to-emerald-500" },
-                { label: "Revenue", value: `BHD ${campaigns.reduce((s, c) => s + c.revenue, 0).toLocaleString()}`, color: "from-amber-400 to-amber-500" },
-              ].map(c => (
-                <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-4 text-white relative overflow-hidden`}>
-                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                  <p className="text-2xl font-bold">{c.value}</p>
-                  <p className="text-white/80 text-xs">{c.label}</p>
-                </div>
-              ))}
-            </div>
+            <KpiStrip items={[{color:"bg-violet-500",value:campaigns.length,label:"Campaigns"},{color:"bg-blue-500",value:campaigns.reduce((s,c)=>s+c.sent,0).toLocaleString(),label:"Total Sent"},{color:"bg-emerald-500",value:Math.round(campaigns.reduce((s,c)=>s+c.opened,0)/Math.max(campaigns.reduce((s,c)=>s+c.sent,0),1)*100)+"%",label:"Avg Open Rate"},{color:"bg-amber-500",value:"BHD "+campaigns.reduce((s,c)=>s+c.revenue,0).toLocaleString(),label:"Revenue"}]} />
 
             <div className="space-y-4">
               {campaigns.map(cam => (
@@ -361,7 +335,7 @@ export function CRM({ aiEnabled, activeSubmenu = "Overview" }: CRMProps) {
                       <div className="flex items-center gap-2 flex-wrap mb-2">
                         <h4 className="font-semibold text-foreground">{cam.name}</h4>
                         <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-secondary text-muted-foreground">{cam.type}</span>
-                        <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", cam.status === "Sent" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : cam.status === "Active" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : cam.status === "Scheduled" ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400")}>{cam.status}</span>
+                        <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", cam.status === "Sent" ? "bg-emerald-100 text-emerald-700" : cam.status === "Active" ? "bg-blue-100 text-blue-700" : cam.status === "Scheduled" ? "bg-purple-100 text-purple-700" : "bg-muted text-muted-foreground")}>{cam.status}</span>
                       </div>
                       <p className="text-xs text-muted-foreground">Segment: {cam.segment} · {cam.scheduledDate || "Not scheduled"}</p>
                     </div>
@@ -380,7 +354,7 @@ export function CRM({ aiEnabled, activeSubmenu = "Overview" }: CRMProps) {
                           <p className="text-xs text-muted-foreground">Click Rate</p>
                         </div>
                         <div>
-                          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">BHD {cam.revenue.toLocaleString()}</p>
+                          <p className="text-lg font-bold text-emerald-600">BHD {cam.revenue.toLocaleString()}</p>
                           <p className="text-xs text-muted-foreground">Revenue</p>
                         </div>
                       </div>
@@ -397,7 +371,7 @@ export function CRM({ aiEnabled, activeSubmenu = "Overview" }: CRMProps) {
           <motion.div key="Complaints" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <h2 className="text-xl font-bold text-foreground">Complaint & Resolution Tracker</h2>
+                <SectionHeader title="Complaint & Resolution Tracker" />
                 <p className="text-muted-foreground text-sm">{complaints.filter(c => c.status !== "Resolved").length} open · {complaints.filter(c => c.status === "Resolved").length} resolved</p>
               </div>
               <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 transition-opacity"><Plus className="w-4 h-4" /> Log Complaint</button>
@@ -421,7 +395,7 @@ export function CRM({ aiEnabled, activeSubmenu = "Overview" }: CRMProps) {
                         <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", getComplaintStatusColor(comp.status))}>{comp.status}</span>
                       </div>
                       <p className="text-sm text-muted-foreground mb-1">{comp.description}</p>
-                      {comp.resolution && <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">✓ {comp.resolution}</p>}
+                      {comp.resolution && <p className="text-sm text-emerald-600 font-medium">✓ {comp.resolution}</p>}
                       <div className="flex gap-4 text-xs text-muted-foreground mt-2">
                         <span>{comp.date}</span>
                         <span>Assigned: {comp.assignedTo}</span>
@@ -447,7 +421,7 @@ export function CRM({ aiEnabled, activeSubmenu = "Overview" }: CRMProps) {
           <motion.div key="Stay History" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <h2 className="text-xl font-bold text-foreground">Guest Stay History</h2>
+                <SectionHeader title="Guest Stay History" />
                 <p className="text-muted-foreground text-sm">{stayHistory.length} recorded stays</p>
               </div>
               <button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm text-muted-foreground"><Download className="w-4 h-4" /> Export</button>

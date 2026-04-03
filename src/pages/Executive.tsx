@@ -11,6 +11,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
+import { KpiStrip, LegendBar, SectionSearch, SectionHeader } from "../components/shared";
 
 interface ExecutiveProps {
   aiEnabled: boolean;
@@ -255,19 +256,19 @@ const auditRows = [
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
-    Ready: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    Generating: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    Scheduled: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    Excellent: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    Good: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    Average: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    "On Track": "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    Behind: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-    Completed: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-    Success: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    Failed: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-    High: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-    Medium: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    Ready: "bg-emerald-100 text-emerald-700",
+    Generating: "bg-amber-100 text-amber-700",
+    Scheduled: "bg-blue-100 text-blue-700",
+    Excellent: "bg-emerald-100 text-emerald-700",
+    Good: "bg-blue-100 text-blue-700",
+    Average: "bg-amber-100 text-amber-700",
+    "On Track": "bg-emerald-100 text-emerald-700",
+    Behind: "bg-red-100 text-red-700",
+    Completed: "bg-purple-100 text-purple-700",
+    Success: "bg-emerald-100 text-emerald-700",
+    Failed: "bg-red-100 text-red-700",
+    High: "bg-red-100 text-red-700",
+    Medium: "bg-amber-100 text-amber-700",
     Low: "bg-secondary text-muted-foreground",
   };
   return (
@@ -279,9 +280,9 @@ function StatusBadge({ status }: { status: string }) {
 
 function ActionBadge({ action }: { action: string }) {
   const map: Record<string, string> = {
-    Created: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    Modified: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    Deleted: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    Created: "bg-emerald-100 text-emerald-700",
+    Modified: "bg-blue-100 text-blue-700",
+    Deleted: "bg-red-100 text-red-700",
     Viewed: "bg-secondary text-muted-foreground",
   };
   return (
@@ -312,7 +313,7 @@ function DashboardView() {
     <motion.div key="Dashboard" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Executive Dashboard</h1>
+          <SectionHeader title="Executive Dashboard" />
           <p className="text-muted-foreground text-sm mt-0.5">GM Overview — April 2026 · Data as of today</p>
         </div>
         <button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm text-muted-foreground">
@@ -321,36 +322,24 @@ function DashboardView() {
       </div>
 
       {/* 6 KPI Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-        {[
-          { label: "Occupancy", value: "79.8%", sub: "+3.2pp YoY", icon: BarChart2, color: "from-blue-400 to-blue-500" },
-          { label: "ADR", value: "$268", sub: "+5.1% YoY", icon: DollarSign, color: "from-emerald-400 to-emerald-500" },
-          { label: "RevPAR", value: "$214", sub: "+8.6% YoY", icon: TrendingUp, color: "from-purple-400 to-purple-500" },
-          { label: "Revenue MTD", value: "$388K", sub: "+1.3% vs budget", icon: Percent, color: "from-amber-400 to-amber-500" },
-          { label: "Guest Score", value: "4.6/5", sub: "+0.1 vs target", icon: Star, color: "from-pink-400 to-pink-500" },
-          { label: "Staff Efficiency", value: "87%", sub: "+2pp vs target", icon: Users, color: "from-teal-400 to-teal-500" },
-        ].map((c) => (
-          <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-4 text-white relative overflow-hidden`}>
-            <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-white/10 rounded-full blur-2xl" />
-            <div className="bg-white/20 rounded-xl w-9 h-9 flex items-center justify-center mb-3">
-              <c.icon className="w-4 h-4 text-white" />
-            </div>
-            <p className="text-3xl font-bold leading-none">{c.value}</p>
-            <p className="text-white/80 text-xs mt-1">{c.label}</p>
-            <p className="text-white/60 text-xs mt-0.5">{c.sub}</p>
-          </div>
-        ))}
-      </div>
+      <KpiStrip items={[
+        {color:"bg-blue-500",value:"79.8%",label:"Occupancy"},
+        {color:"bg-emerald-500",value:"$268",label:"ADR"},
+        {color:"bg-violet-500",value:"$214",label:"RevPAR"},
+        {color:"bg-amber-500",value:"$388K",label:"Revenue MTD"},
+        {color:"bg-pink-500",value:"4.6/5",label:"Guest Score"},
+        {color:"bg-violet-600",value:"87%",label:"Staff Efficiency"},
+      ]} />
 
       {/* 90-Day Multi-Line Chart */}
       <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <h3 className="font-semibold text-foreground">90-Day KPI Trend — Occupancy / ADR / RevPAR</h3>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-blue-500 inline-block rounded" /> Occupancy %</span>
-            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-emerald-500 inline-block rounded" /> ADR $</span>
-            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-purple-500 inline-block rounded" /> RevPAR $</span>
-          </div>
+          <SectionHeader title="90-Day KPI Trend — Occupancy / ADR / RevPAR" />
+          <LegendBar items={[
+            { color: "bg-blue-100 border-blue-200", label: "Occupancy %" },
+            { color: "bg-emerald-100 border-emerald-200", label: "ADR $" },
+            { color: "bg-purple-100 border-purple-200", label: "RevPAR $" },
+          ]} />
         </div>
         <ResponsiveContainer width="100%" height={240}>
           <LineChart data={kpi90DayTrend} margin={{ top: 5, right: 16, left: -8, bottom: 0 }}>
@@ -369,7 +358,7 @@ function DashboardView() {
       {/* Department Performance Table */}
       <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
         <div className="px-6 py-4 border-b border-border">
-          <h3 className="font-semibold text-foreground">Department Performance Scorecard</h3>
+          <SectionHeader title="Department Performance Scorecard" />
         </div>
         <table className="w-full">
           <thead className="bg-secondary/50">
@@ -424,7 +413,7 @@ function ReportsView() {
     <motion.div key="Reports" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Reports Library</h1>
+          <SectionHeader title="Reports Library" />
           <p className="text-muted-foreground text-sm mt-0.5">{filtered.length} reports found</p>
         </div>
       </div>
@@ -519,7 +508,7 @@ function TargetsView() {
     <motion.div key="Targets" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Targets &amp; Goals</h1>
+          <SectionHeader title="Targets &amp; Goals" />
           <p className="text-muted-foreground text-sm mt-0.5">KPI progress tracking — {period === "monthly" ? "March 2026" : "Annual 2026"}</p>
         </div>
         <div className="flex items-center gap-1 bg-secondary rounded-xl p-1">
@@ -528,28 +517,16 @@ function TargetsView() {
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: "On Track", count: onTrack.length, icon: CheckCircle2, color: "from-emerald-400 to-emerald-500" },
-          { label: "Exceeded", count: exceeded.length, icon: TrendingUp, color: "from-blue-400 to-blue-500" },
-          { label: "Behind", count: behind.length, icon: AlertCircle, color: "from-red-400 to-red-500" },
-        ].map((c) => (
-          <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-5 text-white relative overflow-hidden`}>
-            <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-white/10 rounded-full blur-2xl" />
-            <div className="bg-white/20 rounded-xl w-9 h-9 flex items-center justify-center mb-3">
-              <c.icon className="w-4 h-4 text-white" />
-            </div>
-            <p className="text-3xl font-bold">{c.count}</p>
-            <p className="text-white/80 text-sm mt-0.5">{c.label}</p>
-          </div>
-        ))}
-      </div>
+      <KpiStrip items={[
+        {color:"bg-emerald-500",value:onTrack.length,label:"On Track"},
+        {color:"bg-blue-500",value:exceeded.length,label:"Exceeded"},
+        {color:"bg-rose-500",value:behind.length,label:"Behind"},
+      ]} />
 
       {/* KPI Progress List */}
       <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
         <div className="px-6 py-4 border-b border-border">
-          <h3 className="font-semibold text-foreground">KPI Progress</h3>
+          <SectionHeader title="KPI Progress" />
         </div>
         <div className="divide-y divide-border/50">
           {kpiTargets.map((k) => {
@@ -576,7 +553,7 @@ function TargetsView() {
                       <span className="text-xs text-muted-foreground">Current: </span>
                       <span className="text-sm font-bold text-foreground">{typeof k.current === "number" && k.current > 1000 ? `$${(k.current / 1000).toFixed(0)}K` : k.current}{k.unit}</span>
                     </div>
-                    <div className={cn("flex items-center gap-0.5 text-sm font-semibold", isAhead ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400")}>
+                    <div className={cn("flex items-center gap-0.5 text-sm font-semibold", isAhead ? "text-emerald-600" : "text-red-600")}>
                       {isAhead ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
                       {Math.abs(variancePct).toFixed(1)}%
                     </div>
@@ -611,7 +588,7 @@ function AnnouncementsView() {
     <motion.div key="Announcements" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Announcements</h1>
+          <SectionHeader title="Announcements" />
           <p className="text-muted-foreground text-sm mt-0.5">{announcements.filter((a) => a.unread).length} unread</p>
         </div>
         <Bell className="w-5 h-5 text-muted-foreground" />
@@ -630,7 +607,7 @@ function AnnouncementsView() {
         {filtered.map((a) => (
           <div
             key={a.id}
-            className={cn("bg-card rounded-2xl border p-5 relative", a.unread ? "border-primary/30 bg-primary/5 dark:bg-primary/10" : "border-border")}
+            className={cn("bg-card rounded-2xl border p-5 relative", a.unread ? "border-primary/30 bg-primary/5" : "border-border")}
           >
             {a.unread && (
               <span className="absolute top-4 right-4 w-2.5 h-2.5 rounded-full bg-primary" />
@@ -663,7 +640,7 @@ function PLView() {
     <motion.div key="PL" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Financial P&amp;L Summary</h1>
+          <SectionHeader title="Financial P&amp;L Summary" />
           <p className="text-muted-foreground text-sm mt-0.5">{data.label}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -691,7 +668,7 @@ function PLView() {
                 <div className="italic pl-2">{row.account}</div>
                 <div className="text-right font-medium">{row.actual.toFixed(1)}%</div>
                 <div className="text-right">{row.budget.toFixed(1)}%</div>
-                <div className={cn("text-right font-medium", row.actual >= row.budget ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400")}>
+                <div className={cn("text-right font-medium", row.actual >= row.budget ? "text-emerald-600" : "text-red-600")}>
                   {(row.actual - row.budget).toFixed(1)}pp
                 </div>
               </div>
@@ -700,15 +677,15 @@ function PLView() {
           const isTotal = row.type === "total" || row.type === "gop" || row.type === "ebitda";
           const variance = row.actual - row.budget;
           return (
-            <div key={`${row.account}-${i}`} className={cn("grid grid-cols-4 px-6 py-3 border-b border-border/30 hover:bg-secondary/20 transition-colors text-sm", isTotal ? "font-bold bg-secondary/20" : "", row.type === "ebitda" ? "bg-emerald-50/50 dark:bg-emerald-900/10" : "")}>
+            <div key={`${row.account}-${i}`} className={cn("grid grid-cols-4 px-6 py-3 border-b border-border/30 hover:bg-secondary/20 transition-colors text-sm", isTotal ? "font-bold bg-secondary/20" : "", row.type === "ebitda" ? "bg-emerald-50/50" : "")}>
               <div className={cn(isTotal ? "text-foreground" : "text-foreground pl-2")}>
                 {!isTotal && <span className="text-muted-foreground mr-2">—</span>}{row.account}
               </div>
-              <div className={cn("text-right", row.actual < 0 ? "text-red-600 dark:text-red-400" : "text-foreground")}>
+              <div className={cn("text-right", row.actual < 0 ? "text-red-600" : "text-foreground")}>
                 ${Math.abs(row.actual).toLocaleString()}
               </div>
               <div className="text-right text-muted-foreground">${Math.abs(row.budget).toLocaleString()}</div>
-              <div className={cn("text-right font-medium", variance > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400")}>
+              <div className={cn("text-right font-medium", variance > 0 ? "text-emerald-600" : "text-red-600")}>
                 {variance > 0 ? "+" : ""}${variance.toLocaleString()}
               </div>
             </div>
@@ -718,7 +695,7 @@ function PLView() {
 
       {/* GOP% Trend Bar Chart */}
       <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-        <h3 className="font-semibold text-foreground mb-4">Monthly GOP % Trend</h3>
+        <SectionHeader title="Monthly GOP % Trend" className="mb-4" />
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={gopTrendMonthly} margin={{ top: 5, right: 16, left: -8, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -738,7 +715,7 @@ function MarketShareView() {
     <motion.div key="MarketShare" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Market Share Report</h1>
+          <SectionHeader title="Market Share Report" />
           <p className="text-muted-foreground text-sm mt-0.5">Competitive set analysis — March 2026</p>
         </div>
         <button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm text-muted-foreground">
@@ -749,7 +726,7 @@ function MarketShareView() {
       {/* Comp Set Table */}
       <div className="bg-card rounded-2xl shadow-sm border border-border overflow-x-auto">
         <div className="px-6 py-4 border-b border-border">
-          <h3 className="font-semibold text-foreground">Competitive Set Benchmarking</h3>
+          <SectionHeader title="Competitive Set Benchmarking" />
         </div>
         <table className="w-full min-w-[800px]">
           <thead className="bg-secondary/50">
@@ -763,7 +740,7 @@ function MarketShareView() {
             {compSetData.map((row) => (
               <tr
                 key={row.hotel}
-                className={cn("transition-colors", row.isOurs ? "bg-primary/5 dark:bg-primary/10 font-semibold" : "hover:bg-secondary/30")}
+                className={cn("transition-colors", row.isOurs ? "bg-primary/5 font-semibold" : "hover:bg-secondary/30")}
               >
                 <td className="px-5 py-3 text-sm truncate max-w-[200px]" title={row.hotel}>
                   {row.isOurs && <span className="inline-block w-2 h-2 rounded-full bg-primary mr-2" />}
@@ -773,13 +750,13 @@ function MarketShareView() {
                 <td className="px-5 py-3 text-sm">${row.adr}</td>
                 <td className="px-5 py-3 text-sm">${row.revpar}</td>
                 <td className="px-5 py-3 text-sm">
-                  <span className={cn(row.rgi >= 1.0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400")}>{row.rgi.toFixed(2)}</span>
+                  <span className={cn(row.rgi >= 1.0 ? "text-emerald-600" : "text-red-600")}>{row.rgi.toFixed(2)}</span>
                 </td>
                 <td className="px-5 py-3 text-sm">
-                  <span className={cn(row.ari >= 1.0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400")}>{row.ari.toFixed(2)}</span>
+                  <span className={cn(row.ari >= 1.0 ? "text-emerald-600" : "text-red-600")}>{row.ari.toFixed(2)}</span>
                 </td>
                 <td className="px-5 py-3 text-sm">
-                  <span className={cn(row.mpi >= 1.0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400")}>{row.mpi.toFixed(2)}</span>
+                  <span className={cn(row.mpi >= 1.0 ? "text-emerald-600" : "text-red-600")}>{row.mpi.toFixed(2)}</span>
                 </td>
               </tr>
             ))}
@@ -790,11 +767,11 @@ function MarketShareView() {
       {/* RGI Trend Chart */}
       <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <h3 className="font-semibold text-foreground">RGI Trend — Our Hotel vs Market Average (12 Months)</h3>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-primary inline-block rounded" /> Singularity Hotel</span>
-            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-muted-foreground inline-block rounded" /> Market Avg (1.00)</span>
-          </div>
+          <SectionHeader title="RGI Trend — Our Hotel vs Market Average (12 Months)" />
+          <LegendBar items={[
+            { color: "bg-violet-100 border-violet-200", label: "Singularity Hotel" },
+            { color: "bg-slate-100 border-slate-200", label: "Market Avg (1.00)" },
+          ]} />
         </div>
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={rgiTrendData} margin={{ top: 5, right: 16, left: -8, bottom: 0 }}>
@@ -815,17 +792,17 @@ function GuestSatisfactionView() {
   return (
     <motion.div key="GuestSat" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Guest Satisfaction Trends</h1>
+        <SectionHeader title="Guest Satisfaction Trends" />
         <p className="text-muted-foreground text-sm mt-0.5">NPS &amp; CSAT analysis — 12-month rolling</p>
       </div>
 
       {/* NPS Trend */}
       <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <h3 className="font-semibold text-foreground">Net Promoter Score (NPS) — 12 Month Trend</h3>
+          <SectionHeader title="Net Promoter Score (NPS) — 12 Month Trend" />
           <div className="flex items-center gap-2">
             <span className="text-3xl font-bold text-foreground">82</span>
-            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
+            <span className="flex items-center gap-1 text-emerald-600 text-sm font-medium">
               <ArrowUpRight className="w-4 h-4" /> +14 YoY
             </span>
           </div>
@@ -850,7 +827,7 @@ function GuestSatisfactionView() {
       {/* CSAT by Department */}
       <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
         <div className="px-6 py-4 border-b border-border">
-          <h3 className="font-semibold text-foreground">CSAT by Department</h3>
+          <SectionHeader title="CSAT by Department" />
         </div>
         <table className="w-full">
           <thead className="bg-secondary/50">
@@ -876,8 +853,8 @@ function GuestSatisfactionView() {
                 </td>
                 <td className="px-5 py-3">
                   {row.trend === "up"
-                    ? <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-medium"><TrendingUp className="w-3.5 h-3.5" /> Up</span>
-                    : <span className="flex items-center gap-1 text-red-600 dark:text-red-400 text-xs font-medium"><TrendingDown className="w-3.5 h-3.5" /> Down</span>}
+                    ? <span className="flex items-center gap-1 text-emerald-600 text-xs font-medium"><TrendingUp className="w-3.5 h-3.5" /> Up</span>
+                    : <span className="flex items-center gap-1 text-red-600 text-xs font-medium"><TrendingDown className="w-3.5 h-3.5" /> Down</span>}
                 </td>
               </tr>
             ))}
@@ -888,9 +865,7 @@ function GuestSatisfactionView() {
       {/* Feedback Themes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-          <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Top Positive Themes
-          </h3>
+          <SectionHeader title="Top Positive Themes" className="mb-4" actions={<CheckCircle2 className="w-4 h-4 text-emerald-500" />} />
           <ul className="space-y-2.5">
             {[
               { theme: "Warm & personalized service", count: 412 },
@@ -901,15 +876,13 @@ function GuestSatisfactionView() {
             ].map((t) => (
               <li key={t.theme} className="flex items-center justify-between">
                 <span className="text-sm text-foreground">{t.theme}</span>
-                <span className="text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-2.5 py-1 rounded-full">{t.count}</span>
+                <span className="text-xs font-medium bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full">{t.count}</span>
               </li>
             ))}
           </ul>
         </div>
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-          <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-red-500" /> Top Complaint Themes
-          </h3>
+          <SectionHeader title="Top Complaint Themes" className="mb-4" actions={<AlertCircle className="w-4 h-4 text-red-500" />} />
           <ul className="space-y-2.5">
             {[
               { theme: "Slow room service delivery time", count: 84 },
@@ -920,7 +893,7 @@ function GuestSatisfactionView() {
             ].map((t) => (
               <li key={t.theme} className="flex items-center justify-between">
                 <span className="text-sm text-foreground">{t.theme}</span>
-                <span className="text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 px-2.5 py-1 rounded-full">{t.count}</span>
+                <span className="text-xs font-medium bg-red-100 text-red-700 px-2.5 py-1 rounded-full">{t.count}</span>
               </li>
             ))}
           </ul>
@@ -935,7 +908,7 @@ function ESGView() {
     <motion.div key="ESG" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">ESG / Sustainability</h1>
+          <SectionHeader title="ESG / Sustainability" />
           <p className="text-muted-foreground text-sm mt-0.5">Environmental, Social &amp; Governance — March 2026</p>
         </div>
         <button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm text-muted-foreground">
@@ -943,30 +916,17 @@ function ESGView() {
         </button>
       </div>
 
-      {/* KPI Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Carbon Footprint", value: "186 tCO₂e", sub: "Target: 170", icon: Leaf, color: "from-emerald-400 to-emerald-500" },
-          { label: "Water Usage", value: "2,840 m³", sub: "Target: 2,600", icon: Percent, color: "from-blue-400 to-blue-500" },
-          { label: "Waste Diversion", value: "62%", sub: "Target: 75%", icon: Target, color: "from-amber-400 to-amber-500" },
-          { label: "Green Certifications", value: "2 Active", sub: "Green Key + LEED-EB", icon: Shield, color: "from-purple-400 to-purple-500" },
-        ].map((c) => (
-          <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-5 text-white relative overflow-hidden`}>
-            <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-white/10 rounded-full blur-2xl" />
-            <div className="bg-white/20 rounded-xl w-9 h-9 flex items-center justify-center mb-3">
-              <c.icon className="w-4 h-4 text-white" />
-            </div>
-            <p className="text-3xl font-bold leading-none">{c.value}</p>
-            <p className="text-white/80 text-xs mt-1">{c.label}</p>
-            <p className="text-white/60 text-xs mt-0.5">{c.sub}</p>
-          </div>
-        ))}
-      </div>
+      <KpiStrip items={[
+        {color:"bg-emerald-500",value:"186 tCO₂e",label:"Carbon Footprint"},
+        {color:"bg-blue-500",value:"2,840 m³",label:"Water Usage"},
+        {color:"bg-amber-500",value:"62%",label:"Waste Diversion"},
+        {color:"bg-violet-500",value:"2 Active",label:"Green Certs"},
+      ]} />
 
       {/* Initiatives Table */}
       <div className="bg-card rounded-2xl shadow-sm border border-border overflow-x-auto">
         <div className="px-6 py-4 border-b border-border">
-          <h3 className="font-semibold text-foreground">Sustainability Initiatives</h3>
+          <SectionHeader title="Sustainability Initiatives" />
         </div>
         <table className="w-full min-w-[800px]">
           <thead className="bg-secondary/50">
@@ -1013,7 +973,7 @@ function BoardReportView() {
     <motion.div key="Board" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Board Report — Q1 2026</h1>
+          <SectionHeader title="Board Report — Q1 2026" />
           <p className="text-muted-foreground text-sm mt-0.5">Confidential — For Board of Directors Use</p>
         </div>
         <div className="flex items-center gap-2">
@@ -1026,29 +986,16 @@ function BoardReportView() {
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Revenue vs Budget", value: "+1.3%", sub: "$388K vs $383K", icon: DollarSign, color: "from-emerald-400 to-emerald-500" },
-          { label: "GOP Margin", value: "46.1%", sub: "+4.1pp vs target", icon: TrendingUp, color: "from-blue-400 to-blue-500" },
-          { label: "NPS Score", value: "82 pts", sub: "+2pts vs target", icon: Star, color: "from-amber-400 to-amber-500" },
-          { label: "RGI Index", value: "1.08", sub: "+8% above market", icon: BarChart2, color: "from-purple-400 to-purple-500" },
-        ].map((c) => (
-          <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-5 text-white relative overflow-hidden`}>
-            <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-white/10 rounded-full blur-2xl" />
-            <div className="bg-white/20 rounded-xl w-9 h-9 flex items-center justify-center mb-3">
-              <c.icon className="w-4 h-4 text-white" />
-            </div>
-            <p className="text-3xl font-bold leading-none">{c.value}</p>
-            <p className="text-white/80 text-xs mt-1">{c.label}</p>
-            <p className="text-white/60 text-xs mt-0.5">{c.sub}</p>
-          </div>
-        ))}
-      </div>
+      <KpiStrip items={[
+        {color:"bg-emerald-500",value:"+1.3%",label:"Revenue vs Budget"},
+        {color:"bg-blue-500",value:"46.1%",label:"GOP Margin"},
+        {color:"bg-amber-500",value:"82 pts",label:"NPS Score"},
+        {color:"bg-violet-500",value:"1.08",label:"RGI Index"},
+      ]} />
 
       {/* Key Highlights */}
       <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-        <h3 className="font-semibold text-foreground mb-4">Key Highlights — Q1 2026</h3>
+        <SectionHeader title="Key Highlights — Q1 2026" className="mb-4" />
         <ul className="space-y-2.5">
           {[
             "RevPAR closed at $214, representing a 8.6% year-over-year increase driven by improved channel mix and corporate contract growth.",
@@ -1070,7 +1017,7 @@ function BoardReportView() {
       {categories.map((cat) => (
         <div key={cat} className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
           <div className="px-6 py-3 bg-secondary/30 border-b border-border">
-            <h4 className="font-semibold text-foreground text-sm">{cat}</h4>
+            <SectionHeader title={cat} />
           </div>
           <table className="w-full">
             <thead className="bg-secondary/50">
@@ -1087,7 +1034,7 @@ function BoardReportView() {
                   <td className="px-5 py-3 text-sm font-bold text-foreground">{row.value}</td>
                   <td className="px-5 py-3 text-sm text-muted-foreground">{row.vs}</td>
                   <td className="px-5 py-3 text-sm font-medium">
-                    <span className={cn(row.delta === "positive" ? "text-emerald-600 dark:text-emerald-400" : row.delta === "negative" ? "text-red-600 dark:text-red-400" : "text-muted-foreground")}>
+                    <span className={cn(row.delta === "positive" ? "text-emerald-600" : row.delta === "negative" ? "text-red-600" : "text-muted-foreground")}>
                       {row.variance}
                     </span>
                   </td>
@@ -1125,7 +1072,7 @@ function AuditTrailView() {
     <motion.div key="AuditTrail" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Audit Trail</h1>
+          <SectionHeader title="Audit Trail" />
           <p className="text-muted-foreground text-sm mt-0.5">System activity log — {filtered.length} records</p>
         </div>
         <button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-secondary/50 transition-colors text-sm text-muted-foreground">
@@ -1174,7 +1121,7 @@ function AuditTrailView() {
           </thead>
           <tbody className="divide-y divide-border/50">
             {filtered.map((row, i) => (
-              <tr key={`${row.ts}-${i}`} className={cn("hover:bg-secondary/30 transition-colors", row.status === "Failed" ? "bg-red-50/50 dark:bg-red-900/10" : "")}>
+              <tr key={`${row.ts}-${i}`} className={cn("hover:bg-secondary/30 transition-colors", row.status === "Failed" ? "bg-red-50/50" : "")}>
                 <td className="px-4 py-3 text-xs text-muted-foreground font-mono whitespace-nowrap">{row.ts}</td>
                 <td className="px-4 py-3 text-sm font-medium text-foreground whitespace-nowrap truncate max-w-[160px]" title={row.user}>{row.user}</td>
                 <td className="px-4 py-3">

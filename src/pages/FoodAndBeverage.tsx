@@ -24,6 +24,7 @@ import {
   BedDouble,
   BarChart2
 } from "lucide-react";
+import { KpiStrip, LegendBar, SectionSearch, SectionHeader } from "../components/shared";
 
 interface FoodAndBeverageProps {
   aiEnabled: boolean;
@@ -70,31 +71,15 @@ export function FoodAndBeverage({ aiEnabled, activeSubmenu = "Overview" }: FoodA
 function FAndBOverview({ aiEnabled }: { aiEnabled: boolean }) {
   return (
     <div>
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold text-foreground">Food & Beverage Overview</h1>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        {[
-          { label: "Today's Revenue", value: "$4,250", sub: "+12% vs yesterday", icon: Banknote, gradient: "from-blue-400 to-blue-500" },
-          { label: "Active Orders", value: "24", sub: "8 Room Service, 16 POS", icon: ShoppingCart, gradient: "from-amber-400 to-amber-500" },
-          { label: "Avg Prep Time", value: "18m", sub: "On target", icon: Clock, gradient: "from-emerald-400 to-emerald-500" },
-          { label: "Low Stock Items", value: "12", sub: "Needs attention", icon: Info, gradient: "from-red-400 to-red-500" },
-        ].map((kpi, i) => (
-          <div key={i} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white", kpi.gradient)}>
-            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-white/80 text-sm">{kpi.label}</p>
-                <p className="text-3xl font-bold mt-1">{kpi.value}</p>
-                <p className="text-white/70 text-xs mt-1">{kpi.sub}</p>
-              </div>
-              <div className="bg-white/20 p-2.5 rounded-xl"><kpi.icon size={20} /></div>
-            </div>
-          </div>
-        ))}
-      </div>
+      <SectionHeader title="Food & Beverage Overview" subtitle="Live F&B metrics, orders, and kitchen activity" />
+      <KpiStrip
+        items={[
+          { color: "bg-blue-500", value: "$4,250", label: "Today's Revenue" },
+          { color: "bg-amber-500", value: "24", label: "Active Orders" },
+          { color: "bg-emerald-500", value: "18m", label: "Avg Prep Time" },
+          { color: "bg-rose-500", value: "12", label: "Low Stock Items" },
+        ]}
+      />
     </div>
   );
 }
@@ -138,11 +123,7 @@ function SmartMenu4D() {
         <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-xl font-semibold text-foreground flex items-center gap-2">
-                <ChefHat className="w-6 h-6 text-primary" />
-                Interactive Smart Menu (4D)
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">Immersive dining experience. Tilt cards to view 4D preview.</p>
+              <SectionHeader title="Interactive Smart Menu" subtitle="Immersive dining experience — tilt cards to view 4D preview" />
             </div>
           </div>
 
@@ -177,10 +158,7 @@ function SmartMenu4D() {
       <div className="w-full lg:w-80 flex-shrink-0">
         <div className="sticky top-8 bg-card border border-border rounded-2xl shadow-lg overflow-hidden flex flex-col h-[calc(100vh-8rem)]">
           <div className="p-4 border-b border-border bg-secondary/30">
-            <h2 className="font-semibold flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5" />
-              Your Order
-            </h2>
+            <SectionHeader title="Your Order" />
           </div>
           
           <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
@@ -395,25 +373,11 @@ function FNBReports() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-foreground">F&B Reports</h2>
+        <SectionHeader title="F&B Reports" />
         <span className="text-sm text-muted-foreground">Today · {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</span>
       </div>
       {/* KPI cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Total Revenue",  value: `BHD ${totals.revenue.toLocaleString()}`, sub: "+14% vs yesterday", color: "from-violet-400 to-violet-500" },
-          { label: "Total Covers",   value: totals.covers,    sub: "Across all outlets",      color: "from-blue-400 to-blue-500" },
-          { label: "Avg Spend/Cover",value: `BHD ${(totals.revenue/totals.covers).toFixed(1)}`, sub: "Per guest",  color: "from-emerald-400 to-emerald-500" },
-          { label: "Voided Items",   value: totals.voids,     sub: "Requires manager review",  color: "from-amber-400 to-amber-500" },
-        ].map(c => (
-          <div key={c.label} className={`bg-gradient-to-r ${c.color} rounded-2xl p-5 text-white relative overflow-hidden`}>
-            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-            <p className="text-white/80 text-xs font-medium mb-1">{c.label}</p>
-            <p className="text-2xl font-bold">{c.value}</p>
-            <p className="text-white/70 text-xs mt-1">{c.sub}</p>
-          </div>
-        ))}
-      </div>
+      <KpiStrip items={[{color:"bg-blue-500",value:totals.covers,label:"Total Covers"},{color:"bg-amber-500",value:totals.voids,label:"Voided Items"}]} />
       {/* Outlet breakdown */}
       <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
         <div className="px-6 py-4 border-b border-border font-semibold text-foreground">Outlet Breakdown</div>
@@ -520,10 +484,7 @@ function POSSystem() {
       <div className="flex-1 flex flex-col px-4 md:px-8 overflow-hidden">
         {/* Header & Controls */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4 border-b border-border">
-          <h1 className="text-xl font-semibold text-foreground flex items-center gap-2">
-            <ShoppingCart className="w-6 h-6 text-primary" />
-            Point of Sale
-          </h1>
+          <SectionHeader title="Point of Sale" />
           
           <div className="flex items-center gap-2 bg-secondary/50 p-1 rounded-xl">
             {(["Dine-in", "Takeaway", "Room Service"] as const).map(type => (
@@ -611,7 +572,7 @@ function POSSystem() {
       <div className="w-full lg:w-96 bg-card border-l border-border flex flex-col h-full flex-shrink-0">
         <div className="p-4 border-b border-border bg-secondary/30">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-lg">Current Order</h2>
+            <SectionHeader title="Current Order" />
             <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded-md">
               Ticket #4092
             </span>
@@ -756,10 +717,10 @@ interface TableInfo {
 }
 
 const STATUS_COLORS: Record<TableStatus, string> = {
-  available: "bg-emerald-100 dark:bg-emerald-900/40 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400",
-  occupied: "bg-amber-100 dark:bg-amber-900/40 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400",
-  reserved: "bg-violet-100 dark:bg-violet-900/40 border-violet-300 dark:border-violet-700 text-violet-700 dark:text-violet-400",
-  cleaning: "bg-blue-100 dark:bg-blue-900/40 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-400",
+  available: "bg-emerald-100 border-emerald-300 text-emerald-700",
+  occupied: "bg-amber-100 border-amber-300 text-amber-700",
+  reserved: "bg-violet-100 border-violet-300 text-violet-700",
+  cleaning: "bg-blue-100 border-blue-300 text-blue-700",
 };
 
 const INITIAL_TABLES: TableInfo[] = [
@@ -802,7 +763,7 @@ function TableManagement() {
     <div>
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold text-foreground">Table Management</h1>
+          <SectionHeader title="Table Management" />
           <div className="flex gap-3">
             {(["available", "occupied", "reserved", "cleaning"] as TableStatus[]).map(s => (
               <div key={s} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium capitalize", STATUS_COLORS[s])}>
@@ -818,7 +779,7 @@ function TableManagement() {
         {/* Floor Plan */}
         <div className="flex-1 bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-border flex items-center justify-between">
-            <h2 className="font-semibold text-sm">Restaurant Floor Plan</h2>
+            <SectionHeader title="Restaurant Floor Plan" />
             <span className="text-xs text-muted-foreground">Click a table to change status</span>
           </div>
           <div className="relative bg-secondary/20 m-4 rounded-xl" style={{ height: 360 }}>
@@ -851,7 +812,7 @@ function TableManagement() {
         {/* Table List */}
         <div className="xl:w-80 bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-border">
-            <h2 className="font-semibold text-sm">Table Status</h2>
+            <SectionHeader title="Table Status" />
           </div>
           <div className="divide-y divide-border overflow-y-auto" style={{ maxHeight: 400 }}>
             {tables.map(t => (
@@ -894,10 +855,10 @@ interface RoomOrder {
 const STATUS_STEPS = ["received", "preparing", "out-for-delivery", "delivered"] as const;
 
 const ORDER_STATUS_STYLES: Record<string, string> = {
-  received: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400",
-  preparing: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
-  "out-for-delivery": "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400",
-  delivered: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400",
+  received: "bg-blue-100 text-blue-700",
+  preparing: "bg-amber-100 text-amber-700",
+  "out-for-delivery": "bg-violet-100 text-violet-700",
+  delivered: "bg-emerald-100 text-emerald-700",
 };
 
 const INITIAL_ROOM_ORDERS: RoomOrder[] = [
@@ -929,7 +890,7 @@ function RoomService() {
     <div>
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-foreground">Room Service Orders</h1>
+          <SectionHeader title="Room Service Orders" />
           <div className="flex gap-3">
             {STATUS_STEPS.map(s => (
               <div key={s} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium capitalize", ORDER_STATUS_STYLES[s])}>
@@ -1025,9 +986,9 @@ function getStockLevel(item: StockItem): "critical" | "low" | "ok" {
 }
 
 const LEVEL_STYLES = {
-  critical: "text-red-600 dark:text-red-400",
-  low: "text-amber-600 dark:text-amber-400",
-  ok: "text-emerald-600 dark:text-emerald-400",
+  critical: "text-red-600",
+  low: "text-amber-600",
+  ok: "text-emerald-600",
 };
 
 const BAR_STYLES = {
@@ -1053,10 +1014,10 @@ function FAndBInventory() {
     <div>
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold text-foreground">F&B Inventory</h1>
+          <SectionHeader title="F&B Inventory" />
           <div className="flex gap-3 text-sm">
-            {criticalCount > 0 && <span className="flex items-center gap-1.5 px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg font-medium">{criticalCount} Critical</span>}
-            {lowCount > 0 && <span className="flex items-center gap-1.5 px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-lg font-medium">{lowCount} Low</span>}
+            {criticalCount > 0 && <span className="flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-700 rounded-lg font-medium">{criticalCount} Critical</span>}
+            {lowCount > 0 && <span className="flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-700 rounded-lg font-medium">{lowCount} Low</span>}
           </div>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -1117,9 +1078,9 @@ function FAndBInventory() {
                   <td className="px-5 py-3 text-muted-foreground text-xs">{item.supplier}</td>
                   <td className="px-5 py-3">
                     <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full capitalize",
-                      level === "critical" ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400" :
-                      level === "low" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" :
-                      "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                      level === "critical" ? "bg-red-100 text-red-700" :
+                      level === "low" ? "bg-amber-100 text-amber-700" :
+                      "bg-emerald-100 text-emerald-700"
                     )}>
                       {level === "ok" ? "In Stock" : level === "low" ? "Reorder Soon" : "Critical"}
                     </span>
@@ -1185,9 +1146,9 @@ function KitchenDisplay() {
   };
 
   const getPriorityBadge = (priority: string) => {
-    if (priority === "vip") return "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400";
-    if (priority === "rush") return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400";
-    return "bg-slate-100 dark:bg-slate-900/30 text-slate-700 dark:text-slate-400";
+    if (priority === "vip") return "bg-violet-100 text-violet-700";
+    if (priority === "rush") return "bg-red-100 text-red-700";
+    return "bg-slate-100 text-slate-700";
   };
 
   const TicketCard = ({ card, columnKey }: any) => {
@@ -1249,8 +1210,7 @@ function KitchenDisplay() {
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-semibold text-foreground">Kitchen Display</h1>
-            <div className="text-xs text-muted-foreground mt-1">{currentTime.toLocaleTimeString()}</div>
+            <SectionHeader title="Kitchen Display" subtitle={currentTime.toLocaleTimeString()} />
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -1290,24 +1250,12 @@ function KitchenDisplay() {
         })}
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
-        {[
-          { label: "Avg Ticket Time", value: "12m", icon: Clock, color: "from-blue-400 to-blue-500" },
-          { label: "Orders Today", value: "47", icon: UtensilsCrossed, color: "from-emerald-400 to-emerald-500" },
-          { label: "Pending Orders", value: "5", icon: Clock, color: "from-amber-400 to-amber-500" },
-          { label: "Rush Orders", value: "2", icon: Printer, color: "from-red-400 to-red-500" },
-        ].map((stat, idx) => (
-          <div key={idx} className={cn("p-4 rounded-xl bg-gradient-to-r text-white shadow-sm", `${stat.color}`)}>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs opacity-90">{stat.label}</div>
-                <div className="text-2xl font-bold mt-1">{stat.value}</div>
-              </div>
-              <stat.icon className="w-8 h-8 opacity-80" />
-            </div>
-          </div>
-        ))}
-      </div>
+      <KpiStrip items={[
+        { color: "bg-blue-500", value: "12m", label: "Avg Ticket Time" },
+        { color: "bg-emerald-500", value: "47", label: "Orders Today" },
+        { color: "bg-amber-500", value: "5", label: "Pending Orders" },
+        { color: "bg-rose-500", value: "2", label: "Rush Orders" },
+      ]} />
     </div>
   );
 }
@@ -1342,8 +1290,7 @@ function BarManagement() {
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-semibold text-foreground">Bar</h1>
-            <div className="text-xs text-muted-foreground mt-1">Shift Summary: {openTabs} open tabs · Revenue: ${revenue.toFixed(2)}</div>
+            <SectionHeader title="Bar" subtitle={`Shift Summary: ${openTabs} open tabs · Revenue: $${revenue.toFixed(2)}`} />
           </div>
           <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
             Open New Tab
@@ -1351,28 +1298,16 @@ function BarManagement() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4 mb-8">
-        {[
-          { label: "Open Tabs", value: openTabs.toString(), icon: Wine, color: "from-purple-400 to-purple-500" },
-          { label: "Today's Revenue", value: `$${revenue.toFixed(2)}`, icon: Banknote, color: "from-emerald-400 to-emerald-500" },
-          { label: "Most Popular", value: "Mocktail", icon: Coffee, color: "from-amber-400 to-amber-500" },
-          { label: "Avg Tab Value", value: `$${avgTabValue}`, icon: CreditCard, color: "from-blue-400 to-blue-500" },
-        ].map((stat, idx) => (
-          <div key={idx} className={cn("p-4 rounded-xl bg-gradient-to-r text-white shadow-sm", `${stat.color}`)}>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs opacity-90">{stat.label}</div>
-                <div className="text-2xl font-bold mt-1">{stat.value}</div>
-              </div>
-              <stat.icon className="w-8 h-8 opacity-80" />
-            </div>
-          </div>
-        ))}
-      </div>
+      <KpiStrip items={[
+        { color: "bg-violet-500", value: openTabs.toString(), label: "Open Tabs" },
+        { color: "bg-emerald-500", value: `$${revenue.toFixed(2)}`, label: "Today's Revenue" },
+        { color: "bg-amber-500", value: "Mocktail", label: "Most Popular" },
+        { color: "bg-blue-500", value: `$${avgTabValue}`, label: "Avg Tab Value" },
+      ]} />
 
       <div className="grid grid-cols-2 gap-8">
         <div>
-          <h2 className="text-lg font-semibold text-foreground mb-4">Active Tabs</h2>
+          <SectionHeader title="Active Tabs" />
           <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
             <table className="w-full text-sm">
               <thead className="border-b border-border bg-secondary/30">
@@ -1392,16 +1327,16 @@ function BarManagement() {
                     <td className="px-4 py-3">
                       <span className={cn(
                         "text-xs font-medium px-2 py-1 rounded-full",
-                        tab.status === "Open" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" :
-                        tab.status === "Closed" ? "bg-slate-100 dark:bg-slate-900/30 text-slate-700 dark:text-slate-400" :
-                        "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+                        tab.status === "Open" ? "bg-emerald-100 text-emerald-700" :
+                        tab.status === "Closed" ? "bg-slate-100 text-slate-700" :
+                        "bg-amber-100 text-amber-700"
                       )}>
                         {tab.status}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs space-x-2">
-                      <button className="px-2 py-1 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors">Add</button>
-                      <button className="px-2 py-1 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors">Close</button>
+                      <button className="px-2 py-1 text-blue-600 hover:bg-blue-100 rounded transition-colors">Add</button>
+                      <button className="px-2 py-1 text-red-600 hover:bg-red-100 rounded transition-colors">Close</button>
                     </td>
                   </tr>
                 ))}
@@ -1411,12 +1346,9 @@ function BarManagement() {
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold text-foreground mb-4">Quick Order</h2>
+          <SectionHeader title="Quick Order" />
           <div className="space-y-3">
-            <div className="flex items-center gap-2 px-3 py-2 bg-red-100 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800">
-              <div className="w-2 h-2 rounded-full bg-red-500" />
-              <span className="text-xs font-medium text-red-700 dark:text-red-400">3 items running low</span>
-            </div>
+            <LegendBar items={[{ color: "bg-red-100 border-red-200", label: "3 items running low" }]} />
             <div className="grid grid-cols-2 gap-2">
               {beverages.map((bev, idx) => (
                 <button

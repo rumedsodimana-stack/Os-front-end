@@ -14,6 +14,7 @@ import {
   RefreshCw, FileText, Award, BookOpen, Layers, Eye,
   Shuffle, Clock, Settings, Plus
 } from "lucide-react";
+import { KpiStrip, LegendBar, SectionSearch, SectionHeader } from "../components/shared";
 
 interface PortfolioProps {
   aiEnabled: boolean;
@@ -152,27 +153,12 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
         {activeSubmenu === "Overview" && (
           <motion.div key="mpov" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
 
-            {/* Chain KPIs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "Chain-Wide Revenue", value: `USD ${(totalRevenue / 1000000).toFixed(2)}M`, sub: "Apr month-to-date", icon: DollarSign, gradient: "from-indigo-400 to-indigo-500" },
-                { label: "Properties Open", value: `${properties.filter(p => p.status === "Open").length}/${properties.length}`, sub: "1 soft opening", icon: Building2, gradient: "from-emerald-400 to-emerald-500" },
-                { label: "Avg Occupancy", value: `${avgOccupancy}%`, sub: "Across all open", icon: Users, gradient: "from-blue-400 to-blue-500" },
-                { label: "Chain NPS", value: avgNPS, sub: "Weighted average", icon: Star, gradient: "from-amber-400 to-amber-500" },
-              ].map(({ label, value, sub, icon: Icon, gradient }) => (
-                <div key={label} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white", gradient)}>
-                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-white/80 text-sm">{label}</p>
-                      <p className="text-3xl font-bold mt-1">{value}</p>
-                      <p className="text-white/70 text-xs mt-1">{sub}</p>
-                    </div>
-                    <div className="bg-white/20 p-2.5 rounded-xl"><Icon size={20} /></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <KpiStrip items={[
+              {color:"bg-indigo-500",value:`USD ${(totalRevenue/1000000).toFixed(2)}M`,label:"Chain-Wide Revenue"},
+              {color:"bg-emerald-500",value:`${properties.filter(p=>p.status==="Open").length}/${properties.length}`,label:"Properties Open"},
+              {color:"bg-blue-500",value:`${avgOccupancy}%`,label:"Avg Occupancy"},
+              {color:"bg-amber-500",value:avgNPS,label:"Chain NPS"},
+            ]} />
 
             {/* Property Cards Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -186,7 +172,7 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
                       </div>
                       <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin size={11} />{prop.city}, {prop.country}</p>
                     </div>
-                    <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", prop.status === "Open" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : prop.status === "Soft Opening" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400")}>{prop.status}</span>
+                    <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", prop.status === "Open" ? "bg-emerald-100 text-emerald-700" : prop.status === "Soft Opening" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700")}>{prop.status}</span>
                   </div>
                   {prop.status === "Open" ? (
                     <div className="grid grid-cols-3 gap-3">
@@ -219,7 +205,7 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
 
             {/* Occupancy Trend */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-              <h3 className="font-semibold text-foreground mb-4">Chain-Wide Occupancy Trend (6 Months)</h3>
+              <SectionHeader title="Chain-Wide Occupancy Trend (6 Months)" className="mb-4" />
               <ResponsiveContainer width="100%" height={240}>
                 <LineChart data={chainOccupancyTrend}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -241,7 +227,7 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
         {activeSubmenu === "All Properties" && (
           <motion.div key="proplist" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">All Properties</h2>
+              <SectionHeader title="All Properties" />
               <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90"><Plus size={16} /> Add Property</button>
             </div>
 
@@ -279,7 +265,7 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
                           <span className={cn("font-medium", prop.nps >= 80 ? "text-emerald-600" : prop.nps >= 65 ? "text-amber-600" : "text-red-500")}>{prop.nps > 0 ? prop.nps : "–"}</span>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", prop.status === "Open" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : prop.status === "Soft Opening" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400")}>{prop.status}</span>
+                          <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", prop.status === "Open" ? "bg-emerald-100 text-emerald-700" : prop.status === "Soft Opening" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700")}>{prop.status}</span>
                         </td>
                       </tr>
                     ))}
@@ -315,46 +301,30 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
         {activeSubmenu === "Transfers" && (
           <motion.div key="transfers" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Inter-Property Transfer Requests</h2>
+              <SectionHeader title="Inter-Property Transfer Requests" />
               <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90"><Plus size={16} /> New Transfer</button>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "Total Transfers", value: transferRequests.length, gradient: "from-indigo-400 to-indigo-500", icon: Users },
-                { label: "Pending", value: transferRequests.filter(t => t.status === "Pending").length, gradient: "from-amber-400 to-amber-500", icon: Clock },
-                { label: "Approved", value: transferRequests.filter(t => t.status === "Approved").length, gradient: "from-emerald-400 to-emerald-500", icon: CheckCircle2 },
-                { label: "Completed", value: transferRequests.filter(t => t.status === "Completed").length, gradient: "from-blue-400 to-blue-500", icon: Star },
-              ].map(c => {
-                const IconComponent = c.icon;
-                return (
-                  <div key={c.label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${c.gradient} p-5 text-white`}>
-                    <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                    <div className="flex items-start justify-between relative z-10">
-                      <div>
-                        <p className="text-white/80 text-sm">{c.label}</p>
-                        <p className="text-3xl font-bold mt-1">{c.value}</p>
-                      </div>
-                      <div className="bg-white/20 p-2.5 rounded-xl"><IconComponent size={20} /></div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <KpiStrip items={[
+              {color:"bg-indigo-500",value:transferRequests.length,label:"Total Transfers"},
+              {color:"bg-amber-500",value:transferRequests.filter(t=>t.status==="Pending").length,label:"Pending"},
+              {color:"bg-emerald-500",value:transferRequests.filter(t=>t.status==="Approved").length,label:"Approved"},
+              {color:"bg-blue-500",value:transferRequests.filter(t=>t.status==="Completed").length,label:"Completed"},
+            ]} />
 
             <div className="space-y-4">
               {transferRequests.map(tr => {
                 const statusMap: Record<string, string> = {
-                  Pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                  Approved: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-                  Declined: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-                  Completed: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                  Pending: "bg-amber-100 text-amber-700",
+                  Approved: "bg-emerald-100 text-emerald-700",
+                  Declined: "bg-red-100 text-red-700",
+                  Completed: "bg-blue-100 text-blue-700",
                 };
                 const tierMap: Record<string, string> = {
-                  "Platinum Elite": "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-                  Platinum: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
-                  Gold: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                  Silver: "bg-slate-100 text-slate-700 dark:bg-slate-700/30 dark:text-slate-400",
+                  "Platinum Elite": "bg-purple-100 text-purple-700",
+                  Platinum: "bg-indigo-100 text-indigo-700",
+                  Gold: "bg-amber-100 text-amber-700",
+                  Silver: "bg-slate-100 text-slate-700",
                 };
                 return (
                   <div key={tr.id} className="bg-card rounded-2xl shadow-sm border border-border p-5">
@@ -383,14 +353,14 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
                     </div>
                     <p className="text-sm text-muted-foreground mb-3"><strong className="text-foreground">Reason:</strong> {tr.reason}</p>
                     {tr.notes && (
-                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 text-sm text-blue-800 dark:text-blue-300 mb-4">
+                      <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 text-sm text-blue-800 mb-4">
                         <strong>Notes:</strong> {tr.notes}
                       </div>
                     )}
                     {tr.status === "Pending" && (
                       <div className="flex gap-2">
                         <button className="px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600">Approve</button>
-                        <button className="px-3 py-1.5 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-lg text-sm font-medium hover:bg-red-200">Decline</button>
+                        <button className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">Decline</button>
                         <button className="px-3 py-1.5 bg-secondary text-secondary-foreground rounded-lg text-sm font-medium hover:bg-secondary/70">Coordinate</button>
                       </div>
                     )}
@@ -405,39 +375,21 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
         {activeSubmenu === "Consolidated P&L" && (
           <motion.div key="consolidatedpl" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Consolidated P&L — April 2026</h2>
+              <SectionHeader title="Consolidated P&L — April 2026" />
               <button className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-xl text-sm font-medium hover:bg-secondary/70"><Download size={16} /> Export</button>
             </div>
 
-            {/* Chain summary KPIs */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "Total Chain Revenue", value: `$${(totalRevenue / 1000000).toFixed(2)}M`, sub: "MTD Apr 2026", gradient: "from-indigo-400 to-indigo-500", icon: DollarSign },
-                { label: "Total GOP", value: `$${(properties.reduce((s, p) => s + p.gop, 0) / 1000000).toFixed(2)}M`, sub: "Gross Operating Profit", gradient: "from-emerald-400 to-emerald-500", icon: TrendingUp },
-                { label: "Chain GOP %", value: `${Math.round(properties.filter(p => p.revenue > 0).reduce((s, p) => s + p.gopPct, 0) / properties.filter(p => p.revenue > 0).length)}%`, sub: "Average across properties", gradient: "from-blue-400 to-blue-500", icon: BarChart2 },
-                { label: "Total Room Revenue", value: `$${(consolidatedPL.find(d => d.dept === "Rooms") ? Object.values(consolidatedPL.find(d => d.dept === "Rooms")!).slice(1).reduce((a, b) => (a as number) + (b as number), 0) as number / 1000000 : 0).toFixed(2)}M`, sub: "Rooms dept only", gradient: "from-amber-400 to-amber-500", icon: Building2 },
-              ].map(c => {
-                const IconComponent = c.icon;
-                return (
-                  <div key={c.label} className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${c.gradient} p-5 text-white`}>
-                    <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                    <div className="flex items-start justify-between relative z-10">
-                      <div>
-                        <p className="text-white/80 text-sm">{c.label}</p>
-                        <p className="text-3xl font-bold mt-1">{c.value}</p>
-                        <p className="text-white/70 text-xs mt-1">{c.sub}</p>
-                      </div>
-                      <div className="bg-white/20 p-2.5 rounded-xl"><IconComponent size={20} /></div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <KpiStrip items={[
+              {color:"bg-indigo-500",value:`$${(totalRevenue/1000000).toFixed(2)}M`,label:"Total Chain Revenue"},
+              {color:"bg-emerald-500",value:`$${(properties.reduce((s,p)=>s+p.gop,0)/1000000).toFixed(2)}M`,label:"Total GOP"},
+              {color:"bg-blue-500",value:`${Math.round(properties.filter(p=>p.revenue>0).reduce((s,p)=>s+p.gopPct,0)/properties.filter(p=>p.revenue>0).length)}%`,label:"Chain GOP %"},
+              {color:"bg-amber-500",value:`$${(consolidatedPL.find(d=>d.dept==="Rooms")?Object.values(consolidatedPL.find(d=>d.dept==="Rooms")!).slice(1).reduce((a,b)=>(a as number)+(b as number),0)as number/1000000:0).toFixed(2)}M`,label:"Room Revenue"},
+            ]} />
 
             {/* Revenue by dept + property */}
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
               <div className="p-5 border-b border-border">
-                <h3 className="font-semibold text-foreground">Revenue by Department & Property (USD)</h3>
+                <SectionHeader title="Revenue by Department & Property (USD)" />
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -465,10 +417,10 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
                       {[1240000 + 280000 + 85000 + 152000 + 42000, 640000 + 180000 + 95000 + 85000 + 25000, 1100000 + 320000 + 180000 + 0 + 50000, 280000 + 90000 + 32000 + 28000 + 18000].map((v, i) => <td key={i} className="px-4 py-3 text-foreground">${v.toLocaleString()}</td>)}
                       <td className="px-4 py-3 text-foreground">${(1799000 + 1025000 + 1650000 + 448000).toLocaleString()}</td>
                     </tr>
-                    <tr className="bg-emerald-50/50 dark:bg-emerald-900/10">
-                      <td className="px-4 py-3 font-bold text-emerald-700 dark:text-emerald-400">GOP</td>
-                      {properties.filter(p => p.status === "Open").map(p => <td key={p.id} className="px-4 py-3 font-bold text-emerald-700 dark:text-emerald-400">${p.gop.toLocaleString()}</td>)}
-                      <td className="px-4 py-3 font-bold text-emerald-700 dark:text-emerald-400">${properties.reduce((s, p) => s + p.gop, 0).toLocaleString()}</td>
+                    <tr className="bg-emerald-50/50">
+                      <td className="px-4 py-3 font-bold text-emerald-700">GOP</td>
+                      {properties.filter(p => p.status === "Open").map(p => <td key={p.id} className="px-4 py-3 font-bold text-emerald-700">${p.gop.toLocaleString()}</td>)}
+                      <td className="px-4 py-3 font-bold text-emerald-700">${properties.reduce((s, p) => s + p.gop, 0).toLocaleString()}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -477,7 +429,7 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
 
             {/* Revenue chart */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-              <h3 className="font-semibold text-foreground mb-4">Revenue by Department</h3>
+              <SectionHeader title="Revenue by Department" className="mb-4" />
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={consolidatedPL}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -499,7 +451,7 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
         {activeSubmenu === "SOP Library" && (
           <motion.div key="sop" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Standard Operating Procedures</h2>
+              <SectionHeader title="Standard Operating Procedures" />
               <div className="flex gap-2">
                 <button className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-xl text-sm font-medium hover:bg-secondary/70"><Download size={16} /> Export All</button>
                 <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90"><Plus size={16} /> New SOP</button>
@@ -522,9 +474,9 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
               {sopDocuments.filter(s => activePropertyFilter === "All" || s.department === activePropertyFilter).filter(s => s.title.toLowerCase().includes(search.toLowerCase())).map(sop => {
                 const ackPct = Math.round((sop.acknowledgedBy / sop.totalStaff) * 100);
                 const statusMap: Record<string, string> = {
-                  Active: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-                  "Under Review": "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                  Archived: "bg-slate-100 text-slate-700 dark:bg-slate-700/30 dark:text-slate-400",
+                  Active: "bg-emerald-100 text-emerald-700",
+                  "Under Review": "bg-amber-100 text-amber-700",
+                  Archived: "bg-slate-100 text-slate-700",
                 };
                 return (
                   <div key={sop.id} className="bg-card rounded-2xl shadow-sm border border-border p-5">
@@ -533,7 +485,7 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold text-foreground">{sop.title}</h3>
                           <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", statusMap[sop.status])}>{sop.status}</span>
-                          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-700/30 dark:text-slate-400">{sop.version}</span>
+                          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">{sop.version}</span>
                         </div>
                         <p className="text-sm text-muted-foreground">{sop.department} · {sop.category} · Updated: {sop.lastUpdated} · Author: {sop.author}</p>
                       </div>
@@ -544,7 +496,7 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
                     </div>
                     <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{sop.content}</p>
                     <div className="flex flex-wrap gap-2 mb-3">
-                      {sop.applicableTo.map(p => <span key={p} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 rounded-full text-xs font-medium">{p}</span>)}
+                      {sop.applicableTo.map(p => <span key={p} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">{p}</span>)}
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="flex-1">
@@ -569,14 +521,14 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
         {activeSubmenu === "Benchmarking" && (
           <motion.div key="bench" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Inter-Property Benchmarking</h2>
+              <SectionHeader title="Inter-Property Benchmarking" />
               <button className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-xl text-sm font-medium hover:bg-secondary/70"><Download size={16} /> Export Report</button>
             </div>
 
             {/* Radar chart */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <h3 className="font-semibold text-foreground mb-4">Performance Radar — All Properties</h3>
+                <SectionHeader title="Performance Radar — All Properties" className="mb-4" />
                 <ResponsiveContainer width="100%" height={300}>
                   <RadarChart data={benchmarkMetrics}>
                     <PolarGrid stroke="var(--border)" />
@@ -593,7 +545,7 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
 
               {/* Ranked KPIs */}
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <h3 className="font-semibold text-foreground mb-4">Property Rankings</h3>
+                <SectionHeader title="Property Rankings" className="mb-4" />
                 <div className="space-y-4">
                   {[
                     { label: "RevPAR (USD)", sorted: [...properties].filter(p => p.revpar > 0).sort((a, b) => b.revpar - a.revpar), getValue: (p: Property) => `$${p.revpar.toFixed(0)}`, getBar: (p: Property) => (p.revpar / 646) * 100 },
@@ -628,7 +580,7 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
             {/* Full benchmark table */}
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
               <div className="p-5 border-b border-border">
-                <h3 className="font-semibold text-foreground">Full Benchmark Comparison</h3>
+                <SectionHeader title="Full Benchmark Comparison" />
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -663,7 +615,7 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
         {/* ── OCCUPANCY HEATMAP ── */}
         {activeSubmenu === "Occupancy Heatmap" && (
           <motion.div key="heatmap" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
-            <h2 className="text-xl font-semibold text-foreground">Chain-Wide Occupancy Heatmap — April 2026</h2>
+            <SectionHeader title="Chain-Wide Occupancy Heatmap — April 2026" />
 
             {/* Heatmap grid */}
             {properties.filter(p => p.status === "Open").map(prop => {
@@ -696,14 +648,13 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
                   </div>
                   <div className="flex items-center justify-between mt-2">
                     <div className="text-xs text-muted-foreground">Apr 1</div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      {[{ label: "90%+", color: "bg-emerald-500" }, { label: "75–89%", color: "bg-emerald-400" }, { label: "60–74%", color: "bg-amber-400" }, { label: "45–59%", color: "bg-orange-400" }, { label: "<45%", color: "bg-red-400" }].map(l => (
-                        <div key={l.label} className="flex items-center gap-1">
-                          <div className={cn("w-3 h-3 rounded-sm", l.color)} />
-                          {l.label}
-                        </div>
-                      ))}
-                    </div>
+                    <LegendBar items={[
+                      { color: "bg-emerald-100 border-emerald-200", label: "90%+" },
+                      { color: "bg-emerald-100 border-emerald-300", label: "75–89%" },
+                      { color: "bg-amber-100 border-amber-200", label: "60–74%" },
+                      { color: "bg-orange-100 border-orange-200", label: "45–59%" },
+                      { color: "bg-red-100 border-red-200", label: "<45%" },
+                    ]} />
                     <div className="text-xs text-muted-foreground">Apr 30</div>
                   </div>
                 </div>
@@ -712,7 +663,7 @@ export function Portfolio({ aiEnabled, activeSubmenu = "Overview" }: PortfolioPr
 
             {/* Trend chart */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-              <h3 className="font-semibold text-foreground mb-4">6-Month Occupancy Trend by Property</h3>
+              <SectionHeader title="6-Month Occupancy Trend by Property" className="mb-4" />
               <ResponsiveContainer width="100%" height={260}>
                 <LineChart data={chainOccupancyTrend}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -785,7 +736,7 @@ function BrandStandardsView() {
     <motion.div key="brand-standards" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }} className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-foreground">Brand Standards</h2>
+          <SectionHeader title="Brand Standards" />
           <p className="text-sm text-muted-foreground mt-1">Last updated: 2026-03-25</p>
         </div>
         <button
@@ -798,16 +749,16 @@ function BrandStandardsView() {
 
       {/* Brand Identity */}
       <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-6">Brand Identity</h3>
+        <SectionHeader title="Brand Identity" className="mb-6" />
 
         {/* Logo Versions */}
         <div className="mb-8">
-          <h4 className="font-medium text-foreground mb-4">Logo Versions</h4>
+          <SectionHeader title="Logo Versions" className="mb-4" />
           <div className="grid grid-cols-4 gap-4">
             {[
               { name: "Primary Logo", bg: "bg-gradient-to-br from-violet-400 to-violet-600" },
               { name: "White Logo", bg: "bg-secondary/50" },
-              { name: "Dark Logo", bg: "bg-gray-800" },
+              { name: "Dark Logo", bg: "bg-muted-foreground" },
               { name: "Favicon", bg: "bg-gradient-to-br from-indigo-400 to-indigo-600" },
             ].map((logo) => (
               <div key={logo.name} className="bg-secondary/30 rounded-2xl border border-border p-4 flex flex-col items-center gap-2">
@@ -825,7 +776,7 @@ function BrandStandardsView() {
 
         {/* Color Palette */}
         <div className="mb-8">
-          <h4 className="font-medium text-foreground mb-4">Color Palette</h4>
+          <SectionHeader title="Color Palette" className="mb-4" />
           <div className="grid grid-cols-5 gap-4">
             {brandColors.map((color) => (
               <div key={color.hex} className="text-center">
@@ -839,7 +790,7 @@ function BrandStandardsView() {
 
         {/* Typography */}
         <div>
-          <h4 className="font-medium text-foreground mb-4">Typography</h4>
+          <SectionHeader title="Typography" className="mb-4" />
           <div className="space-y-4">
             <div className="bg-secondary/30 rounded-xl p-4">
               <p style={{ fontSize: "32px", fontWeight: "bold" }} className="text-foreground mb-1">Headings (Inter Bold, 32px)</p>
@@ -860,7 +811,7 @@ function BrandStandardsView() {
       {/* SOP Table */}
       <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
         <div className="px-6 py-4 border-b border-border">
-          <h3 className="text-lg font-semibold text-foreground">Standard Operating Procedures</h3>
+          <SectionHeader title="Standard Operating Procedures" />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -902,7 +853,7 @@ function BrandStandardsView() {
 
       {/* Changelog */}
       <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-6">Brand Changelog</h3>
+        <SectionHeader title="Brand Changelog" className="mb-6" />
         <div className="space-y-4">
           {changelog.map((entry, i) => (
             <div key={i} className={cn("flex gap-4 pb-4", i < changelog.length - 1 && "border-b border-border/50")}>

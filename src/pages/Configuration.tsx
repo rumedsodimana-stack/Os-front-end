@@ -21,6 +21,7 @@ import {
   Sun,
 } from "lucide-react";
 import { useThemeStore } from "../store/themeStore";
+import { SectionHeader } from "../components/shared";
 
 interface ConfigurationProps {
   aiEnabled: boolean;
@@ -220,7 +221,7 @@ function AppearanceTab() {
 
       {/* Accent Presets */}
       <div className="lg:col-span-2 bg-card rounded-2xl border border-border p-6 shadow-sm">
-        <h2 className="text-base font-semibold mb-4">Colour Presets</h2>
+        <SectionHeader title="Colour Presets" className="mb-4" />
         <div className="grid grid-cols-6 gap-3">
           {ACCENT_PRESETS.map(preset => (
             <button
@@ -245,7 +246,7 @@ function AppearanceTab() {
 
       {/* Colors */}
       <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-        <h2 className="text-base font-semibold mb-4">Custom Colors</h2>
+        <SectionHeader title="Custom Colors" className="mb-4" />
         <ColorSwatch label="Primary Color" value={theme.primaryColor} onChange={v => theme.set({ primaryColor: v })} />
         <ColorSwatch label="Accent Color" value={theme.accentColor} onChange={v => theme.set({ accentColor: v })} />
         <ColorSwatch label="Background Color" value={theme.bgColor} onChange={v => theme.set({ bgColor: v })} />
@@ -262,7 +263,7 @@ function AppearanceTab() {
 
       {/* Typography & Layout */}
       <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-        <h2 className="text-base font-semibold mb-4">Typography & Layout</h2>
+        <SectionHeader title="Typography & Layout" className="mb-4" />
 
         <RadioGroup
           label="Font Family"
@@ -328,7 +329,7 @@ function AppearanceTab() {
 
       {/* Live Preview */}
       <div className="lg:col-span-2 bg-card rounded-2xl border border-border p-6 shadow-sm">
-        <h2 className="text-base font-semibold mb-4">Live Preview</h2>
+        <SectionHeader title="Live Preview" className="mb-4" />
         <div className="rounded-xl border border-border overflow-hidden">
           <div className="h-10 flex items-center px-4 gap-3" style={{ backgroundColor: theme.primaryColor }}>
             <div className="w-3 h-3 rounded-full bg-white/30" />
@@ -376,7 +377,7 @@ function PropertyBrandingTab() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
       <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-        <h2 className="text-base font-semibold mb-6">Property Identity</h2>
+        <SectionHeader title="Property Identity" className="mb-6" />
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium mb-1.5 block">Hotel Name</label>
@@ -417,7 +418,7 @@ function PropertyBrandingTab() {
       </div>
 
       <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-        <h2 className="text-base font-semibold mb-6">Localisation</h2>
+        <SectionHeader title="Localisation" className="mb-6" />
         <div className="space-y-4">
           {[
             {
@@ -478,7 +479,7 @@ function UserPreferencesTab() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
       <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-        <h2 className="text-base font-semibold mb-6">Date & Time</h2>
+        <SectionHeader title="Date & Time" className="mb-6" />
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium mb-1.5 block">Date Format</label>
@@ -533,7 +534,7 @@ function UserPreferencesTab() {
       </div>
 
       <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-        <h2 className="text-base font-semibold mb-6">Notifications</h2>
+        <SectionHeader title="Notifications" className="mb-6" />
         <div className="space-y-1">
           {[
             { key: "email", label: "Email Notifications", desc: "Receive summaries and alerts via email" },
@@ -619,7 +620,7 @@ function IntegrationsTab() {
     <div className="space-y-6 pb-12">
       {INTEGRATIONS.map(cat => (
         <div key={cat.category} className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-          <h2 className="text-base font-semibold mb-4">{cat.category}</h2>
+          <SectionHeader title={cat.category} className="mb-4" />
           <div className="space-y-3">
             {cat.items.map(item => {
               const connected = statuses[item.name] === "connected";
@@ -669,7 +670,7 @@ function SystemSettingsTab() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
       <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-        <h2 className="text-base font-semibold mb-6">Security & Sessions</h2>
+        <SectionHeader title="Security & Sessions" className="mb-6" />
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium mb-1.5 block">Auto-Logout (minutes of inactivity)</label>
@@ -719,7 +720,7 @@ function SystemSettingsTab() {
       </div>
 
       <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-        <h2 className="text-base font-semibold mb-6">Data & Compliance</h2>
+        <SectionHeader title="Data & Compliance" className="mb-6" />
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium mb-1.5 block">Audit Log Retention</label>
@@ -770,7 +771,7 @@ function SystemSettingsTab() {
       </div>
 
       <div className="lg:col-span-2 bg-red-50 dark:bg-red-950/20 rounded-2xl border border-red-200 dark:border-red-900/50 p-6">
-        <h2 className="text-base font-semibold text-red-700 dark:text-red-400 mb-2">Danger Zone</h2>
+        <SectionHeader title="Danger Zone" className="mb-2" />
         <p className="text-sm text-red-600/80 dark:text-red-400/70 mb-4">These actions are irreversible. Proceed with caution.</p>
         <div className="flex flex-wrap gap-3">
           <button className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-xl text-sm font-medium hover:bg-red-200 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800 transition-colors">

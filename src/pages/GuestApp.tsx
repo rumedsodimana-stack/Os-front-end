@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
+import { SectionHeader } from "../components/shared";
 import {
   Home, RotateCcw, Zap, Sparkles, MessageCircle, ShoppingBag,
   Cloud, Droplets, Lightbulb, Wind, Lock, Bell, Plus, FileText,
@@ -132,7 +133,7 @@ export function GuestApp() {
 
                 {/* Today's Events */}
                 <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                  <h3 className="font-semibold text-gray-900 mb-3 text-sm">Today's Highlights</h3>
+                  <SectionHeader title="Today's Highlights" className="mb-3" />
                   <div className="space-y-2">
                     {[
                       { time: "6:30 AM", event: "Breakfast Service Starts" },
@@ -165,7 +166,7 @@ export function GuestApp() {
             {/* ROOM CONTROLS TAB */}
             {activeTab === "room" && (
               <motion.div key="room" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="p-4 space-y-4">
-                <h2 className="text-lg font-bold text-gray-900">Your Room · {roomNumber}</h2>
+                <SectionHeader title={`Your Room · ${roomNumber}`} />
 
                 {/* Temperature Control */}
                 <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-5 border border-blue-100">
@@ -330,7 +331,7 @@ export function GuestApp() {
 
                 {/* Featured Packages */}
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">Featured Packages</h3>
+                  <SectionHeader title="Featured Packages" className="mb-3" />
                   <div className="space-y-3">
                     {[
                       { name: "Honeymoon Package", price: 250, color: "from-pink-400 to-rose-500" },
@@ -352,7 +353,7 @@ export function GuestApp() {
 
                 {/* Room Types */}
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">Available Room Types</h3>
+                  <SectionHeader title="Available Room Types" className="mb-3" />
                   <div className="grid grid-cols-2 gap-3">
                     {[
                       { name: "Deluxe", amenities: "2 guests • Bath & Shower", price: 85 },
@@ -376,7 +377,7 @@ export function GuestApp() {
 
                 {/* Hotel Facilities */}
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">Hotel Facilities</h3>
+                  <SectionHeader title="Hotel Facilities" className="mb-3" />
                   <div className="grid grid-cols-3 gap-3">
                     {[
                       { name: "Pool", icon: Droplets },

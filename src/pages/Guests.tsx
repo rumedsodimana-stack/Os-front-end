@@ -15,6 +15,7 @@ import {
   ArrowUpRight, Coffee, Bed, UtensilsCrossed, Wifi,
   Car, HeartHandshake, BellRing, Filter, Download
 } from "lucide-react";
+import { KpiStrip, LegendBar, SectionSearch, SectionHeader } from "../components/shared";
 
 interface GuestsProps {
   aiEnabled: boolean;
@@ -163,7 +164,7 @@ const tierColors: Record<LoyaltyTier, string> = {
   Platinum: "bg-indigo-100 text-indigo-800 border border-indigo-200",
   Gold: "bg-amber-100 text-amber-800 border border-amber-200",
   Silver: "bg-slate-100 text-slate-700 border border-slate-200",
-  Member: "bg-gray-100 text-gray-600 border border-gray-200",
+  Member: "bg-muted text-muted-foreground border border-border",
 };
 const TierBadge = ({ tier }: { tier: LoyaltyTier }) => (
   <span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold", tierColors[tier])}>{tier}</span>
@@ -174,17 +175,22 @@ const SentimentBadge = ({ s }: { s: string }) => (
 const PriorityDot = ({ tier }: { tier: LoyaltyTier }) => (
   <span className={cn("w-2 h-2 rounded-full inline-block mr-2", tier === "Platinum Elite" ? "bg-purple-500" : tier === "Platinum" ? "bg-indigo-500" : tier === "Gold" ? "bg-amber-400" : "bg-slate-400")} />
 );
+const getGuestStatus = (g: Guest): string => {
+  if (g.currentlyInHouse) return "In-House";
+  if (!g.currentlyInHouse && !!g.nextStay) return "Arriving Today";
+  return "Reserved";
+};
 
 export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
   const [search, setSearch] = useState("");
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
   const [tierFilter, setTierFilter] = useState<string>("All");
-  const inHouseGuests = guests.filter(g => g.status === "In-House");
-  const todayArrivals = guests.filter(g => g.status === "Arriving Today");
+  const inHouseGuests = guests.filter(g => g.currentlyInHouse === true);
+  const todayArrivals = guests.filter(g => !g.currentlyInHouse && !!g.nextStay);
   const vipGuests = guests.filter(g => g.tier === "Platinum Elite" || g.tier === "Platinum");
 
   const filteredGuests = guests.filter(g => {
-    const matchSearch = g.name.toLowerCase().includes(search.toLowerCase()) || g.email.toLowerCase().includes(search.toLowerCase()) || g.nationality.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = `${g.firstName} ${g.lastName}`.toLowerCase().includes(search.toLowerCase()) || g.email.toLowerCase().includes(search.toLowerCase()) || g.nationality.toLowerCase().includes(search.toLowerCase());
     const matchTier = tierFilter === "All" || g.tier === tierFilter;
     return matchSearch && matchTier;
   });
@@ -198,36 +204,17 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
         {activeSubmenu === "Overview" && (
           <motion.div key="overview" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Guest Intelligence</h2>
+              <SectionHeader title="Guest Intelligence" />
               <p className="text-muted-foreground text-sm mt-1">Know every guest before they walk through the door</p>
             </div>
             {/* KPI Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "In-House Guests", value: inHouseGuests.length, sub: "3 VIPs on property", icon: <Bed className="w-5 h-5 text-white" />, gradient: "from-violet-400 to-violet-600" },
-                { label: "Arrivals Today", value: todayArrivals.length, sub: "All preferences loaded", icon: <Calendar className="w-5 h-5 text-white" />, gradient: "from-blue-400 to-blue-600" },
-                { label: "Satisfaction Score", value: avgSatisfaction, sub: "↑ 0.4 vs last month", icon: <Star className="w-5 h-5 text-white" />, gradient: "from-amber-400 to-orange-500" },
-                { label: "Active Members", value: "485", sub: "22 Platinum Elite", icon: <Crown className="w-5 h-5 text-white" />, gradient: "from-emerald-400 to-emerald-600" },
-              ].map(card => (
-                <div key={card.label} className={cn("relative overflow-hidden rounded-2xl p-5 bg-gradient-to-r text-white shadow-md", card.gradient)}>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-white/80 text-xs font-medium uppercase tracking-wide">{card.label}</p>
-                      <p className="text-3xl font-bold mt-1">{card.value}</p>
-                      <p className="text-white/70 text-xs mt-1">{card.sub}</p>
-                    </div>
-                    <div className="bg-white/20 rounded-xl p-2">{card.icon}</div>
-                  </div>
-                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                </div>
-              ))}
-            </div>
+            <KpiStrip items={[{color:"bg-violet-500",value:inHouseGuests.length,label:"In-House Guests"},{color:"bg-blue-500",value:todayArrivals.length,label:"Arrivals Today"},{color:"bg-amber-500",value:avgSatisfaction,label:"Satisfaction Score"},{color:"bg-emerald-500",value:"485",label:"Active Members"}]} />
 
             {/* Charts row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Satisfaction trend */}
               <div className="lg:col-span-2 bg-card rounded-2xl shadow-sm border border-border p-5">
-                <h3 className="font-semibold text-foreground mb-4">Satisfaction Score Trend</h3>
+                <SectionHeader title="Satisfaction Score Trend" />
                 <ResponsiveContainer width="100%" height={180}>
                   <AreaChart data={satisfactionTrend}>
                     <defs><linearGradient id="satGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="var(--color-violet-500,#7c3aed)" stopOpacity={0.3}/><stop offset="95%" stopColor="var(--color-violet-500,#7c3aed)" stopOpacity={0}/></linearGradient></defs>
@@ -241,7 +228,7 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
               </div>
               {/* Tier distribution */}
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <h3 className="font-semibold text-foreground mb-3">Loyalty Tier Breakdown</h3>
+                <SectionHeader title="Loyalty Tier Breakdown" />
                 <ResponsiveContainer width="100%" height={150}>
                   <PieChart>
                     <Pie data={tierDistribution} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" paddingAngle={2}>
@@ -272,10 +259,10 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
                 <div className="space-y-3">
                   {inHouseGuests.filter(g=>g.tier==="Platinum Elite"||g.tier==="Platinum").map(g => (
                     <div key={g.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-secondary/40 hover:bg-secondary/70 transition-colors cursor-pointer" onClick={() => setSelectedGuest(g)}>
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center text-white font-bold text-sm shrink-0">{g.name.charAt(0)}</div>
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center text-white font-bold text-sm shrink-0">{g.firstName.charAt(0)}</div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground truncate">{g.name}</p>
-                        <p className="text-xs text-muted-foreground">Room {g.room} · {g.nights} nights</p>
+                        <p className="text-sm font-semibold text-foreground truncate">{`${g.firstName} ${g.lastName}`}</p>
+                        <p className="text-xs text-muted-foreground">Room {g.currentRoom} · {g.totalNights} nights</p>
                       </div>
                       <TierBadge tier={g.tier} />
                     </div>
@@ -284,9 +271,7 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
               </div>
               {/* Upcoming moments */}
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <Gift className="w-4 h-4 text-pink-500" /><h3 className="font-semibold text-foreground">Upcoming Moments</h3>
-                </div>
+                <SectionHeader title="Upcoming Moments" className="mb-3" actions={<Gift className="w-4 h-4 text-pink-500" />} />
                 <div className="space-y-3">
                   {guestMoments.map(m => (
                     <div key={m.id} className="p-2.5 rounded-xl border border-border bg-secondary/20 hover:bg-secondary/50 transition-colors">
@@ -305,15 +290,13 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
               </div>
               {/* Recent feedback */}
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <MessageSquare className="w-4 h-4 text-blue-500" /><h3 className="font-semibold text-foreground">Recent Feedback</h3>
-                </div>
+                <SectionHeader title="Recent Feedback" className="mb-3" actions={<MessageSquare className="w-4 h-4 text-blue-500" />} />
                 <div className="space-y-3">
                   {feedbackEntries.slice(0, 4).map(f => (
                     <div key={f.id} className="border-b border-border/50 pb-2 last:border-0">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-foreground">{f.guestName}</span>
-                        <div className="flex">{[1,2,3,4,5].map(s=><Star key={s} className={cn("w-3 h-3",s<=f.rating?"text-amber-400 fill-amber-400":"text-gray-200")} />)}</div>
+                        <div className="flex">{[1,2,3,4,5].map(s=><Star key={s} className={cn("w-3 h-3",s<=f.rating?"text-amber-400 fill-amber-400":"text-muted-foreground")} />)}</div>
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{f.comment}</p>
                       <SentimentBadge s={f.sentiment} />
@@ -330,7 +313,7 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
           <motion.div key="all-guests" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h2 className="text-2xl font-bold text-foreground">Guest Directory</h2>
+                <SectionHeader title="Guest Directory" />
                 <p className="text-muted-foreground text-sm">{guests.length} total profiles</p>
               </div>
               <button className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors self-start sm:self-auto">
@@ -367,9 +350,9 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
                     <tr key={g.id} className="hover:bg-secondary/30 transition-colors cursor-pointer" onClick={()=>setSelectedGuest(g)}>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className={cn("w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0", g.tier==="Platinum Elite"?"bg-gradient-to-br from-purple-500 to-violet-700":g.tier==="Platinum"?"bg-gradient-to-br from-indigo-400 to-indigo-600":g.tier==="Gold"?"bg-gradient-to-br from-amber-400 to-orange-500":"bg-gradient-to-br from-slate-400 to-slate-600")}>{g.name.charAt(0)}</div>
+                          <div className={cn("w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0", g.tier==="Platinum Elite"?"bg-gradient-to-br from-purple-500 to-violet-700":g.tier==="Platinum"?"bg-gradient-to-br from-indigo-400 to-indigo-600":g.tier==="Gold"?"bg-gradient-to-br from-amber-400 to-orange-500":"bg-gradient-to-br from-slate-400 to-slate-600")}>{g.firstName.charAt(0)}</div>
                           <div>
-                            <div className="flex items-center gap-1.5 font-semibold text-foreground">{g.name}{g.vip&&<Crown className="w-3 h-3 text-amber-500"/>}</div>
+                            <div className="flex items-center gap-1.5 font-semibold text-foreground">{`${g.firstName} ${g.lastName}`}{g.vip&&<Crown className="w-3 h-3 text-amber-500"/>}</div>
                             <p className="text-xs text-muted-foreground">{g.email}</p>
                           </div>
                         </div>
@@ -380,10 +363,10 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
                       </td>
                       <td className="px-4 py-3 hidden lg:table-cell font-semibold text-foreground">{g.totalStays}</td>
                       <td className="px-4 py-3 hidden lg:table-cell">
-                        <div className="flex items-center gap-1"><Award className="w-3 h-3 text-amber-500"/><span className="font-medium text-foreground">{g.loyaltyPoints.toLocaleString()}</span></div>
+                        <div className="flex items-center gap-1"><Award className="w-3 h-3 text-amber-500"/><span className="font-medium text-foreground">{g.points.toLocaleString()}</span></div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", g.status==="In-House"?"bg-green-100 text-green-700":g.status==="Arriving Today"?"bg-blue-100 text-blue-700":g.status==="Checked Out"?"bg-gray-100 text-gray-600":"bg-purple-100 text-purple-700")}>{g.status}</span>
+                        <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", getGuestStatus(g)==="In-House"?"bg-green-100 text-green-700":getGuestStatus(g)==="Arriving Today"?"bg-blue-100 text-blue-700":"bg-purple-100 text-purple-700")}>{getGuestStatus(g)}</span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
@@ -402,9 +385,9 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
               <div className="bg-card rounded-2xl shadow-sm border border-border p-6 space-y-5">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-4">
-                    <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-xl", selectedGuest.tier==="Platinum Elite"?"bg-gradient-to-br from-purple-500 to-violet-700":"bg-gradient-to-br from-indigo-400 to-indigo-600")}>{selectedGuest.name.charAt(0)}</div>
+                    <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-xl", selectedGuest.tier==="Platinum Elite"?"bg-gradient-to-br from-purple-500 to-violet-700":"bg-gradient-to-br from-indigo-400 to-indigo-600")}>{selectedGuest.firstName.charAt(0)}</div>
                     <div>
-                      <div className="flex items-center gap-2"><h3 className="text-lg font-bold text-foreground">{selectedGuest.name}</h3>{selectedGuest.vip&&<Crown className="w-4 h-4 text-amber-500"/>}</div>
+                      <div className="flex items-center gap-2"><h3 className="text-lg font-bold text-foreground">{`${selectedGuest.firstName} ${selectedGuest.lastName}`}</h3>{selectedGuest.vip&&<Crown className="w-4 h-4 text-amber-500"/>}</div>
                       <TierBadge tier={selectedGuest.tier} />
                       <p className="text-sm text-muted-foreground mt-1">{selectedGuest.email} · {selectedGuest.phone}</p>
                     </div>
@@ -412,7 +395,7 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
                   <button onClick={()=>setSelectedGuest(null)} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-secondary transition-colors">✕</button>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {[{label:"Total Stays",v:selectedGuest.totalStays},{label:"Total Spend",v:`$${selectedGuest.totalSpend.toLocaleString()}`},{label:"Loyalty Points",v:selectedGuest.loyaltyPoints.toLocaleString()},{label:"Nationality",v:selectedGuest.nationality}].map(s=>(
+                  {[{label:"Total Stays",v:selectedGuest.totalStays},{label:"Total Spend",v:`$${selectedGuest.totalSpend.toLocaleString()}`},{label:"Loyalty Points",v:selectedGuest.points.toLocaleString()},{label:"Nationality",v:selectedGuest.nationality}].map(s=>(
                     <div key={s.label} className="bg-secondary/40 rounded-xl p-3 text-center">
                       <p className="text-xs text-muted-foreground">{s.label}</p>
                       <p className="text-lg font-bold text-foreground mt-1">{s.v}</p>
@@ -423,7 +406,7 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
                   <div>
                     <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2"><Coffee className="w-4 h-4"/>Room Preferences</h4>
                     <div className="space-y-1.5 text-sm">
-                      {[["Floor",selectedGuest.preferences.floor],["Pillow",selectedGuest.preferences.pillow],["Temperature",selectedGuest.preferences.temperature+"°C"],["Dietary",selectedGuest.preferences.dietary.join(", ")]].map(([k,v])=>(
+                      {[["Floor",selectedGuest.preferredFloor],["Pillow",selectedGuest.pillowPref],["Dietary",selectedGuest.dietaryReq.join(", ")||"None"]].map(([k,v])=>(
                         <div key={k} className="flex justify-between border-b border-border/50 pb-1.5 last:border-0"><span className="text-muted-foreground">{k}</span><span className="font-medium text-foreground">{v}</span></div>
                       ))}
                     </div>
@@ -443,20 +426,20 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
         {activeSubmenu === "Arrivals Today" && (
           <motion.div key="arrivals" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-5">
             <div className="flex items-center justify-between">
-              <div><h2 className="text-2xl font-bold text-foreground">Today's Arrivals</h2><p className="text-muted-foreground text-sm mt-1">{todayArrivals.length} guests arriving · All preferences pre-loaded</p></div>
+              <div><SectionHeader title="Today's Arrivals" /><p className="text-muted-foreground text-sm mt-1">{todayArrivals.length} guests arriving · All preferences pre-loaded</p></div>
               <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"><Send className="w-4 h-4"/>Send Pre-Arrival Messages</button>
             </div>
             <div className="space-y-4">
               {todayArrivals.map(g => (
                 <div key={g.id} className="bg-card rounded-2xl shadow-sm border border-border p-5">
                   <div className="flex items-start gap-4 flex-wrap sm:flex-nowrap">
-                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg shrink-0", g.tier==="Platinum Elite"?"bg-gradient-to-br from-purple-500 to-violet-700":g.tier==="Platinum"?"bg-gradient-to-br from-indigo-400 to-indigo-600":"bg-gradient-to-br from-amber-400 to-orange-500")}>{g.name.charAt(0)}</div>
+                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg shrink-0", g.tier==="Platinum Elite"?"bg-gradient-to-br from-purple-500 to-violet-700":g.tier==="Platinum"?"bg-gradient-to-br from-indigo-400 to-indigo-600":"bg-gradient-to-br from-amber-400 to-orange-500")}>{g.firstName.charAt(0)}</div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-lg font-bold text-foreground">{g.name}</span>
+                        <span className="text-lg font-bold text-foreground">{`${g.firstName} ${g.lastName}`}</span>
                         {g.vip&&<Crown className="w-4 h-4 text-amber-500"/>}
                         <TierBadge tier={g.tier} />
-                        <span className="text-sm text-muted-foreground">· Room {g.room} · {g.nights} nights</span>
+                        <span className="text-sm text-muted-foreground">· Room {g.currentRoom} · {g.totalNights} nights</span>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
                         <div className="bg-secondary/40 rounded-xl p-3">
@@ -465,15 +448,15 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
                         </div>
                         <div className="bg-secondary/40 rounded-xl p-3">
                           <p className="text-xs text-muted-foreground">Pillow Pref.</p>
-                          <p className="text-sm font-semibold text-foreground mt-0.5 flex items-center gap-1"><Bed className="w-3.5 h-3.5"/>{g.preferences.pillow}</p>
+                          <p className="text-sm font-semibold text-foreground mt-0.5 flex items-center gap-1"><Bed className="w-3.5 h-3.5"/>{g.pillowPref}</p>
                         </div>
                         <div className="bg-secondary/40 rounded-xl p-3">
                           <p className="text-xs text-muted-foreground">Floor Pref.</p>
-                          <p className="text-sm font-semibold text-foreground mt-0.5 flex items-center gap-1"><ArrowUpRight className="w-3.5 h-3.5"/>{g.preferences.floor}</p>
+                          <p className="text-sm font-semibold text-foreground mt-0.5 flex items-center gap-1"><ArrowUpRight className="w-3.5 h-3.5"/>{g.preferredFloor}</p>
                         </div>
                         <div className="bg-secondary/40 rounded-xl p-3">
                           <p className="text-xs text-muted-foreground">Dietary</p>
-                          <p className="text-sm font-semibold text-foreground mt-0.5 flex items-center gap-1"><UtensilsCrossed className="w-3.5 h-3.5"/>{g.preferences.dietary[0]||"None"}</p>
+                          <p className="text-sm font-semibold text-foreground mt-0.5 flex items-center gap-1"><UtensilsCrossed className="w-3.5 h-3.5"/>{g.dietaryReq[0]||"None"}</p>
                         </div>
                       </div>
                     </div>
@@ -493,7 +476,7 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
         {/* ── VIP INTELLIGENCE ─────────────────────────────── */}
         {activeSubmenu === "VIP Intelligence" && (
           <motion.div key="vip" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-5">
-            <div><h2 className="text-2xl font-bold text-foreground">VIP Intelligence</h2><p className="text-muted-foreground text-sm mt-1">Every detail, anticipated before they ask</p></div>
+            <div><SectionHeader title="VIP Intelligence" /><p className="text-muted-foreground text-sm mt-1">Every detail, anticipated before they ask</p></div>
             {/* Alert banner */}
             <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
               <BellRing className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
@@ -506,17 +489,17 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
               {/* In-house VIPs */}
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
                 <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Crown className="w-4 h-4 text-amber-500"/>On Property Now</h3>
-                {vipGuests.filter(g=>g.status==="In-House").map(g => (
+                {vipGuests.filter(g=>g.currentlyInHouse).map(g => (
                   <div key={g.id} className="mb-4 pb-4 border-b border-border/50 last:border-0 last:mb-0">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-700 flex items-center justify-center text-white font-bold shrink-0">{g.name.charAt(0)}</div>
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-700 flex items-center justify-center text-white font-bold shrink-0">{g.firstName.charAt(0)}</div>
                       <div className="flex-1">
-                        <div className="font-semibold text-foreground flex items-center gap-1.5">{g.name}<Crown className="w-3 h-3 text-amber-500"/></div>
-                        <div className="flex items-center gap-2"><TierBadge tier={g.tier}/><span className="text-xs text-muted-foreground">Room {g.room}</span></div>
+                        <div className="font-semibold text-foreground flex items-center gap-1.5">{`${g.firstName} ${g.lastName}`}<Crown className="w-3 h-3 text-amber-500"/></div>
+                        <div className="flex items-center gap-2"><TierBadge tier={g.tier}/><span className="text-xs text-muted-foreground">Room {g.currentRoom}</span></div>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      {[["Stays",g.totalStays],["Total Spend","$"+g.totalSpend.toLocaleString()],["Language",g.preferences.language],["Dietary",g.preferences.dietary[0]||"None"]].map(([k,v])=>(
+                      {[["Stays",g.totalStays],["Total Spend","$"+g.totalSpend.toLocaleString()],["Language",g.language],["Dietary",g.dietaryReq[0]||"None"]].map(([k,v])=>(
                         <div key={k} className="bg-secondary/40 rounded-lg p-2"><p className="text-muted-foreground">{k}</p><p className="font-semibold text-foreground mt-0.5">{v}</p></div>
                       ))}
                     </div>
@@ -528,24 +511,23 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
               {/* Upcoming VIPs */}
               <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
                 <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Calendar className="w-4 h-4 text-violet-500"/>Upcoming VIPs</h3>
-                {vipGuests.filter(g=>g.status==="Arriving Today"||g.status==="Reserved").map(g => (
+                {vipGuests.filter(g=>!g.currentlyInHouse&&!!g.nextStay).map(g => (
                   <div key={g.id} className="mb-4 pb-4 border-b border-border/50 last:border-0 last:mb-0">
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-white font-bold shrink-0">{g.name.charAt(0)}</div>
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-white font-bold shrink-0">{g.firstName.charAt(0)}</div>
                       <div>
-                        <div className="font-semibold text-foreground">{g.name}</div>
-                        <div className="flex items-center gap-2"><TierBadge tier={g.tier}/><span className="text-xs text-muted-foreground">{g.status}</span></div>
+                        <div className="font-semibold text-foreground">{`${g.firstName} ${g.lastName}`}</div>
+                        <div className="flex items-center gap-2"><TierBadge tier={g.tier}/><span className="text-xs text-muted-foreground">Arriving {g.nextStay}</span></div>
                       </div>
                     </div>
                     <div className="text-xs space-y-1">
-                      <div className="flex gap-2"><span className="text-muted-foreground w-20 shrink-0">Pillow:</span><span className="text-foreground font-medium">{g.preferences.pillow}</span></div>
-                      <div className="flex gap-2"><span className="text-muted-foreground w-20 shrink-0">Floor:</span><span className="text-foreground font-medium">{g.preferences.floor}</span></div>
-                      <div className="flex gap-2"><span className="text-muted-foreground w-20 shrink-0">Temp:</span><span className="text-foreground font-medium">{g.preferences.temperature}°C</span></div>
-                      <div className="flex gap-2"><span className="text-muted-foreground w-20 shrink-0">Dietary:</span><span className="text-foreground font-medium">{g.preferences.dietary.join(", ")||"None"}</span></div>
+                      <div className="flex gap-2"><span className="text-muted-foreground w-20 shrink-0">Pillow:</span><span className="text-foreground font-medium">{g.pillowPref}</span></div>
+                      <div className="flex gap-2"><span className="text-muted-foreground w-20 shrink-0">Floor:</span><span className="text-foreground font-medium">{g.preferredFloor}</span></div>
+                      <div className="flex gap-2"><span className="text-muted-foreground w-20 shrink-0">Dietary:</span><span className="text-foreground font-medium">{g.dietaryReq.join(", ")||"None"}</span></div>
                     </div>
                   </div>
                 ))}
-                {vipGuests.filter(g=>g.status==="Arriving Today"||g.status==="Reserved").length===0&&<p className="text-muted-foreground text-sm text-center py-8">No upcoming VIP arrivals</p>}
+                {vipGuests.filter(g=>!g.currentlyInHouse&&!!g.nextStay).length===0&&<p className="text-muted-foreground text-sm text-center py-8">No upcoming VIP arrivals</p>}
               </div>
             </div>
           </motion.div>
@@ -555,7 +537,7 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
         {activeSubmenu === "Guest Moments" && (
           <motion.div key="moments" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-5">
             <div className="flex items-center justify-between">
-              <div><h2 className="text-2xl font-bold text-foreground">Guest Moments</h2><p className="text-muted-foreground text-sm mt-1">Birthdays, anniversaries, milestones — never miss a thing</p></div>
+              <div><SectionHeader title="Guest Moments" /><p className="text-muted-foreground text-sm mt-1">Birthdays, anniversaries, milestones — never miss a thing</p></div>
               <button className="flex items-center gap-2 bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"><Plus className="w-4 h-4"/>Create a Moment</button>
             </div>
             {/* Upcoming moments */}
@@ -600,7 +582,7 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
             </div>
             {/* Nationality breakdown bar */}
             <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-              <h3 className="font-semibold text-foreground mb-4">Guest Nationalities</h3>
+              <SectionHeader title="Guest Nationalities" />
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={nationalityData} layout="vertical" margin={{left:20}}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border,#e2e8f0)" horizontal={false} />
@@ -617,37 +599,21 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
         {/* ── LOYALTY & REWARDS ────────────────────────────── */}
         {activeSubmenu === "Loyalty & Rewards" && (
           <motion.div key="loyalty" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-5">
-            <div><h2 className="text-2xl font-bold text-foreground">Loyalty & Rewards</h2><p className="text-muted-foreground text-sm mt-1">Points, perks and progress across every tier</p></div>
+            <div><SectionHeader title="Loyalty & Rewards" /><p className="text-muted-foreground text-sm mt-1">Points, perks and progress across every tier</p></div>
             {/* Tier cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-              {tierDistribution.map(t => {
-                const gradientMap: Record<string, string> = {
-                  "Platinum Elite": "from-purple-400 to-purple-500",
-                  "Platinum": "from-indigo-400 to-indigo-500",
-                  "Gold": "from-amber-400 to-amber-500",
-                  "Silver": "from-slate-400 to-slate-500",
-                  "Member": "from-gray-400 to-gray-500"
-                };
-                return (
-                  <div key={t.name} className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-r p-5 text-white", gradientMap[t.name])}>
-                    <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <p className="text-white/80 text-xs font-medium uppercase tracking-wide">{t.name}</p>
-                        <p className="text-3xl font-bold mt-1">{t.value}</p>
-                        <p className="text-white/70 text-xs mt-1">members</p>
-                      </div>
-                      <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0 ml-2">
-                        <div className="w-5 h-5 rounded-full" style={{background:t.color}} />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <KpiStrip items={tierDistribution.map(t => {
+              const colorMap: Record<string, string> = {
+                "Platinum Elite": "bg-violet-500",
+                "Platinum": "bg-indigo-500",
+                "Gold": "bg-amber-500",
+                "Silver": "bg-slate-500",
+                "Member": "bg-slate-400"
+              };
+              return { color: colorMap[t.name] ?? "bg-slate-500", value: String(t.value), label: t.name };
+            })} />
             {/* Tier benefits matrix */}
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
-              <div className="px-5 py-4 border-b border-border"><h3 className="font-semibold text-foreground">Tier Benefits</h3></div>
+              <div className="px-5 py-4 border-b border-border"><SectionHeader title="Tier Benefits" /></div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead><tr className="bg-secondary/50 text-muted-foreground text-xs uppercase tracking-wide">
@@ -674,7 +640,7 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
             {/* Transaction log */}
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
               <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-                <h3 className="font-semibold text-foreground">Recent Points Activity</h3>
+                <SectionHeader title="Recent Points Activity" />
                 <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"><Download className="w-3.5 h-3.5"/>Export</button>
               </div>
               <table className="w-full text-sm">
@@ -707,7 +673,7 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
         {activeSubmenu === "Feedback" && (
           <motion.div key="feedback" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-5">
             <div className="flex items-center justify-between">
-              <div><h2 className="text-2xl font-bold text-foreground">Guest Feedback</h2><p className="text-muted-foreground text-sm mt-1">Every voice heard, every issue resolved</p></div>
+              <div><SectionHeader title="Guest Feedback" /><p className="text-muted-foreground text-sm mt-1">Every voice heard, every issue resolved</p></div>
               <div className="flex items-center gap-3">
                 <div className="text-center bg-card rounded-xl border border-border px-4 py-2">
                   <p className="text-xs text-muted-foreground">Avg Rating</p>
@@ -716,21 +682,11 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
               </div>
             </div>
             {/* Sentiment summary */}
-            <div className="grid grid-cols-3 gap-4">
-              {[
-                { label: "Positive", count: feedbackEntries.filter(f=>f.sentiment==="Positive").length, icon: <ThumbsUp className="w-5 h-5"/>, color: "from-green-400 to-emerald-500" },
-                { label: "Neutral", count: feedbackEntries.filter(f=>f.sentiment==="Neutral").length, icon: <MessageSquare className="w-5 h-5"/>, color: "from-yellow-400 to-amber-500" },
-                { label: "Negative", count: feedbackEntries.filter(f=>f.sentiment==="Negative").length, icon: <ThumbsDown className="w-5 h-5"/>, color: "from-red-400 to-rose-500" },
-              ].map(s => (
-                <div key={s.label} className={cn("relative overflow-hidden rounded-2xl p-4 bg-gradient-to-r text-white shadow-md", s.color)}>
-                  <div className="flex items-center justify-between">
-                    <div><p className="text-white/80 text-xs font-medium uppercase">{s.label}</p><p className="text-3xl font-bold mt-1">{s.count}</p></div>
-                    <div className="bg-white/20 rounded-xl p-2">{s.icon}</div>
-                  </div>
-                  <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                </div>
-              ))}
-            </div>
+            <KpiStrip items={[
+              { color: "bg-emerald-500", value: feedbackEntries.filter(f=>f.sentiment==="Positive").length, label: "Positive" },
+              { color: "bg-amber-500", value: feedbackEntries.filter(f=>f.sentiment==="Neutral").length, label: "Neutral" },
+              { color: "bg-rose-500", value: feedbackEntries.filter(f=>f.sentiment==="Negative").length, label: "Negative" },
+            ]} />
             {/* Feedback cards */}
             <div className="space-y-4">
               {feedbackEntries.map(f => (
@@ -742,9 +698,9 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-foreground">{f.guestName}</span>
                           <SentimentBadge s={f.sentiment} />
-                          <span className="text-xs text-muted-foreground">{f.source} · {f.date}</span>
+                          <span className="text-xs text-muted-foreground">{f.channel} · {f.date}</span>
                         </div>
-                        <div className="flex">{[1,2,3,4,5].map(s=><Star key={s} className={cn("w-4 h-4",s<=f.rating?"text-amber-400 fill-amber-400":"text-gray-200")}/>)}</div>
+                        <div className="flex">{[1,2,3,4,5].map(s=><Star key={s} className={cn("w-4 h-4",s<=f.rating?"text-amber-400 fill-amber-400":"text-muted-foreground")}/>)}</div>
                       </div>
                       <p className="text-sm text-foreground mt-2 leading-relaxed">{f.comment}</p>
                       {f.response ? (
@@ -769,7 +725,7 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
         {/* ── JOURNEY ──────────────────────────────────────── */}
         {activeSubmenu === "Journey" && (
           <motion.div key="journey" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.25 }} className="space-y-5">
-            <div><h2 className="text-2xl font-bold text-foreground">Guest Journey</h2><p className="text-muted-foreground text-sm mt-1">Full cross-property history and spend at a glance</p></div>
+            <div><SectionHeader title="Guest Journey" /><p className="text-muted-foreground text-sm mt-1">Full cross-property history and spend at a glance</p></div>
             {/* Guest selector */}
             <div className="relative max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -781,20 +737,20 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
               return (
                 <div className="space-y-4">
                   <div className="bg-card rounded-2xl shadow-sm border border-border p-5 flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-700 flex items-center justify-center text-white font-bold text-xl">{g.name.charAt(0)}</div>
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-700 flex items-center justify-center text-white font-bold text-xl">{g.firstName.charAt(0)}</div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2"><span className="text-xl font-bold text-foreground">{g.name}</span><Crown className="w-4 h-4 text-amber-500"/><TierBadge tier={g.tier}/></div>
+                      <div className="flex items-center gap-2"><span className="text-xl font-bold text-foreground">{`${g.firstName} ${g.lastName}`}</span><Crown className="w-4 h-4 text-amber-500"/><TierBadge tier={g.tier}/></div>
                       <p className="text-sm text-muted-foreground mt-0.5">{g.nationality} · Member since 2019 · {g.email}</p>
                     </div>
                     <div className="grid grid-cols-3 gap-4 text-center">
-                      {[{l:"Total Stays",v:g.totalStays},{l:"Total Spend",v:"$"+g.totalSpend.toLocaleString()},{l:"Points",v:g.loyaltyPoints.toLocaleString()}].map(s=>(
+                      {[{l:"Total Stays",v:g.totalStays},{l:"Total Spend",v:"$"+g.totalSpend.toLocaleString()},{l:"Points",v:g.points.toLocaleString()}].map(s=>(
                         <div key={s.l}><p className="text-xs text-muted-foreground">{s.l}</p><p className="text-lg font-bold text-foreground">{s.v}</p></div>
                       ))}
                     </div>
                   </div>
                   {/* Stay timeline */}
                   <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                    <h3 className="font-semibold text-foreground mb-5">Stay History Timeline</h3>
+                    <SectionHeader title="Stay History Timeline" />
                     <div className="relative">
                       <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border" />
                       {[
@@ -809,7 +765,7 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
                           <div className="flex-1 bg-secondary/30 rounded-xl p-4 hover:bg-secondary/60 transition-colors">
                             <div className="flex items-center justify-between flex-wrap gap-2">
                               <div><span className="font-semibold text-foreground">{stay.property}</span><span className="text-xs text-muted-foreground ml-2">{stay.date}</span></div>
-                              <div className="flex items-center gap-1">{[1,2,3,4,5].map(s=><Star key={s} className={cn("w-3 h-3",s<=Math.round(stay.rating/2)?"text-amber-400 fill-amber-400":"text-gray-200")}/>)}</div>
+                              <div className="flex items-center gap-1">{[1,2,3,4,5].map(s=><Star key={s} className={cn("w-3 h-3",s<=Math.round(stay.rating/2)?"text-amber-400 fill-amber-400":"text-muted-foreground")}/>)}</div>
                             </div>
                             <div className="flex gap-4 mt-2 text-sm">
                               <span className="text-muted-foreground">{stay.nights} nights · {stay.room}</span>
@@ -823,7 +779,7 @@ export function Guests({ aiEnabled, activeSubmenu = "Overview" }: GuestsProps) {
                   </div>
                   {/* Spend breakdown */}
                   <div className="bg-card rounded-2xl shadow-sm border border-border p-5">
-                    <h3 className="font-semibold text-foreground mb-4">Spend by Category</h3>
+                    <SectionHeader title="Spend by Category" />
                     <ResponsiveContainer width="100%" height={200}>
                       <BarChart data={[{cat:"Rooms",v:28000},{cat:"F&B",v:12000},{cat:"Spa",v:4500},{cat:"Activities",v:2800},{cat:"Other",v:1200}]}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border,#e2e8f0)" />
