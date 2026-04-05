@@ -105,7 +105,7 @@ function DashboardApp() {
 
 export default function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="omnistay-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="travelbook-hotel-os-theme">
       <ThemeApplier />
       <Routes>
         <Route path="/login" element={<Login />} />

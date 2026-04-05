@@ -101,9 +101,9 @@ export function Layout({
         onMouseLeave={() => setHoveredDept(null)}
       >
         {/* Darker Left Strip (Main Menu) */}
-        <div className="w-16 bg-violet-700/90 backdrop-blur-md h-full rounded-r-2xl z-20 flex flex-col items-center py-6 shadow-xl absolute left-0 top-0 border-r border-white/10">
+        <div className="w-16 bg-[#0a1d26]/90 backdrop-blur-md h-full rounded-r-2xl z-20 flex flex-col items-center py-6 shadow-xl absolute left-0 top-0 border-r border-white/10">
           {/* Logo */}
-          <div className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center mb-4 text-white font-bold text-lg shadow-inner shrink-0">
+          <div className="w-9 h-9 bg-amber-300/20 rounded-xl flex items-center justify-center mb-4 text-amber-300 font-bold text-lg shadow-inner shrink-0">
             O
           </div>
 
@@ -121,7 +121,7 @@ export function Layout({
                   }}
                   className={cn(
                     "w-full h-9 rounded-xl flex items-center justify-center transition-all relative group shrink-0",
-                    isActive ? "bg-violet-500/90 shadow-md text-white border border-white/10" : "text-violet-300 hover:text-white hover:bg-white/10"
+                    isActive ? "bg-amber-300 text-slate-950 shadow-md border border-amber-200/20" : "text-white/55 hover:text-white hover:bg-white/10"
                   )}
                   title={dept.name}
                 >
@@ -137,25 +137,25 @@ export function Layout({
         </div>
 
         {/* Submenu Area */}
-        <div className="flex-1 bg-violet-500/90 backdrop-blur-md h-full rounded-r-[40px] pl-16 flex flex-col z-10 py-6 transition-all">
+        <div className="flex-1 bg-[#0a1d26]/80 backdrop-blur-xl h-full rounded-r-[40px] pl-16 flex flex-col z-10 py-6 transition-all border-r border-white/10">
           
           {/* User Profile */}
           <div className="flex items-center gap-3 px-6 mb-8 text-white">
-            <div className="w-10 h-10 rounded-full bg-violet-400/80 flex items-center justify-center overflow-hidden border-2 border-violet-300/50 shrink-0 shadow-sm">
+            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center overflow-hidden border-2 border-white/20 shrink-0 shadow-sm">
               <img src="https://i.pravatar.cc/150?u=a042581f4e29026024d" alt="User" className="w-full h-full object-cover" />
             </div>
             <div className={cn("flex flex-col", !sidebarOpen && "md:hidden")}>
               <span className="font-medium text-sm whitespace-nowrap">Jane Doe</span>
-              <span className="text-xs text-violet-200 truncate max-w-[100px]">{displayDept.name}</span>
+              <span className="text-xs text-white/55 truncate max-w-[100px]">{displayDept.name}</span>
             </div>
-            <button className={cn("ml-auto text-violet-200 hover:text-white", !sidebarOpen && "md:hidden")}>
+            <button className={cn("ml-auto text-white/55 hover:text-white", !sidebarOpen && "md:hidden")}>
               <ChevronDown className="w-4 h-4" />
             </button>
           </div>
 
           {/* Submenu Title */}
           <div className="px-6 mb-4">
-            <h3 className="text-violet-200 text-xs font-bold uppercase tracking-wider">{displayDept.name}</h3>
+            <h3 className="text-white/40 text-xs font-bold uppercase tracking-wider">{displayDept.name}</h3>
           </div>
 
           {/* Submenu Links */}
@@ -171,7 +171,7 @@ export function Layout({
                   }}
                   className={cn(
                     "w-full flex items-center gap-3 px-4 py-3 rounded-l-full transition-colors relative group text-left outline-none",
-                    isSubActive ? "text-violet-700 dark:text-violet-300 font-medium" : "text-white hover:bg-white/10"
+                    isSubActive ? "text-amber-300 font-medium" : "text-white hover:bg-white/10"
                   )}
                 >
                   {isSubActive && (
@@ -194,7 +194,7 @@ export function Layout({
           </nav>
 
           {/* Bottom Links */}
-          <div className="mt-auto pl-6 flex flex-col gap-2 pt-4 border-t border-violet-400/50 mx-4">
+          <div className="mt-auto pl-6 flex flex-col gap-2 pt-4 border-t border-white/10 mx-4">
             {import.meta.env.DEV && (
               <a
                 href="/style-guide"
@@ -221,12 +221,14 @@ export function Layout({
         
         {/* Header */}
         <header className="h-24 flex items-center justify-between px-8 shrink-0">
-          <button 
+          <button
             className="md:hidden text-muted-foreground hover:text-foreground mr-4"
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
             <Menu className="h-6 w-6" />
           </button>
+
+          <div className="text-amber-300 font-bold text-sm tracking-wider uppercase hidden md:block">TravelBook Hotel OS</div>
 
           <div className="flex-1 flex justify-center max-w-3xl mx-auto">
             <div className="bg-card rounded-full shadow-sm flex items-center px-4 py-2 w-full border border-border">

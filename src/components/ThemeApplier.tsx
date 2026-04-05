@@ -40,10 +40,10 @@ export function ThemeApplier() {
     // Apply dark mode class
     if (theme.darkMode) {
       root.classList.add("dark");
-      localStorage.setItem("omnistay-theme", "dark");
+      localStorage.setItem("travelbook-hotel-os-theme", "dark");
     } else {
       root.classList.remove("dark");
-      localStorage.setItem("omnistay-theme", "light");
+      localStorage.setItem("travelbook-hotel-os-theme", "light");
     }
 
     // Apply primary color to the actual CSS variable the UI uses
