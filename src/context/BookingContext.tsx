@@ -40,6 +40,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) return;
     const path = "bookings";
+    if ((import.meta as any).env?.DEV) { setLoading(false); return; }
     const bookingsQuery = query(collection(db, path), orderBy("checkIn", "desc"), limit(50));
     const unsubscribe = onSnapshot(bookingsQuery, (snapshot) => {
       const bookingData = snapshot.docs.map(doc => ({ 

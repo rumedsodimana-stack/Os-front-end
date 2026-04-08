@@ -17,7 +17,13 @@ import {
   Maximize2,
   Settings,
   Users,
-  Layers
+  Layers,
+  Sparkles,
+  Droplet,
+  Gauge,
+  Download,
+  Upload,
+  ChevronDown
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useTheme } from "../components/theme-provider";
@@ -44,8 +50,102 @@ const FONTS = [
   { name: "Plus Jakarta Sans", value: "Plus Jakarta Sans" },
 ];
 
+/**
+ * Reusable: one colour-picker row (swatch + hex input), used across all new
+ * Theme Studio sections. Keeps the existing Sidebar Styling visual pattern
+ * (see lines ~192–213) as the canonical control.
+ */
+function ColorField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <label className="text-xs font-medium text-muted-foreground">{label}</label>
+      <div className="flex items-center gap-3">
+        <div
+          className="w-10 h-10 rounded-lg border border-border shrink-0 relative overflow-hidden"
+          style={{ backgroundColor: value }}
+        >
+          <input
+            type="color"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="absolute inset-0 opacity-0 cursor-pointer scale-150"
+          />
+        </div>
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-xs font-mono outline-none focus:ring-1 focus:ring-primary"
+        />
+      </div>
+    </div>
+  );
+}
+
+/** Collapsible wrapper — uses native <details> so no new dep. */
+function StudioSection({
+  icon: Icon,
+  title,
+  subtitle,
+  children,
+  defaultOpen = false,
+}: {
+  icon: any;
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  return (
+    <details open={defaultOpen} className="group bg-card border border-border rounded-2xl overflow-hidden">
+      <summary className="flex items-center gap-3 px-6 py-4 cursor-pointer list-none hover:bg-secondary/30 transition-colors">
+        <Icon className="w-5 h-5 text-primary shrink-0" />
+        <div className="flex-1">
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+          {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
+        </div>
+        <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="px-6 py-5 border-t border-border space-y-5">{children}</div>
+    </details>
+  );
+}
+
 export function Configuration({ activeSubmenu }: { activeSubmenu: string }) {
-  const { theme, setTheme, config, setConfig, resetConfig } = useTheme();
+  const { theme, setTheme, config, setConfig, resetConfig, exportConfig, importConfig } = useTheme();
+  const [importError, setImportError] = useState<string | null>(null);
+
+  const handleExport = () => {
+    const json = exportConfig();
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `orbit-theme-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = importConfig(String(reader.result));
+      if (!result.ok) setImportError(result.error ?? "Import failed");
+      else setImportError(null);
+    };
+    reader.readAsText(file);
+    e.target.value = ""; // allow re-upload of same file
+  };
 
   const renderContent = () => {
     switch (activeSubmenu) {
@@ -172,75 +272,222 @@ export function Configuration({ activeSubmenu }: { activeSubmenu: string }) {
               </div>
             </section>
 
-            {/* Sidebar Styling */}
-            <section className="space-y-4">
+
+            {/* ══════════════════════════════════════════════════════════
+                 THEME STUDIO — every design token, editable in one place
+                 ══════════════════════════════════════════════════════════ */}
+            <section className="space-y-3">
               <div className="flex items-center gap-2">
-                <SidebarIcon className="w-5 h-5 text-primary" />
-                <h2 className="text-lg font-semibold">Sidebar Styling</h2>
+                <Sparkles className="w-5 h-5 text-primary" />
+                <h2 className="text-lg font-semibold">Theme Studio</h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 bg-card border border-border rounded-2xl">
-                {[
-                  { id: "sidebarMainBg", label: "Main Strip BG" },
-                  { id: "sidebarSubBg", label: "Submenu Area BG" },
-                  { id: "sidebarActiveBg", label: "Active Link BG" },
-                  { id: "sidebarActiveText", label: "Active Link Text" },
-                  { id: "sidebarHoverBg", label: "Hover Background" },
-                  { id: "sidebarIconColor", label: "Icon Color" },
-                ].map((item) => (
-                  <div key={item.id} className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">{item.label}</label>
-                    <div className="flex items-center gap-3">
-                      <div 
-                        className="w-10 h-10 rounded-lg border border-border shrink-0 relative overflow-hidden"
-                        style={{ backgroundColor: (config as any)[item.id] }}
-                      >
-                        <input 
-                          type="color" 
-                          value={(config as any)[item.id]}
-                          onChange={(e) => setConfig({ [item.id]: e.target.value })}
-                          className="absolute inset-0 opacity-0 cursor-pointer scale-150"
-                        />
+              <p className="text-xs text-muted-foreground -mt-1">
+                Every editable design token in one place. Source of truth:{" "}
+                <code className="px-1 py-0.5 rounded bg-secondary text-[11px]">src/styles/tokens.json</code>.
+                Changes apply live and persist to <code className="text-[11px]">localStorage</code>.
+                Export as a <strong>theme pack</strong> to re-use across tenants.
+              </p>
+
+              {/* Surfaces */}
+              <StudioSection icon={Droplet} title="Surfaces" subtitle="Page background, foreground text, card, border">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <ColorField label="Background" value={config.colorBackground} onChange={(v) => setConfig({ colorBackground: v })} />
+                  <ColorField label="Foreground (text)" value={config.colorForeground} onChange={(v) => setConfig({ colorForeground: v })} />
+                  <ColorField label="Card" value={config.colorCard} onChange={(v) => setConfig({ colorCard: v })} />
+                  <ColorField label="Border" value={config.colorBorder} onChange={(v) => setConfig({ colorBorder: v })} />
+                </div>
+              </StudioSection>
+
+              {/* Status */}
+              <StudioSection icon={Palette} title="Status colours" subtitle="Success · Warning · Danger · Info (edits the 500 shade)">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <ColorField label="Success (emerald)" value={config.colorSuccess} onChange={(v) => setConfig({ colorSuccess: v })} />
+                  <ColorField label="Warning (amber)" value={config.colorWarning} onChange={(v) => setConfig({ colorWarning: v })} />
+                  <ColorField label="Danger (red)" value={config.colorDanger} onChange={(v) => setConfig({ colorDanger: v })} />
+                  <ColorField label="Info (blue)" value={config.colorInfo} onChange={(v) => setConfig({ colorInfo: v })} />
+                </div>
+                <div className="grid grid-cols-4 gap-2 pt-2">
+                  {[
+                    { v: config.colorSuccess, label: "success" },
+                    { v: config.colorWarning, label: "warning" },
+                    { v: config.colorDanger,  label: "danger"  },
+                    { v: config.colorInfo,    label: "info"    },
+                  ].map((s) => (
+                    <div key={s.label} className="space-y-1">
+                      <div className="h-6 rounded-md border border-border" style={{ backgroundColor: s.v }} />
+                      <div className="text-[10px] text-center font-mono text-muted-foreground">{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </StudioSection>
+
+              {/* KPI Gradients */}
+              <StudioSection icon={Gauge} title="KPI gradients" subtitle="6 gradient pairs used on KPI hero tiles (.bg-kpi-*)">
+                <div className="space-y-4">
+                  {[
+                    { label: "Arrivals",     from: "kpiArrivalsFrom",   to: "kpiArrivalsTo",   cls: "bg-kpi-arrivals" },
+                    { label: "In House",     from: "kpiInHouseFrom",    to: "kpiInHouseTo",    cls: "bg-kpi-in-house" },
+                    { label: "Departures",   from: "kpiDeparturesFrom", to: "kpiDeparturesTo", cls: "bg-kpi-departures" },
+                    { label: "Revenue",      from: "kpiRevenueFrom",    to: "kpiRevenueTo",    cls: "bg-kpi-revenue" },
+                    { label: "Occupancy",    from: "kpiOccupancyFrom",  to: "kpiOccupancyTo",  cls: "bg-kpi-occupancy" },
+                    { label: "ADR / RevPAR", from: "kpiAdrRevparFrom",  to: "kpiAdrRevparTo",  cls: "bg-kpi-adr-revpar" },
+                  ].map((g) => (
+                    <div key={g.cls} className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-4 items-center">
+                      <div className={cn("h-14 rounded-xl shadow-sm flex items-center justify-center text-[11px] font-bold text-white uppercase tracking-wider", g.cls)}>
+                        {g.label}
                       </div>
-                      <input 
-                        type="text" 
-                        value={(config as any)[item.id]}
-                        onChange={(e) => setConfig({ [item.id]: e.target.value })}
-                        className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-xs font-mono outline-none focus:ring-1 focus:ring-primary"
+                      <div className="grid grid-cols-2 gap-3">
+                        <ColorField label="From" value={(config as any)[g.from]} onChange={(v) => setConfig({ [g.from]: v } as any)} />
+                        <ColorField label="To"   value={(config as any)[g.to]}   onChange={(v) => setConfig({ [g.to]:   v } as any)} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </StudioSection>
+
+              {/* Typography — mono + base size (sans/heading already above) */}
+              <StudioSection icon={FontIcon} title="Typography (advanced)" subtitle="Monospace font & base size">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">Monospace Font (code / data)</label>
+                    <select
+                      value={config.fontMono}
+                      onChange={(e) => setConfig({ fontMono: e.target.value })}
+                      className="w-full bg-card border border-border rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                      {FONTS.map((font) => (
+                        <option key={font.value} value={font.value}>{font.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">Base Font Size ({config.fontSizeBase}px)</label>
+                    <input
+                      type="range"
+                      min="12"
+                      max="20"
+                      step="1"
+                      value={config.fontSizeBase}
+                      onChange={(e) => setConfig({ fontSizeBase: parseInt(e.target.value) })}
+                      className="w-full accent-primary"
+                    />
+                  </div>
+                </div>
+              </StudioSection>
+
+              {/* Motion */}
+              <StudioSection icon={Gauge} title="Motion" subtitle="Animation durations (ms)">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {[
+                    { key: "motionDurationFast", label: "Fast",  min: 50,  max: 300 },
+                    { key: "motionDurationBase", label: "Base",  min: 100, max: 500 },
+                    { key: "motionDurationSlow", label: "Slow",  min: 200, max: 800 },
+                  ].map((m) => (
+                    <div key={m.key} className="space-y-2">
+                      <label className="text-sm font-medium text-muted-foreground">{m.label} ({(config as any)[m.key]}ms)</label>
+                      <input
+                        type="range"
+                        min={m.min}
+                        max={m.max}
+                        step="10"
+                        value={(config as any)[m.key]}
+                        onChange={(e) => setConfig({ [m.key]: parseInt(e.target.value) } as any)}
+                        className="w-full accent-primary"
                       />
                     </div>
-                  </div>
-                ))}
-              </div>
-            </section>
+                  ))}
+                </div>
+              </StudioSection>
 
-            {/* Sidebar Style */}
-            <section className="space-y-4">
-              <div className="flex items-center gap-2">
-                <SidebarIcon className="w-5 h-5 text-primary" />
-                <h2 className="text-lg font-semibold">Sidebar Style</h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { id: "classic", label: "Classic", desc: "Solid background with borders" },
-                  { id: "glass", label: "Glassmorphism", desc: "Translucent with blur effect" },
-                ].map((style) => (
+              {/* Sidebar */}
+              <StudioSection icon={SidebarIcon} title="Sidebar" subtitle="Layout variant, colours, style, and hover states">
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 block">Layout variant</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      { id: "classic-rail", label: "Classic Rail", desc: "80px icon rail + 256px submenu drawer (default)" },
+                      { id: "top-nav",      label: "Top Nav",      desc: "Horizontal top bar, no left sidebar — max content width" },
+                    ].map((v) => (
+                      <button
+                        key={v.id}
+                        onClick={() => setConfig({ sidebarVariant: v.id as any })}
+                        className={cn(
+                          "flex flex-col items-start gap-1 p-4 rounded-xl border-2 text-left transition-all",
+                          config.sidebarVariant === v.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                        )}
+                      >
+                        <span className={cn("font-semibold", config.sidebarVariant === v.id ? "text-primary" : "text-foreground")}>
+                          {v.label}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{v.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-border">
+                  {[
+                    { id: "classic", label: "Classic", desc: "Solid background with borders" },
+                    { id: "glass",   label: "Glassmorphism", desc: "Translucent with blur effect" },
+                  ].map((style) => (
+                    <button
+                      key={style.id}
+                      onClick={() => setConfig({ sidebarStyle: style.id as any })}
+                      className={cn(
+                        "flex flex-col items-start gap-1 p-4 rounded-xl border-2 text-left transition-all",
+                        config.sidebarStyle === style.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                      )}
+                    >
+                      <span className={cn("font-semibold", config.sidebarStyle === style.id ? "text-primary" : "text-foreground")}>
+                        {style.label}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{style.desc}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-3 border-t border-border">
+                  <ColorField label="Main Strip BG"     value={config.sidebarMainBg}     onChange={(v) => setConfig({ sidebarMainBg: v })} />
+                  <ColorField label="Submenu Area BG"   value={config.sidebarSubBg}      onChange={(v) => setConfig({ sidebarSubBg: v })} />
+                  <ColorField label="Active Link BG"    value={config.sidebarActiveBg}   onChange={(v) => setConfig({ sidebarActiveBg: v })} />
+                  <ColorField label="Active Link Text"  value={config.sidebarActiveText} onChange={(v) => setConfig({ sidebarActiveText: v })} />
+                  <ColorField label="Hover Background"  value={config.sidebarHoverBg}    onChange={(v) => setConfig({ sidebarHoverBg: v })} />
+                  <ColorField label="Icon Color"        value={config.sidebarIconColor}  onChange={(v) => setConfig({ sidebarIconColor: v })} />
+                </div>
+              </StudioSection>
+
+              {/* AI Chat Window */}
+              <StudioSection icon={Sparkles} title="AI Chat Window" subtitle="The Agentic AI right-side panel">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <ColorField label="Panel Background"      value={config.aiPanelBg}           onChange={(v) => setConfig({ aiPanelBg: v })} />
+                  <ColorField label="Panel Header BG"       value={config.aiPanelHeaderBg}     onChange={(v) => setConfig({ aiPanelHeaderBg: v })} />
+                  <ColorField label="User Bubble BG"        value={config.aiUserBubbleBg}      onChange={(v) => setConfig({ aiUserBubbleBg: v })} />
+                  <ColorField label="Assistant Bubble BG"   value={config.aiAssistantBubbleBg} onChange={(v) => setConfig({ aiAssistantBubbleBg: v })} />
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Tip: turn the AI panel on (toggle in the top header) to preview changes live.
+                </p>
+              </StudioSection>
+
+              {/* Export / Import */}
+              <StudioSection icon={Download} title="Theme pack — export / import" subtitle="Save the full config as JSON, or load a tenant theme pack">
+                <div className="flex flex-wrap items-center gap-3">
                   <button
-                    key={style.id}
-                    onClick={() => setConfig({ sidebarStyle: style.id as any })}
-                    className={cn(
-                      "flex flex-col items-start gap-1 p-4 rounded-xl border-2 text-left transition-all",
-                      config.sidebarStyle === style.id 
-                        ? "border-primary bg-primary/5" 
-                        : "border-border hover:border-primary/50"
-                    )}
+                    onClick={handleExport}
+                    className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
                   >
-                    <span className={cn("font-semibold", config.sidebarStyle === style.id ? "text-primary" : "text-foreground")}>
-                      {style.label}
-                    </span>
-                    <span className="text-xs text-muted-foreground">{style.desc}</span>
+                    <Download className="w-4 h-4" /> Export theme.json
                   </button>
-                ))}
-              </div>
+                  <label className="flex items-center gap-2 bg-card border border-border text-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary transition-colors cursor-pointer">
+                    <Upload className="w-4 h-4" /> Import theme.json
+                    <input type="file" accept="application/json" onChange={handleImport} className="hidden" />
+                  </label>
+                </div>
+                {importError && (
+                  <p className="text-xs text-danger-500 mt-2">Import error: {importError}</p>
+                )}
+                <p className="text-[11px] text-muted-foreground">
+                  The theme pack contains every editable token (colours, gradients, radius, typography, motion, sidebar). Drop it into another Orbit OS tenant to rebrand without touching code.
+                </p>
+              </StudioSection>
             </section>
 
             {/* Reset */}

@@ -4,11 +4,29 @@ import { cn } from "../lib/utils";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
 import { KPICard } from "../components/ui/KPICard";
+import { RoomCard, ROOM_GRID } from "../components/ui/RoomCard";
 import { useRooms, Room, RoomStatus, HKStatus } from "../context/RoomContext";
 import { useGuests } from "../context/GuestContext";
 import { useBookings, Booking } from "../context/BookingContext";
 import { useFolios, Folio, FolioItem } from "../context/FolioContext";
+import { useInventory } from "../context/InventoryContext";
 import { useAuth } from "../context/AuthContext";
+
+// Semantic tone helper for room status badges — no hardcoded palette colours.
+export function statusBadgeTone(status: string): string {
+  switch (status) {
+    case "Stay Over":
+      return "bg-info-100 text-info-700 border-info-200";
+    case "Arrival":
+      return "bg-success-100 text-success-700 border-success-200";
+    case "Departure":
+      return "bg-warning-100 text-warning-700 border-warning-200";
+    case "OOS":
+      return "bg-danger-100 text-danger-700 border-danger-200";
+    default:
+      return "bg-secondary text-secondary-foreground border-border";
+  }
+}
 
 const getBadgeColor = (status: string) => {
   switch (status) {
@@ -317,13 +335,13 @@ function FrontDeskRooms() {
   const [statusFilter, setStatusFilter] = React.useState("All Statuses");
   const [selectedRoom, setSelectedRoom] = React.useState<Room | null>(null);
 
-  const getStatusColor = (status: RoomStatus) => {
+  const statusTone = (status: RoomStatus): "info" | "success" | "warning" | "danger" | "neutral" => {
     switch (status) {
-      case "Stay Over": return "bg-blue-100/60 border-blue-200 text-blue-900 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300";
-      case "Arrival": return "bg-emerald-100/60 border-emerald-200 text-emerald-900 dark:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-300";
-      case "Departure": return "bg-amber-100/60 border-amber-200 text-amber-900 dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-300";
-      case "OOS": return "bg-red-100/60 border-red-200 text-red-900 dark:bg-red-900/30 dark:border-red-800 dark:text-red-300";
-      case "Vacant": return "bg-card border-border text-foreground";
+      case "Stay Over": return "info";
+      case "Arrival":   return "success";
+      case "Departure": return "warning";
+      case "OOS":       return "danger";
+      case "Vacant":    return "neutral";
     }
   };
 
@@ -385,39 +403,24 @@ function FrontDeskRooms() {
       </div>
 
       {/* Rooms Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
-        {filteredRooms.map((room) => (
-          <div 
-            key={room.number} 
-            onClick={() => setSelectedRoom(room)}
-            className={cn(
-              "p-4 rounded-2xl border shadow-sm flex flex-col gap-3 transition-all hover:shadow-md cursor-pointer", 
-              getStatusColor(room.status)
-            )}
-          >
-            <div className="flex justify-between items-start">
-              <h3 className="text-2xl font-bold">{room.number}</h3>
-              <div className="flex gap-1" title={`Housekeeping: ${room.hkStatus}`}>
-                {room.hkStatus === 'Clean' || room.hkStatus === 'Inspected' ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                ) : (
-                  <AlertCircle className="w-4 h-4 text-red-500" />
-                )}
-              </div>
-            </div>
-            
-            <div className="flex-1">
-              <p className="text-sm font-semibold truncate" title={room.guestName || room.notes || "Vacant"}>
-                {room.guestName || room.notes || "Vacant"}
-              </p>
-              <p className="text-xs opacity-70 truncate" title={room.type}>{room.type}</p>
-            </div>
-            
-            <div className="mt-auto pt-2 flex justify-between items-center text-xs font-medium opacity-80 border-t border-current/10">
-              <span>{room.status}</span>
-            </div>
-          </div>
-        ))}
+      <div className={ROOM_GRID}>
+        {filteredRooms.map((room) => {
+          const tone = statusTone(room.status);
+          const hkOk = room.hkStatus === "Clean" || room.hkStatus === "Inspected";
+          return (
+            <RoomCard
+              key={room.number}
+              room={room}
+              tone={tone}
+              onClick={() => setSelectedRoom(room)}
+              topRight={hkOk
+                ? <CheckCircle2 className="w-4 h-4 text-success-500" />
+                : <AlertCircle className="w-4 h-4 text-danger-500" />}
+              subtitle={room.guestName || room.notes || "Vacant"}
+              badge={{ label: room.status, tone }}
+            />
+          );
+        })}
       </div>
 
       <AnimatePresence>
@@ -1387,7 +1390,7 @@ function CheckOutWizard({ room, onClose, showToast }: { room: Room, onClose: () 
   );
 }
 
-function RoomProfileModal({ room, onClose, initialWizard = null }: { room: Room; onClose: () => void; initialWizard?: string | null }) {
+export function RoomProfileModal({ room, onClose, initialWizard = null }: { room: Room; onClose: () => void; initialWizard?: string | null }) {
   const hasGuest = room.status === "Stay Over" || room.status === "Arrival" || room.status === "Departure";
   const [activeTab, setActiveTab] = useState("overview");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -1396,6 +1399,99 @@ function RoomProfileModal({ room, onClose, initialWizard = null }: { room: Room;
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // ─── Live data from shared contexts ──────────────────────────────────────
+  const { guests } = useGuests();
+  const { bookings } = useBookings();
+  const { folios, addFolioItem } = useFolios();
+  const { getItemsByDepartment, postMovement } = useInventory();
+
+  const guest = useMemo(() => {
+    if (!room.guestId && !room.guestName) return undefined;
+    return guests.find(g =>
+      (room.guestId && g.id === room.guestId) ||
+      (room.guestName && `${g.firstName} ${g.lastName}`.toLowerCase() === room.guestName.toLowerCase())
+    );
+  }, [guests, room.guestId, room.guestName]);
+
+  const activeBooking = useMemo(() => {
+    return bookings.find(b =>
+      b.roomNumber === room.number &&
+      (b.status === "Checked In" || b.status === "Confirmed")
+    );
+  }, [bookings, room.number]);
+
+  const folio = useMemo(() => {
+    if (!activeBooking) return undefined;
+    return folios.find(f => f.bookingId === activeBooking.id);
+  }, [folios, activeBooking]);
+
+  const guestHistory = useMemo(() => {
+    if (!guest) return [];
+    const name = `${guest.firstName} ${guest.lastName}`;
+    return bookings.filter(b => b.guestName === name);
+  }, [bookings, guest]);
+
+  const minibarItems = useMemo(() => getItemsByDepartment("Mini Bar"), [getItemsByDepartment]);
+
+  const nights = useMemo(() => {
+    if (!activeBooking) return 0;
+    const inD = new Date(activeBooking.checkIn).getTime();
+    const outD = new Date(activeBooking.checkOut).getTime();
+    if (Number.isNaN(inD) || Number.isNaN(outD)) return 0;
+    return Math.max(0, Math.round((outD - inD) / 86400000));
+  }, [activeBooking]);
+
+  const fmtDate = (s?: string) => {
+    if (!s) return "—";
+    const d = new Date(s);
+    if (Number.isNaN(d.getTime())) return s;
+    return d.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+  };
+  const fmtMoney = (n?: number) => typeof n === "number" ? `$${n.toFixed(2)}` : "—";
+
+  // ─── Smart Controls local state ──────────────────────────────────────────
+  const [masterLights, setMasterLights] = useState(true);
+  const [dnd, setDnd] = useState(false);
+  const [mur, setMur] = useState(false);
+  const [targetTemp, setTargetTemp] = useState(22);
+
+  // ─── Footer note modals (Accompany / Comments / Profile Notes / No Post) ──
+  const [noteModal, setNoteModal] = useState<null | "Accompany" | "Comments" | "Profile Notes" | "No Post">(null);
+  const [savedNotes, setSavedNotes] = useState<Record<string, string>>({});
+  const [noPostActive, setNoPostActive] = useState(false);
+
+  // ─── Folio charge handler ────────────────────────────────────────────────
+  const postCharge = async (description: string, amount: number, category: FolioItem["category"] = "Other") => {
+    if (!folio) {
+      showToast("No open folio — charge not posted");
+      return;
+    }
+    try {
+      await addFolioItem(folio.id, { description, amount, type: "Charge", category });
+      showToast(`${description} posted ($${amount.toFixed(2)})`);
+    } catch {
+      showToast("Failed to post charge");
+    }
+  };
+
+  const postMinibarSale = async (item: ReturnType<typeof getItemsByDepartment>[number]) => {
+    const price = item.sellingPrice ?? item.unitCost;
+    try {
+      await postMovement({
+        itemId: item.id,
+        itemName: item.name,
+        type: "SALE",
+        quantity: 1,
+        toDepartment: "Mini Bar",
+        reference: folio ? `Folio-${folio.id}` : `Room-${room.number}`,
+        user: "Front Desk",
+      });
+      await postCharge(`Mini Bar — ${item.name}`, price, "F&B");
+    } catch {
+      showToast("Failed to post mini bar sale");
+    }
   };
 
   const tabs = [
@@ -1441,7 +1537,7 @@ function RoomProfileModal({ room, onClose, initialWizard = null }: { room: Room;
               exit={{ opacity: 0, y: -20 }}
               className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-foreground text-background px-4 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2"
             >
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <CheckCircle2 className="w-4 h-4 text-success-500" />
               {toastMessage}
             </motion.div>
           )}
@@ -1451,13 +1547,7 @@ function RoomProfileModal({ room, onClose, initialWizard = null }: { room: Room;
           <div>
             <h3 className="text-xl font-bold text-foreground flex items-center gap-3">
               Room {room.number} Profile
-              <span className={cn("px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider border", 
-                room.status === "Stay Over" ? "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800" :
-                room.status === "Arrival" ? "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800" :
-                room.status === "Departure" ? "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800" :
-                room.status === "OOS" ? "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800" :
-                "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700"
-              )}>
+              <span className={cn("px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border", statusBadgeTone(room.status))}>
                 {room.status}
               </span>
             </h3>
@@ -1498,12 +1588,12 @@ function RoomProfileModal({ room, onClose, initialWizard = null }: { room: Room;
                       <Users className="w-4 h-4 text-primary" /> Guest Profile
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
-                      <DetailField label="Name" value={room.guestName} className="col-span-2 text-base" />
-                      <DetailField label="Phone" value="+1 (555) 123-4567" />
-                      <DetailField label="Language" value="EN" />
-                      <DetailField label="Nationality" value="US" />
-                      <DetailField label="VIP" value="Gold Member" className="text-amber-600 dark:text-amber-400" />
-                      <DetailField label="Company" value="Acme Corp" className="col-span-2" />
+                      <DetailField label="Name" value={guest ? `${guest.firstName} ${guest.lastName}` : (room.guestName || "—")} className="col-span-2 text-base" />
+                      <DetailField label="Phone" value={guest?.phone || "—"} />
+                      <DetailField label="Language" value={(guest as any)?.language || "—"} />
+                      <DetailField label="Nationality" value={guest?.location || "—"} />
+                      <DetailField label="VIP" value={guest ? (guest.vip ? `${guest.loyaltyStatus} Member` : guest.loyaltyStatus) : "—"} className={guest?.vip ? "text-warning-700" : undefined} />
+                      <DetailField label="Company" value={(guest as any)?.company || "—"} className="col-span-2" />
                     </div>
                   </div>
                 </div>
@@ -1515,15 +1605,15 @@ function RoomProfileModal({ room, onClose, initialWizard = null }: { room: Room;
                       <CalendarCheck className="w-4 h-4 text-primary" /> Stay Details
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
-                      <DetailField label="Res. ID" value="RES-1042" className="col-span-2 text-primary font-bold" />
-                      <DetailField label="Arrival" value="Oct 12, 2026" />
-                      <DetailField label="Departure" value="Oct 15, 2026" />
-                      <DetailField label="Nights" value={3} />
-                      <DetailField label="Adults/Child" value="2 / 0" />
+                      <DetailField label="Res. ID" value={activeBooking ? `RES-${activeBooking.id.slice(0, 6).toUpperCase()}` : "—"} className="col-span-2 text-primary font-bold" />
+                      <DetailField label="Arrival" value={fmtDate(activeBooking?.checkIn)} />
+                      <DetailField label="Departure" value={fmtDate(activeBooking?.checkOut)} />
+                      <DetailField label="Nights" value={activeBooking ? nights : "—"} />
+                      <DetailField label="Adults/Child" value={(activeBooking as any)?.adults ? `${(activeBooking as any).adults} / ${(activeBooking as any).children || 0}` : "—"} />
                       <DetailField label="Room Type" value={room.type} />
                       <DetailField label="Room" value={room.number} />
-                      <DetailField label="Rate Code" value="CORP" />
-                      <DetailField label="Rate" value="$250.00" />
+                      <DetailField label="Rate Code" value={(activeBooking as any)?.rateCode || "—"} />
+                      <DetailField label="Rate" value={fmtMoney(activeBooking?.amount)} />
                     </div>
                   </div>
                 </div>
@@ -1535,12 +1625,12 @@ function RoomProfileModal({ room, onClose, initialWizard = null }: { room: Room;
                       <DollarSign className="w-4 h-4 text-primary" /> Payment & Routing
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
-                      <DetailField label="Res. Type" value="GUARANTEED" />
-                      <DetailField label="Market" value="CORP" />
-                      <DetailField label="Payment" value="Visa ending in 4242" className="col-span-2" />
-                      <DetailField label="Guest Balance" value="$0.00" className="text-emerald-600 dark:text-emerald-400 font-bold col-span-2 text-lg" />
-                      <DetailField label="Comments" value={room.notes || "Late arrival requested"} className="col-span-2" />
-                      <DetailField label="Billing Info" value="Room & Tax to Company" className="col-span-2" />
+                      <DetailField label="Res. Type" value={activeBooking?.status || "—"} />
+                      <DetailField label="Market" value={(activeBooking as any)?.market || "—"} />
+                      <DetailField label="Payment" value={(activeBooking as any)?.payment || "—"} className="col-span-2" />
+                      <DetailField label="Guest Balance" value={fmtMoney(folio?.totalBalance ?? 0)} className="text-success-700 font-bold col-span-2 text-lg" />
+                      <DetailField label="Comments" value={room.notes || savedNotes["Comments"] || "—"} className="col-span-2" />
+                      <DetailField label="Billing Info" value={savedNotes["Billing"] || "—"} className="col-span-2" />
                     </div>
                   </div>
                 </div>
@@ -1593,34 +1683,40 @@ function RoomProfileModal({ room, onClose, initialWizard = null }: { room: Room;
             <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
               <div className="p-4 border-b border-border flex justify-between items-center">
                 <h4 className="font-semibold">Folio Transactions</h4>
-                <button onClick={() => setActiveOptionModal("Post Charge")} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90">Post Charge</button>
+                <button onClick={() => setActiveOptionModal("Post Charge")} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm">Post Charge</button>
               </div>
               <table className="w-full text-sm text-left border-collapse">
                 <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
                   <tr>
                     <th className="px-4 py-3 font-medium">Date</th>
-                    <th className="px-4 py-3 font-medium">Code</th>
+                    <th className="px-4 py-3 font-medium">Category</th>
                     <th className="px-4 py-3 font-medium">Description</th>
                     <th className="px-4 py-3 font-medium text-right">Amount</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
-                  <tr className="hover:bg-secondary/30">
-                    <td className="px-4 py-3">Oct 12, 2026</td>
-                    <td className="px-4 py-3">RM</td>
-                    <td className="px-4 py-3">Room Charge</td>
-                    <td className="px-4 py-3 text-right">$250.00</td>
-                  </tr>
-                  <tr className="hover:bg-secondary/30">
-                    <td className="px-4 py-3">Oct 12, 2026</td>
-                    <td className="px-4 py-3">REST</td>
-                    <td className="px-4 py-3">Lobby Bar - Dinner</td>
-                    <td className="px-4 py-3 text-right">$45.50</td>
-                  </tr>
-                  <tr className="hover:bg-secondary/30 font-medium bg-secondary/10">
-                    <td colSpan={3} className="px-4 py-3 text-right">Total Balance:</td>
-                    <td className="px-4 py-3 text-right text-emerald-600 dark:text-emerald-400">$295.50</td>
-                  </tr>
+                  {folio && folio.items.length > 0 ? (
+                    <>
+                      {folio.items.map(item => (
+                        <tr key={item.id} className="hover:bg-secondary/30">
+                          <td className="px-4 py-3">{item.timestamp.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })}</td>
+                          <td className="px-4 py-3">{item.category}</td>
+                          <td className="px-4 py-3">{item.description}</td>
+                          <td className={cn("px-4 py-3 text-right", item.type === "Payment" ? "text-success-700" : "text-foreground")}>
+                            {item.type === "Payment" ? "-" : ""}{fmtMoney(item.amount)}
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="font-medium bg-secondary/10">
+                        <td colSpan={3} className="px-4 py-3 text-right">Total Balance:</td>
+                        <td className="px-4 py-3 text-right text-success-700">{fmtMoney(folio.totalBalance)}</td>
+                      </tr>
+                    </>
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">No folio items yet.</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1630,27 +1726,31 @@ function RoomProfileModal({ room, onClose, initialWizard = null }: { room: Room;
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <h4 className="font-semibold">Mini Bar Inventory</h4>
-                <p className="text-sm text-muted-foreground">Last Restocked: Today, 10:00 AM</p>
+                <p className="text-sm text-muted-foreground">{minibarItems.length} items tracked</p>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  { name: "Evian Water", price: "$5.00", stock: 2 },
-                  { name: "Coca Cola", price: "$4.00", stock: 2 },
-                  { name: "Heineken", price: "$8.00", stock: 2 },
-                  { name: "Red Wine (375ml)", price: "$25.00", stock: 1 },
-                  { name: "Pringles", price: "$6.00", stock: 1 },
-                  { name: "Toblerone", price: "$7.00", stock: 1 },
-                ].map((item, i) => (
-                  <div key={i} className="bg-card p-4 rounded-xl border border-border shadow-sm flex flex-col items-center text-center gap-2">
-                    <Wine className="w-8 h-8 text-muted-foreground opacity-50 mb-2" />
-                    <span className="font-medium text-sm">{item.name}</span>
-                    <span className="text-xs text-muted-foreground">{item.price} • {item.stock} in stock</span>
-                    <button onClick={() => setActiveOptionModal("Post Charge")} className="mt-2 w-full px-3 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-xs font-medium transition-colors">
-                      Post Charge
-                    </button>
-                  </div>
-                ))}
-              </div>
+              {minibarItems.length === 0 ? (
+                <div className="p-12 text-center bg-card rounded-xl border border-dashed border-border text-muted-foreground">
+                  <Wine className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p>No mini bar items configured.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {minibarItems.map(item => (
+                    <div key={item.id} className="bg-card p-4 rounded-xl border border-border shadow-sm flex flex-col items-center text-center gap-2">
+                      <Wine className="w-8 h-8 text-muted-foreground opacity-50 mb-2" />
+                      <span className="font-medium text-sm">{item.name}</span>
+                      <span className="text-xs text-muted-foreground">{fmtMoney(item.sellingPrice)} • {item.inStock} in stock</span>
+                      <button
+                        disabled={item.inStock <= 0}
+                        onClick={() => postMinibarSale(item)}
+                        className="mt-2 w-full px-3 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Post Charge
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -1660,10 +1760,11 @@ function RoomProfileModal({ room, onClose, initialWizard = null }: { room: Room;
                 <h4 className="font-semibold">Work Orders</h4>
                 <button onClick={() => setActiveOptionModal("Create Ticket")} className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg text-sm font-medium hover:bg-secondary/80">Create Ticket</button>
               </div>
+              {/* TODO: wire to a MaintenanceContext when one is introduced (no such context exists yet — do not invent one). */}
               <div className="p-6 text-center text-muted-foreground">
                 <Wrench className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                <p>No active maintenance issues for this room.</p>
-                <p className="text-sm mt-1">Last PM completed: Sept 15, 2026</p>
+                <p>No active work orders for Room {room.number}.</p>
+                <p className="text-sm mt-1">Use "Create Ticket" to log a new maintenance request.</p>
               </div>
             </div>
           )}
@@ -1672,6 +1773,7 @@ function RoomProfileModal({ room, onClose, initialWizard = null }: { room: Room;
             <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
               <div className="p-4 border-b border-border">
                 <h4 className="font-semibold">Room Assets</h4>
+                <p className="text-xs text-muted-foreground mt-1">Static reference list — no asset-by-room context exists yet.</p>
               </div>
               <ul className="divide-y divide-border/50">
                 {[
@@ -1702,36 +1804,38 @@ function RoomProfileModal({ room, onClose, initialWizard = null }: { room: Room;
               <div className="p-4 border-b border-border">
                 <h4 className="font-semibold">Recent Stays</h4>
               </div>
-              <table className="w-full text-sm text-left border-collapse">
-                <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
-                  <tr>
-                    <th className="px-4 py-3 font-medium">Guest</th>
-                    <th className="px-4 py-3 font-medium">Dates</th>
-                    <th className="px-4 py-3 font-medium">Rate Code</th>
-                    <th className="px-4 py-3 font-medium">Nights</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/50">
-                  <tr className="hover:bg-secondary/30">
-                    <td className="px-4 py-3 font-medium">Michael Scott</td>
-                    <td className="px-4 py-3">Oct 05 - Oct 08, 2026</td>
-                    <td className="px-4 py-3">CORP</td>
-                    <td className="px-4 py-3">3</td>
-                  </tr>
-                  <tr className="hover:bg-secondary/30">
-                    <td className="px-4 py-3 font-medium">Dwight Schrute</td>
-                    <td className="px-4 py-3">Sep 28 - Oct 02, 2026</td>
-                    <td className="px-4 py-3">RACK</td>
-                    <td className="px-4 py-3">4</td>
-                  </tr>
-                  <tr className="hover:bg-secondary/30">
-                    <td className="px-4 py-3 font-medium">Jim Halpert</td>
-                    <td className="px-4 py-3">Sep 20 - Sep 22, 2026</td>
-                    <td className="px-4 py-3">OTA</td>
-                    <td className="px-4 py-3">2</td>
-                  </tr>
-                </tbody>
-              </table>
+              {guestHistory.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  <History className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No prior stays on file for this guest.</p>
+                </div>
+              ) : (
+                <table className="w-full text-sm text-left border-collapse">
+                  <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">Guest</th>
+                      <th className="px-4 py-3 font-medium">Dates</th>
+                      <th className="px-4 py-3 font-medium">Room</th>
+                      <th className="px-4 py-3 font-medium">Status</th>
+                      <th className="px-4 py-3 font-medium text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/50">
+                    {guestHistory.map(b => {
+                      const ni = Math.max(0, Math.round((new Date(b.checkOut).getTime() - new Date(b.checkIn).getTime()) / 86400000));
+                      return (
+                        <tr key={b.id} className="hover:bg-secondary/30">
+                          <td className="px-4 py-3 font-medium">{b.guestName}</td>
+                          <td className="px-4 py-3">{fmtDate(b.checkIn)} – {fmtDate(b.checkOut)} ({ni}n)</td>
+                          <td className="px-4 py-3">{b.roomNumber}</td>
+                          <td className="px-4 py-3">{b.status}</td>
+                          <td className="px-4 py-3 text-right">{fmtMoney(b.amount)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
 
@@ -1740,42 +1844,41 @@ function RoomProfileModal({ room, onClose, initialWizard = null }: { room: Room;
               <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
                 <div className="flex items-center justify-between mb-6">
                   <h4 className="font-semibold flex items-center gap-2"><Thermometer className="w-5 h-5 text-primary" /> Climate Control</h4>
-                  <span className="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded text-xs font-bold">ONLINE</span>
+                  <span className="px-2 py-1 bg-success-100 text-success-700 rounded text-[10px] font-bold uppercase tracking-wider">ONLINE</span>
                 </div>
                 <div className="flex flex-col items-center justify-center py-4">
-                  <span className="text-5xl font-light mb-2">22°C</span>
-                  <span className="text-sm text-muted-foreground">Target: 22°C • Mode: Auto</span>
+                  <span className="text-5xl font-light mb-2">{targetTemp}°C</span>
+                  <span className="text-sm text-muted-foreground">Target: {targetTemp}°C • Mode: Auto</span>
                 </div>
                 <div className="flex gap-2 mt-4">
-                  <button onClick={() => showToast("Decreased target temperature")} className="flex-1 py-2 bg-secondary rounded-lg font-medium hover:bg-secondary/80">-</button>
-                  <button onClick={() => showToast("Increased target temperature")} className="flex-1 py-2 bg-secondary rounded-lg font-medium hover:bg-secondary/80">+</button>
+                  <button onClick={() => { setTargetTemp(t => Math.max(16, t - 1)); showToast("Decreased target temperature"); }} className="flex-1 py-2 bg-secondary rounded-lg font-medium hover:bg-secondary/80 transition-colors">-</button>
+                  <button onClick={() => { setTargetTemp(t => Math.min(30, t + 1)); showToast("Increased target temperature"); }} className="flex-1 py-2 bg-secondary rounded-lg font-medium hover:bg-secondary/80 transition-colors">+</button>
                 </div>
               </div>
 
               <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
                 <div className="flex items-center justify-between mb-6">
                   <h4 className="font-semibold flex items-center gap-2"><Lightbulb className="w-5 h-5 text-primary" /> Lighting & Status</h4>
-                  <span className="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded text-xs font-bold">ONLINE</span>
+                  <span className="px-2 py-1 bg-success-100 text-success-700 rounded text-[10px] font-bold uppercase tracking-wider">ONLINE</span>
                 </div>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg border border-border/50">
-                    <span className="font-medium text-sm">Master Lights</span>
-                    <div onClick={() => showToast("Toggled Master Lights")} className="w-10 h-5 bg-primary rounded-full relative cursor-pointer">
-                      <div className="w-4 h-4 bg-white rounded-full absolute right-0.5 top-0.5"></div>
+                  {[
+                    { label: "Master Lights", value: masterLights, set: setMasterLights },
+                    { label: "Do Not Disturb (DND)", value: dnd, set: setDnd },
+                    { label: "Make Up Room (MUR)", value: mur, set: setMur },
+                  ].map(tog => (
+                    <div key={tog.label} className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg border border-border/50">
+                      <span className="font-medium text-sm">{tog.label}</span>
+                      <button
+                        type="button"
+                        onClick={() => { tog.set(!tog.value); showToast(`Toggled ${tog.label}`); }}
+                        className={cn("w-10 h-5 rounded-full relative cursor-pointer transition-colors", tog.value ? "bg-primary" : "bg-secondary border border-border")}
+                        aria-pressed={tog.value}
+                      >
+                        <div className={cn("w-4 h-4 bg-card rounded-full absolute top-0.5 shadow-sm transition-all", tog.value ? "right-0.5" : "left-0.5")}></div>
+                      </button>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg border border-border/50">
-                    <span className="font-medium text-sm">Do Not Disturb (DND)</span>
-                    <div onClick={() => showToast("Toggled DND")} className="w-10 h-5 bg-secondary rounded-full relative cursor-pointer">
-                      <div className="w-4 h-4 bg-white rounded-full absolute left-0.5 top-0.5 shadow-sm"></div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg border border-border/50">
-                    <span className="font-medium text-sm">Make Up Room (MUR)</span>
-                    <div onClick={() => showToast("Toggled MUR")} className="w-10 h-5 bg-secondary rounded-full relative cursor-pointer">
-                      <div className="w-4 h-4 bg-white rounded-full absolute left-0.5 top-0.5 shadow-sm"></div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1787,29 +1890,33 @@ function RoomProfileModal({ room, onClose, initialWizard = null }: { room: Room;
         <div className="px-6 py-4 border-t border-border bg-secondary/30 flex flex-col sm:flex-row items-center justify-between gap-4 sticky bottom-0 z-20">
           {hasGuest ? (
             <div className="flex flex-wrap gap-2">
-              <ActionButton onClick={() => showToast("Accompany module opened")} label="Accompany" color="bg-card border border-border hover:bg-secondary text-foreground" />
-              <ActionButton onClick={() => showToast("Comments module opened")} label="Comments" color="bg-card border border-border hover:bg-secondary text-foreground" />
-              <ActionButton onClick={() => showToast("Profile Notes module opened")} label="Profile Notes" color="bg-card border border-border hover:bg-secondary text-foreground" />
-              <ActionButton onClick={() => showToast("No Post status toggled")} label="No Post" color="bg-card border border-border hover:bg-secondary text-foreground" />
-              <ActionButton onClick={() => showToast("Alerts module opened")} label="Alerts" color="bg-red-100 text-red-700 border border-red-200 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800" />
+              <ActionButton onClick={() => setNoteModal("Accompany")} label="Accompany" color="bg-card border border-border hover:bg-secondary text-foreground" />
+              <ActionButton onClick={() => setNoteModal("Comments")} label="Comments" color="bg-card border border-border hover:bg-secondary text-foreground" />
+              <ActionButton onClick={() => setNoteModal("Profile Notes")} label="Profile Notes" color="bg-card border border-border hover:bg-secondary text-foreground" />
+              <ActionButton
+                onClick={() => { setNoPostActive(v => !v); showToast(`No Post ${!noPostActive ? "enabled" : "cleared"}`); }}
+                label={noPostActive ? "No Post ✓" : "No Post"}
+                color={noPostActive ? "bg-warning-100 text-warning-700 border border-warning-200" : "bg-card border border-border hover:bg-secondary text-foreground"}
+              />
+              <ActionButton onClick={() => setActiveOptionModal("Alerts")} label="Alerts" color="bg-danger-100 text-danger-700 border border-danger-200 hover:bg-danger-100/80" />
             </div>
           ) : <div />}
           <div className="flex gap-3 w-full sm:w-auto justify-end">
-            <button onClick={onClose} className="px-6 py-2 bg-card border border-border text-foreground rounded-xl text-sm font-bold hover:bg-secondary transition-colors">
+            <button onClick={onClose} className="px-6 py-2 bg-card border border-border text-foreground rounded-lg text-sm font-bold hover:bg-secondary transition-colors">
               Close
             </button>
             {room.status === "Arrival" && (
-              <button onClick={() => setActiveOptionModal("Check In")} className="px-6 py-2 bg-violet-600 text-white rounded-xl text-sm font-bold shadow-sm hover:bg-violet-700 transition-colors">
+              <button onClick={() => setActiveOptionModal("Check In")} className="px-6 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold shadow-sm hover:bg-primary/90 transition-colors">
                 Check In
               </button>
             )}
             {(room.status === "Departure" || room.status === "Stay Over") && (
-              <button onClick={() => setActiveOptionModal("Check Out")} className="px-6 py-2 bg-violet-600 text-white rounded-xl text-sm font-bold shadow-sm hover:bg-violet-700 transition-colors">
+              <button onClick={() => setActiveOptionModal("Check Out")} className="px-6 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold shadow-sm hover:bg-primary/90 transition-colors">
                 Check Out
               </button>
             )}
             {hasGuest && (
-              <button onClick={() => showToast("Changes saved successfully")} className="px-8 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-bold shadow-sm hover:bg-primary/90 transition-colors">
+              <button onClick={() => showToast("Saved")} className="px-8 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold shadow-sm hover:bg-primary/90 transition-colors">
                 Save
               </button>
             )}
@@ -1859,6 +1966,50 @@ function RoomProfileModal({ room, onClose, initialWizard = null }: { room: Room;
                 ) : (
                   <GenericOptionForm title={activeOptionModal} onClose={() => setActiveOptionModal(null)} showToast={showToast} />
                 )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Note sub-modal for Accompany / Comments / Profile Notes */}
+        <AnimatePresence>
+          {noteModal && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="absolute inset-0 z-50 bg-card flex flex-col"
+            >
+              <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-secondary/30">
+                <h3 className="text-lg font-bold text-foreground">{noteModal}</h3>
+                <button onClick={() => setNoteModal(null)} className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1 p-6 overflow-y-auto space-y-4">
+                <label className="text-sm font-medium text-muted-foreground">Note</label>
+                <textarea
+                  defaultValue={savedNotes[noteModal] || ""}
+                  id={`note-textarea-${noteModal}`}
+                  rows={6}
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all"
+                  placeholder={`Add ${noteModal.toLowerCase()}…`}
+                />
+              </div>
+              <div className="px-6 py-4 border-t border-border bg-secondary/30 flex justify-end gap-3">
+                <button onClick={() => setNoteModal(null)} className="px-4 py-2 bg-card border border-border text-foreground rounded-lg text-sm font-medium hover:bg-secondary transition-colors">Cancel</button>
+                <button
+                  onClick={() => {
+                    const el = document.getElementById(`note-textarea-${noteModal}`) as HTMLTextAreaElement | null;
+                    const val = el?.value || "";
+                    setSavedNotes(prev => ({ ...prev, [noteModal!]: val }));
+                    showToast(`${noteModal} saved`);
+                    setNoteModal(null);
+                  }}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+                >
+                  Save
+                </button>
               </div>
             </motion.div>
           )}

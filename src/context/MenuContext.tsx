@@ -62,6 +62,7 @@ export function MenuProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     
     const menuPath = "menu";
+    if ((import.meta as any).env?.DEV) { setLoading(false); return; }
     const menuQuery = query(collection(db, menuPath), orderBy("category"));
     const unsubscribeMenu = onSnapshot(menuQuery, (snapshot) => {
       const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MenuItem));

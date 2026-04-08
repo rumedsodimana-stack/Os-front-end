@@ -43,6 +43,26 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) return;
     const path = "rooms";
+    if ((import.meta as any).env?.DEV) {
+      // Seed mock rooms for dev preview so Mini Bar / Room Service / Housekeeping grids render
+      const mockRooms: Room[] = Array.from({ length: 24 }, (_, i) => {
+        const floor = Math.floor(i / 8) + 1;
+        const num = `${floor}${String((i % 8) + 1).padStart(2, "0")}`;
+        const types = ["Deluxe King", "Deluxe Twin", "Executive Suite", "Presidential Suite"];
+        const statuses: RoomStatus[] = ["Stay Over", "Arrival", "Departure", "Vacant", "OOS"];
+        const hk: HKStatus[] = ["Clean", "Dirty", "Inspected"];
+        return {
+          number: num,
+          type: types[i % types.length],
+          status: statuses[i % statuses.length],
+          hkStatus: hk[i % hk.length],
+          guestName: i % 3 === 0 ? `Guest ${i + 1}` : undefined,
+        };
+      });
+      setRooms(mockRooms);
+      setLoading(false);
+      return;
+    }
     const roomsQuery = query(collection(db, path), orderBy("number"));
     const unsubscribe = onSnapshot(roomsQuery, (snapshot) => {
       const roomData = snapshot.docs.map(doc => ({ 

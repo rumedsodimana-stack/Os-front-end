@@ -1,6 +1,7 @@
 import React from "react";
 import { KPICard } from "./ui/KPICard";
-import { Users, TrendingUp, AlertCircle, CheckCircle2, Info, Search, Filter, Plus, FileText } from "lucide-react";
+import { RoomCard, ROOM_GRID } from "./ui/RoomCard";
+import { Users, TrendingUp, AlertCircle, CheckCircle2, Info, Search, Filter, Plus, FileText, BellRing, Wine } from "lucide-react";
 import { cn } from "../lib/utils";
 
 export function UIAssetsLibrary() {
@@ -36,6 +37,113 @@ export function UIAssetsLibrary() {
                 <li>Real backend integration for all mocked data.</li>
                 <li>Form validation standardizations (e.g., Zod + React Hook Form).</li>
               </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Design Tokens — source of truth for colors, radii, shadows, gradients */}
+      <section className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold border-b border-border pb-2 mb-2">Design Tokens</h2>
+          <p className="text-sm text-muted-foreground">
+            Single source of truth:{" "}
+            <code className="text-xs bg-secondary px-1 rounded">src/styles/tokens.json</code> ·{" "}
+            <code className="text-xs bg-secondary px-1 rounded">src/styles/tokens.css</code>.
+            Use semantic utilities (<code className="text-xs bg-secondary px-1 rounded">bg-success-500</code>,{" "}
+            <code className="text-xs bg-secondary px-1 rounded">bg-kpi-arrivals</code>) instead of raw palette classes.
+          </p>
+        </div>
+
+        {/* Status colors */}
+        <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+          <h3 className="text-sm font-semibold text-foreground">Status Colors</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { name: "success", label: "Success" },
+              { name: "warning", label: "Warning" },
+              { name: "danger", label: "Danger" },
+              { name: "info", label: "Info" },
+            ].map((s) => (
+              <div key={s.name} className="space-y-2">
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{s.label}</div>
+                <div className="flex rounded-lg overflow-hidden border border-border">
+                  {["100", "500", "700"].map((shade) => (
+                    <div
+                      key={shade}
+                      className="flex-1 h-10 flex items-end justify-center pb-1 text-[10px] font-mono"
+                      style={{
+                        backgroundColor: `var(--color-${s.name}-${shade})`,
+                        color: shade === "100" ? "#111" : "#fff",
+                      }}
+                      title={`--color-${s.name}-${shade}`}
+                    >
+                      {shade}
+                    </div>
+                  ))}
+                </div>
+                <code className="text-[10px] text-muted-foreground">bg-{s.name}-{"{100,500,700}"}</code>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* KPI Gradients */}
+        <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+          <h3 className="text-sm font-semibold text-foreground">KPI Gradients</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {[
+              { cls: "bg-kpi-arrivals", label: "Arrivals" },
+              { cls: "bg-kpi-in-house", label: "In House" },
+              { cls: "bg-kpi-departures", label: "Departures" },
+              { cls: "bg-kpi-revenue", label: "Revenue" },
+              { cls: "bg-kpi-occupancy", label: "Occupancy" },
+              { cls: "bg-kpi-adr-revpar", label: "ADR / RevPAR" },
+            ].map((k) => (
+              <div key={k.cls} className="space-y-2">
+                <div className={cn("h-16 rounded-xl shadow-sm", k.cls)} />
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-medium text-foreground">{k.label}</span>
+                  <code className="text-muted-foreground">.{k.cls}</code>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Radius & Shadow scales */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+            <h3 className="text-sm font-semibold text-foreground">Radius Scale</h3>
+            <div className="flex items-end gap-3">
+              {[
+                { key: "sm", v: "var(--radius-sm)" },
+                { key: "md", v: "var(--radius-md)" },
+                { key: "lg", v: "var(--radius-lg)" },
+                { key: "xl", v: "var(--radius-xl)" },
+                { key: "2xl", v: "var(--radius-2xl)" },
+              ].map((r) => (
+                <div key={r.key} className="flex-1 space-y-1 text-center">
+                  <div className="h-14 bg-primary/15 border border-primary/30" style={{ borderRadius: r.v }} />
+                  <div className="text-[10px] font-mono text-muted-foreground">{r.key}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+            <h3 className="text-sm font-semibold text-foreground">Shadow Scale</h3>
+            <div className="flex items-end gap-4">
+              {[
+                { key: "sm", v: "var(--shadow-sm)" },
+                { key: "md", v: "var(--shadow-md)" },
+                { key: "lg", v: "var(--shadow-lg)" },
+                { key: "xl", v: "var(--shadow-xl)" },
+              ].map((sh) => (
+                <div key={sh.key} className="flex-1 space-y-1 text-center">
+                  <div className="h-14 bg-card rounded-xl border border-border" style={{ boxShadow: sh.v }} />
+                  <div className="text-[10px] font-mono text-muted-foreground">{sh.key}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -123,6 +231,61 @@ export function UIAssetsLibrary() {
             trend="neutral" 
             color="purple" 
           />
+        </div>
+      </section>
+
+      {/* Room Card — canonical tile used by Front Desk, Housekeeping, Mini Bar, Room Service */}
+      <section className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold border-b border-border pb-2 mb-2">Room Card</h2>
+          <p className="text-sm text-muted-foreground">
+            The ONE canonical room tile — <code className="bg-secondary px-1 rounded">src/components/ui/RoomCard.tsx</code>.
+            Used everywhere a room grid appears (Front Desk, Housekeeping, Mini Bar, Room Service).
+            Shape & rhythm are fixed; departments customise CONTENT via slots: <code className="bg-secondary px-1 rounded">badge</code>,{" "}
+            <code className="bg-secondary px-1 rounded">topRight</code>, <code className="bg-secondary px-1 rounded">subtitle</code>,{" "}
+            <code className="bg-secondary px-1 rounded">footer</code>, <code className="bg-secondary px-1 rounded">tone</code>,{" "}
+            <code className="bg-secondary px-1 rounded">onClick</code>. Grid: <code className="bg-secondary px-1 rounded">ROOM_GRID</code>.
+            Clicking any card opens <code className="bg-secondary px-1 rounded">RoomProfileModal</code>.
+          </p>
+        </div>
+        <div className={ROOM_GRID}>
+          <RoomCard
+            room={{ number: "101", type: "Deluxe King", status: "Stay Over", hkStatus: "Clean", guestName: "J. Smith" } as any}
+            tone="info"
+            topRight={<CheckCircle2 className="w-4 h-4 text-success-500" />}
+            subtitle="J. Smith"
+            badge={{ label: "Stay Over", tone: "info" }}
+          />
+          <RoomCard
+            room={{ number: "102", type: "Deluxe King", status: "Arrival", hkStatus: "Dirty" } as any}
+            tone="danger"
+            topRight={<AlertCircle className="w-4 h-4 text-danger-500" />}
+            subtitle={<span className="flex items-center gap-2">Arrival <span className="px-1.5 py-0.5 bg-primary text-primary-foreground text-[9px] rounded uppercase tracking-wider font-bold">VIP</span></span>}
+            badge={{ label: "Dirty", tone: "danger" }}
+          />
+          <RoomCard
+            room={{ number: "103", type: "Executive Suite", status: "Vacant", hkStatus: "Inspected" } as any}
+            tone="success"
+            topRight={<Wine className="w-4 h-4 text-muted-foreground" />}
+            subtitle="Guest: —"
+            badge={{ label: "Stocked", tone: "success" }}
+          />
+          <RoomCard
+            room={{ number: "104", type: "Presidential", status: "Stay Over", hkStatus: "Clean", guestName: "A. Lee" } as any}
+            tone="primary"
+            topRight={<BellRing className="w-4 h-4 text-primary" />}
+            subtitle="Guest: A. Lee"
+            badge={{ label: "Active Order", tone: "warning" }}
+          />
+        </div>
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <p className="text-xs text-muted-foreground mb-2">Per-department usage (same card, different content):</p>
+          <ul className="text-xs text-muted-foreground list-disc list-inside space-y-1">
+            <li><strong className="text-foreground">Front Desk:</strong> tone = reservation status · topRight = HK OK/alert · subtitle = guest/notes · badge = room status</li>
+            <li><strong className="text-foreground">Housekeeping:</strong> tone = HK condition · footer = assignee + condition buttons + updated time</li>
+            <li><strong className="text-foreground">Mini Bar:</strong> tone = stock status · topRight = Wine · subtitle = guest · badge = Stocked/Consumed/Needs Check/Needs Restock</li>
+            <li><strong className="text-foreground">Room Service:</strong> tone = primary when active · topRight = BellRing/Check · badge = Active Order/Idle</li>
+          </ul>
         </div>
       </section>
 

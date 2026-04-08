@@ -1,0 +1,164 @@
+/* ==========================================================================
+   Orbit OS — Design Tokens (CSS variables)
+   --------------------------------------------------------------------------
+   Mirrors src/styles/tokens.json. Keep them in sync.
+   This file is the runtime source of truth for ALL color, radius, shadow,
+   typography, motion, and z-index values in the app.
+
+   Theming: to re-theme for a tenant/client, ship a second CSS file that
+   overrides any of these variables under :root (or a .theme-<name> class).
+
+   Dark mode: override values under .dark (handled by theme-provider).
+   ========================================================================== */
+
+:root {
+  /* ---------- Brand ---------- */
+  --color-brand-primary:       #8b5cf6; /* violet-500 */
+  --color-brand-primary-hover: #7c3aed; /* violet-600 */
+  --color-brand-primary-fg:    #ffffff;
+  --color-brand-ring:          #8b5cf6;
+
+  /* ---------- Surface (light defaults) ---------- */
+  --color-background:        #f3f4f6;
+  --color-foreground:        #1f2937;
+  --color-card:              #ffffff;
+  --color-card-fg:           #1f2937;
+  --color-popover:           #ffffff;
+  --color-popover-fg:        #1f2937;
+  --color-border:            #e5e7eb;
+  --color-input:             #e5e7eb;
+  --color-secondary:         #f1f5f9;
+  --color-secondary-fg:      #1f2937;
+  --color-muted:             #f3f4f6;
+  --color-muted-fg:          #6b7280;
+  --color-accent:            #f3f4f6;
+  --color-accent-fg:         #1f2937;
+
+  /* ---------- Status: Success ---------- */
+  --color-success:           #10b981;
+  --color-success-100:       #d1fae5;
+  --color-success-500:       #10b981;
+  --color-success-700:       #047857;
+  --color-success-fg:        #ffffff;
+
+  /* ---------- Status: Warning ---------- */
+  --color-warning:           #f59e0b;
+  --color-warning-100:       #fef3c7;
+  --color-warning-500:       #f59e0b;
+  --color-warning-700:       #b45309;
+  --color-warning-fg:        #ffffff;
+
+  /* ---------- Status: Danger (also destructive) ---------- */
+  --color-danger:            #ef4444;
+  --color-danger-100:        #fee2e2;
+  --color-danger-500:        #ef4444;
+  --color-danger-700:        #b91c1c;
+  --color-danger-fg:         #ffffff;
+  --color-destructive:       #ef4444;
+  --color-destructive-fg:    #ffffff;
+
+  /* ---------- Status: Info ---------- */
+  --color-info:              #3b82f6;
+  --color-info-100:          #dbeafe;
+  --color-info-500:          #3b82f6;
+  --color-info-700:          #1d4ed8;
+  --color-info-fg:            #ffffff;
+
+  /* ---------- KPI Gradients (used by .bg-kpi-* utilities) ---------- */
+  --kpi-arrivals-from:   #ec4899; --kpi-arrivals-to:   #e11d48;
+  --kpi-in-house-from:   #8b5cf6; --kpi-in-house-to:   #9333ea;
+  --kpi-departures-from: #10b981; --kpi-departures-to: #16a34a;
+  --kpi-revenue-from:    #f59e0b; --kpi-revenue-to:    #ca8a04;
+  --kpi-occupancy-from:  #3b82f6; --kpi-occupancy-to:  #0891b2;
+  --kpi-adr-revpar-from: #6366f1; --kpi-adr-revpar-to: #7c3aed;
+
+  /* ---------- Radius ---------- */
+  --radius-none: 0px;
+  --radius-sm:   0.25rem;
+  --radius-md:   0.5rem;
+  --radius-lg:   0.75rem;
+  --radius-xl:   1rem;
+  --radius-2xl:  1.5rem;
+  --radius-full: 9999px;
+
+  /* ---------- Shadow ---------- */
+  --shadow-none: none;
+  --shadow-sm:   0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md:   0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg:   0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl:   0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* ---------- Typography ---------- */
+  --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'DM Sans', 'Inter', system-ui, sans-serif;
+  --font-mono:    ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* ---------- Motion ---------- */
+  --motion-duration-instant: 0ms;
+  --motion-duration-fast:    120ms;
+  --motion-duration-base:    200ms;
+  --motion-duration-slow:    320ms;
+  --motion-easing-standard:   cubic-bezier(0.2, 0, 0, 1);
+  --motion-easing-decelerate: cubic-bezier(0, 0, 0, 1);
+  --motion-easing-accelerate: cubic-bezier(0.3, 0, 1, 1);
+
+  /* ---------- Z-index scale ---------- */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-dropdown: 20;
+  --z-overlay: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+
+  /* ---------- Legacy aliases (for index.css @theme and existing components) ---------- */
+  /* Do not reference these from new code — use the --color-* names above. */
+  --background:            var(--color-background);
+  --foreground:            var(--color-foreground);
+  --card:                  var(--color-card);
+  --card-foreground:       var(--color-card-fg);
+  --popover:               var(--color-popover);
+  --popover-foreground:    var(--color-popover-fg);
+  --primary:               var(--color-brand-primary);
+  --primary-foreground:    var(--color-brand-primary-fg);
+  --secondary:             var(--color-secondary);
+  --secondary-foreground:  var(--color-secondary-fg);
+  --muted:                 var(--color-muted);
+  --muted-foreground:      var(--color-muted-fg);
+  --accent:                var(--color-accent);
+  --accent-foreground:     var(--color-accent-fg);
+  --destructive:           var(--color-destructive);
+  --destructive-foreground:var(--color-destructive-fg);
+  --border:                var(--color-border);
+  --input:                 var(--color-input);
+  --ring:                  var(--color-brand-ring);
+  --radius:                var(--radius-xl);
+}
+
+/* ---------- Dark mode overrides ---------- */
+.dark {
+  --color-background:   #0f172a;
+  --color-foreground:   #f8fafc;
+  --color-card:         #1e293b;
+  --color-card-fg:      #f8fafc;
+  --color-popover:      #1e293b;
+  --color-popover-fg:   #f8fafc;
+  --color-border:       #334155;
+  --color-input:        #334155;
+  --color-secondary:    #334155;
+  --color-secondary-fg: #f8fafc;
+  --color-muted:        #334155;
+  --color-muted-fg:     #94a3b8;
+  --color-accent:       #334155;
+  --color-accent-fg:    #f8fafc;
+
+  --color-success-100:  rgba(6, 78, 59, 0.3);
+  --color-success-700:  #34d399;
+  --color-warning-100:  rgba(120, 53, 15, 0.3);
+  --color-warning-700:  #fbbf24;
+  --color-danger-100:   rgba(127, 29, 29, 0.3);
+  --color-danger-700:   #f87171;
+  --color-destructive:  #7f1d1d;
+  --color-destructive-fg:#f8fafc;
+  --color-info-100:     rgba(30, 58, 138, 0.3);
+  --color-info-700:     #60a5fa;
+}

@@ -53,6 +53,7 @@ export function FolioProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     
     const path = "folios";
+    if ((import.meta as any).env?.DEV) { setLoading(false); return; }
     const foliosQuery = query(collection(db, path));
     const unsubscribe = onSnapshot(foliosQuery, (snapshot) => {
       const folioData = snapshot.docs.map(doc => {

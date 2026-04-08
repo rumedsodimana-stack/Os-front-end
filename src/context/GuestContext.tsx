@@ -65,6 +65,7 @@ export function GuestProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) return;
     const path = "guests";
+    if ((import.meta as any).env?.DEV) { setLoading(false); return; }
     const q = query(collection(db, path));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const guestData = snapshot.docs.map(doc => {

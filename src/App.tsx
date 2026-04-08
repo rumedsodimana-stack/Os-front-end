@@ -31,6 +31,11 @@ import { Security } from "./pages/Security";
 import { ITAndSystems } from "./pages/ITAndSystems";
 import { Reservations } from "./pages/Reservations";
 import { LegalAndCompliance } from "./pages/LegalAndCompliance";
+import { CostControl } from "./pages/CostControl";
+import { MiniBar } from "./pages/MiniBar";
+import { RoomService } from "./pages/RoomService";
+import { InventoryProvider } from "./context/InventoryContext";
+import { CostCenterProvider } from "./context/CostCenterContext";
 import { Readme } from "./pages/Readme";
 
 type Department = 
@@ -54,6 +59,9 @@ type Department =
   | "Configuration"
   | "Guest Relations"
   | "Connect"
+  | "Cost Control"
+  | "Mini Bar"
+  | "Room Service"
   | "Readme";
 
 export default function App() {
@@ -94,7 +102,9 @@ function AppContent() {
             <RoomProvider>
               <BookingProvider>
                 <FolioProvider>
-                  <Layout 
+                  <InventoryProvider>
+                    <CostCenterProvider>
+                  <Layout
                     activeDepartment={activeDepartment} 
                     setActiveDepartment={setActiveDepartment}
                     activeSubmenu={activeSubmenu}
@@ -122,8 +132,13 @@ function AppContent() {
                     {activeDepartment === "IT & Systems" && <ITAndSystems aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
                     {activeDepartment === "Reservations" && <Reservations aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
                     {activeDepartment === "Legal & Compliance" && <LegalAndCompliance aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Cost Control" && <CostControl aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Mini Bar" && <MiniBar aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Room Service" && <RoomService aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
                     {activeDepartment === "Readme" && <Readme activeSubmenu={activeSubmenu} />}
                   </Layout>
+                    </CostCenterProvider>
+                  </InventoryProvider>
                 </FolioProvider>
               </BookingProvider>
             </RoomProvider>
