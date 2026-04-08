@@ -1,1618 +1,1549 @@
-import React, { useMemo } from "react";
-import {
-  Users,
-  UserCheck,
-  UserX,
-  Calendar,
-  Clock,
-  DollarSign,
-  Award,
-  BookOpen,
+import React, { useState } from "react";
+import { 
+  Users, 
+  UserPlus, 
+  Calendar, 
+  Clock, 
+  CreditCard, 
+  GraduationCap, 
+  ShieldCheck, 
+  Receipt, 
+  FileText, 
+  Search, 
+  Filter,
+  MoreVertical,
+  ChevronRight,
+  ChevronDown,
+  CheckCircle2,
   AlertCircle,
-  Star,
-  Shield,
-  Activity,
-  Heart,
-  FileText,
+  Clock4,
   TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Briefcase,
+  Settings2,
+  UserCheck,
+  Wallet,
+  UserSearch,
+  X
 } from "lucide-react";
 import { cn } from "../lib/utils";
-import {
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  PieChart, 
+  Pie, 
+  Cell,
+  LineChart,
+  Line,
   AreaChart,
   Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
+  Legend
 } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
-import { KpiStrip, LegendBar, SectionSearch, SectionHeader, PageShell } from "../components/shared";
+import { KPICard } from "../components/ui/KPICard";
 
-
-interface HumanResourcesProps {
+interface HRProps {
   aiEnabled: boolean;
   activeSubmenu?: string;
 }
 
-// ─── Static Data ────────────────────────────────────────────────────────────
+const COLORS = ["#8b5cf6", "#ec4899", "#10b981", "#f59e0b", "#3b82f6"];
 
-const attendanceTrend = [
-  { date: "Mar 03", present: 82, absent: 8, late: 6 },
-  { date: "Mar 04", present: 85, absent: 6, late: 5 },
-  { date: "Mar 05", present: 80, absent: 9, late: 7 },
-  { date: "Mar 06", present: 88, absent: 5, late: 3 },
-  { date: "Mar 07", present: 76, absent: 12, late: 8 },
-  { date: "Mar 08", present: 90, absent: 4, late: 2 },
-  { date: "Mar 09", present: 72, absent: 14, late: 10 },
-  { date: "Mar 10", present: 87, absent: 6, late: 5 },
-  { date: "Mar 11", present: 89, absent: 5, late: 4 },
-  { date: "Mar 12", present: 84, absent: 8, late: 6 },
-  { date: "Mar 13", present: 91, absent: 3, late: 2 },
-  { date: "Mar 14", present: 86, absent: 7, late: 5 },
-  { date: "Mar 15", present: 79, absent: 10, late: 9 },
-  { date: "Mar 16", present: 83, absent: 9, late: 6 },
-  { date: "Mar 17", present: 93, absent: 2, late: 1 },
-  { date: "Mar 18", present: 78, absent: 11, late: 9 },
-  { date: "Mar 19", present: 88, absent: 5, late: 4 },
-  { date: "Mar 20", present: 92, absent: 3, late: 1 },
-  { date: "Mar 21", present: 85, absent: 8, late: 5 },
-  { date: "Mar 22", present: 87, absent: 6, late: 5 },
-  { date: "Mar 23", present: 81, absent: 10, late: 7 },
-  { date: "Mar 24", present: 90, absent: 4, late: 2 },
-  { date: "Mar 25", present: 77, absent: 13, late: 8 },
-  { date: "Mar 26", present: 89, absent: 5, late: 4 },
-  { date: "Mar 27", present: 94, absent: 2, late: 0 },
-  { date: "Mar 28", present: 86, absent: 7, late: 5 },
-  { date: "Mar 29", present: 82, absent: 9, late: 7 },
-  { date: "Mar 30", present: 90, absent: 4, late: 3 },
-  { date: "Mar 31", present: 88, absent: 6, late: 4 },
-  { date: "Apr 01", present: 91, absent: 3, late: 2 },
-];
+// --- Sub-components ---
 
-const deptDistribution = [
-  { name: "Front Office", value: 22, color: "#6366f1" },
-  { name: "Housekeeping", value: 31, color: "#8b5cf6" },
-  { name: "F&B", value: 28, color: "#a78bfa" },
-  { name: "Maintenance", value: 14, color: "#c4b5fd" },
-  { name: "Security", value: 8, color: "#7c3aed" },
-  { name: "Finance", value: 6, color: "#4f46e5" },
-  { name: "HR", value: 5, color: "#3730a3" },
-];
+function HROverview() {
+  const attendanceData = [
+    { name: "Mon", present: 230, absent: 18 },
+    { name: "Tue", present: 235, absent: 13 },
+    { name: "Wed", present: 228, absent: 20 },
+    { name: "Thu", present: 240, absent: 8 },
+    { name: "Fri", present: 232, absent: 16 },
+  ];
 
-const todayRoster = [
-  { name: "Maria Santos", dept: "Front Office", role: "Receptionist", shift: "Morning", clockIn: "07:02", status: "On Duty" },
-  { name: "James Reyes", dept: "Housekeeping", role: "Room Attendant", shift: "Morning", clockIn: "07:15", status: "On Duty" },
-  { name: "Ana Cruz", dept: "F&B", role: "Waitstaff", shift: "Afternoon", clockIn: "15:00", status: "Scheduled" },
-  { name: "Pedro Lim", dept: "Maintenance", role: "Technician", shift: "Morning", clockIn: "06:58", status: "On Duty" },
-  { name: "Sofia Tan", dept: "Front Office", role: "Concierge", shift: "Morning", clockIn: "07:05", status: "On Duty" },
-  { name: "Carlos Dela Cruz", dept: "Security", role: "Guard", shift: "Night", clockIn: "23:00", status: "Scheduled" },
-  { name: "Rosa Mendez", dept: "Housekeeping", role: "Supervisor", shift: "Morning", clockIn: "06:45", status: "On Duty" },
-  { name: "Miguel Torres", dept: "F&B", role: "Chef", shift: "Morning", clockIn: "06:30", status: "On Duty" },
-  { name: "Luz Garcia", dept: "Finance", role: "Accountant", shift: "Morning", clockIn: "08:02", status: "Late" },
-  { name: "Ramon Villanueva", dept: "HR", role: "HR Officer", shift: "Morning", clockIn: "—", status: "Absent" },
-];
+  const departmentDistribution = [
+    { name: "Front Desk", value: 45 },
+    { name: "Housekeeping", value: 85 },
+    { name: "F&B", value: 60 },
+    { name: "Engineering", value: 25 },
+    { name: "Admin", value: 33 },
+  ];
 
-const staffDirectory = [
-  { id: "EMP001", name: "Maria Santos", dept: "Front Office", role: "Senior Receptionist", email: "m.santos@singularity.ph", phone: "+63 917 123 4567", contract: "Full-time", joinDate: "2020-03-15", status: "Active" },
-  { id: "EMP002", name: "James Reyes", dept: "Housekeeping", role: "Room Attendant", email: "j.reyes@singularity.ph", phone: "+63 918 234 5678", contract: "Full-time", joinDate: "2021-06-01", status: "Active" },
-  { id: "EMP003", name: "Ana Cruz", dept: "F&B", role: "Waitstaff", email: "a.cruz@singularity.ph", phone: "+63 919 345 6789", contract: "Part-time", joinDate: "2022-09-10", status: "Active" },
-  { id: "EMP004", name: "Pedro Lim", dept: "Maintenance", role: "Senior Technician", email: "p.lim@singularity.ph", phone: "+63 920 456 7890", contract: "Full-time", joinDate: "2019-11-20", status: "Active" },
-  { id: "EMP005", name: "Sofia Tan", dept: "Front Office", role: "Concierge", email: "s.tan@singularity.ph", phone: "+63 921 567 8901", contract: "Full-time", joinDate: "2021-02-14", status: "Active" },
-  { id: "EMP006", name: "Carlos Dela Cruz", dept: "Security", role: "Senior Guard", email: "c.delacruz@singularity.ph", phone: "+63 922 678 9012", contract: "Full-time", joinDate: "2020-07-05", status: "Active" },
-  { id: "EMP007", name: "Rosa Mendez", dept: "Housekeeping", role: "Housekeeping Supervisor", email: "r.mendez@singularity.ph", phone: "+63 923 789 0123", contract: "Full-time", joinDate: "2018-04-22", status: "Active" },
-  { id: "EMP008", name: "Miguel Torres", dept: "F&B", role: "Sous Chef", email: "m.torres@singularity.ph", phone: "+63 924 890 1234", contract: "Full-time", joinDate: "2019-08-30", status: "Active" },
-  { id: "EMP009", name: "Luz Garcia", dept: "Finance", role: "Senior Accountant", email: "l.garcia@singularity.ph", phone: "+63 925 901 2345", contract: "Full-time", joinDate: "2020-01-08", status: "Active" },
-  { id: "EMP010", name: "Ramon Villanueva", dept: "HR", role: "HR Officer", email: "r.villanueva@singularity.ph", phone: "+63 926 012 3456", contract: "Full-time", joinDate: "2021-03-17", status: "On Leave" },
-  { id: "EMP011", name: "Elena Bautista", dept: "Front Office", role: "Night Auditor", email: "e.bautista@singularity.ph", phone: "+63 927 123 4567", contract: "Full-time", joinDate: "2022-11-05", status: "Active" },
-  { id: "EMP012", name: "Jose Ramos", dept: "Housekeeping", role: "Laundry Attendant", email: "j.ramos@singularity.ph", phone: "+63 928 234 5678", contract: "Casual", joinDate: "2023-01-20", status: "Probation" },
-  { id: "EMP013", name: "Carmen Flores", dept: "F&B", role: "Restaurant Manager", email: "c.flores@singularity.ph", phone: "+63 929 345 6789", contract: "Full-time", joinDate: "2017-06-12", status: "Active" },
-  { id: "EMP014", name: "Antonio Pascual", dept: "Maintenance", role: "Plumber", email: "a.pascual@singularity.ph", phone: "+63 930 456 7890", contract: "Full-time", joinDate: "2020-09-03", status: "Active" },
-  { id: "EMP015", name: "Maricel Hernandez", dept: "Security", role: "Security Supervisor", email: "m.hernandez@singularity.ph", phone: "+63 931 567 8901", contract: "Full-time", joinDate: "2019-04-18", status: "Active" },
-  { id: "EMP016", name: "Fernando Aquino", dept: "Finance", role: "Finance Manager", email: "f.aquino@singularity.ph", phone: "+63 932 678 9012", contract: "Full-time", joinDate: "2016-10-25", status: "Active" },
-  { id: "EMP017", name: "Patricia Domingo", dept: "HR", role: "HR Manager", email: "p.domingo@singularity.ph", phone: "+63 933 789 0123", contract: "Full-time", joinDate: "2015-08-14", status: "Active" },
-  { id: "EMP018", name: "Ricardo Castro", dept: "F&B", role: "Bartender", email: "r.castro@singularity.ph", phone: "+63 934 890 1234", contract: "Part-time", joinDate: "2023-03-01", status: "Probation" },
-  { id: "EMP019", name: "Cristina Lopez", dept: "Front Office", role: "Guest Relations Officer", email: "c.lopez@singularity.ph", phone: "+63 935 901 2345", contract: "Full-time", joinDate: "2021-07-19", status: "Active" },
-  { id: "EMP020", name: "Eduardo Morales", dept: "Maintenance", role: "Electrician", email: "e.morales@singularity.ph", phone: "+63 936 012 3456", contract: "Full-time", joinDate: "2018-12-10", status: "On Leave" },
-];
-
-const attendanceRecords = [
-  { date: "2026-04-01", employee: "Maria Santos", dept: "Front Office", clockIn: "07:02", clockOut: "15:08", hoursWorked: 8.1, breakDuration: 0.5, overtime: 0, status: "Present" },
-  { date: "2026-04-01", employee: "James Reyes", dept: "Housekeeping", clockIn: "07:18", clockOut: "15:15", hoursWorked: 7.95, breakDuration: 0.5, overtime: 0, status: "Late" },
-  { date: "2026-04-01", employee: "Pedro Lim", dept: "Maintenance", clockIn: "06:58", clockOut: "17:02", hoursWorked: 10.07, breakDuration: 1.0, overtime: 2.0, status: "Present" },
-  { date: "2026-04-01", employee: "Sofia Tan", dept: "Front Office", clockIn: "07:05", clockOut: "15:10", hoursWorked: 8.08, breakDuration: 0.5, overtime: 0, status: "Present" },
-  { date: "2026-04-01", employee: "Rosa Mendez", dept: "Housekeeping", clockIn: "06:45", clockOut: "15:00", hoursWorked: 8.25, breakDuration: 0.5, overtime: 0.25, status: "Present" },
-  { date: "2026-04-01", employee: "Miguel Torres", dept: "F&B", clockIn: "06:30", clockOut: "14:45", hoursWorked: 8.25, breakDuration: 0.5, overtime: 0.25, status: "Present" },
-  { date: "2026-04-01", employee: "Luz Garcia", dept: "Finance", clockIn: "08:32", clockOut: "17:35", hoursWorked: 9.05, breakDuration: 1.0, overtime: 1.0, status: "Late" },
-  { date: "2026-04-01", employee: "Ramon Villanueva", dept: "HR", clockIn: "—", clockOut: "—", hoursWorked: 0, breakDuration: 0, overtime: 0, status: "Absent" },
-  { date: "2026-04-01", employee: "Elena Bautista", dept: "Front Office", clockIn: "22:55", clockOut: "07:05", hoursWorked: 8.17, breakDuration: 0.5, overtime: 0, status: "Present" },
-  { date: "2026-04-01", employee: "Carmen Flores", dept: "F&B", clockIn: "09:00", clockOut: "18:00", hoursWorked: 8.0, breakDuration: 1.0, overtime: 0, status: "Present" },
-  { date: "2026-03-31", employee: "Maria Santos", dept: "Front Office", clockIn: "07:00", clockOut: "15:05", hoursWorked: 8.08, breakDuration: 0.5, overtime: 0, status: "Present" },
-  { date: "2026-03-31", employee: "Fernando Aquino", dept: "Finance", clockIn: "08:02", clockOut: "17:00", hoursWorked: 8.97, breakDuration: 1.0, overtime: 0, status: "Present" },
-  { date: "2026-03-31", employee: "Patricia Domingo", dept: "HR", clockIn: "08:00", clockOut: "17:30", hoursWorked: 9.5, breakDuration: 1.0, overtime: 0.5, status: "Present" },
-  { date: "2026-03-31", employee: "Maricel Hernandez", dept: "Security", clockIn: "06:55", clockOut: "15:00", hoursWorked: 8.08, breakDuration: 0.5, overtime: 0, status: "Present" },
-  { date: "2026-03-31", employee: "Antonio Pascual", dept: "Maintenance", clockIn: "07:10", clockOut: "16:00", hoursWorked: 8.83, breakDuration: 1.0, overtime: 0, status: "Late" },
-  { date: "2026-03-31", employee: "Ricardo Castro", dept: "F&B", clockIn: "—", clockOut: "—", hoursWorked: 0, breakDuration: 0, overtime: 0, status: "Absent" },
-  { date: "2026-03-30", employee: "Cristina Lopez", dept: "Front Office", clockIn: "07:00", clockOut: "15:00", hoursWorked: 8.0, breakDuration: 0.5, overtime: 0, status: "Present" },
-  { date: "2026-03-30", employee: "Eduardo Morales", dept: "Maintenance", clockIn: "—", clockOut: "—", hoursWorked: 4.0, breakDuration: 0, overtime: 0, status: "Half Day" },
-  { date: "2026-03-29", employee: "Jose Ramos", dept: "Housekeeping", clockIn: "—", clockOut: "—", hoursWorked: 0, breakDuration: 0, overtime: 0, status: "Holiday" },
-  { date: "2026-03-29", employee: "Ana Cruz", dept: "F&B", clockIn: "15:00", clockOut: "23:05", hoursWorked: 8.08, breakDuration: 0.5, overtime: 0, status: "Present" },
-];
-
-const shiftStaff = [
-  { name: "Maria Santos", dept: "Front Office" },
-  { name: "James Reyes", dept: "Housekeeping" },
-  { name: "Ana Cruz", dept: "F&B" },
-  { name: "Pedro Lim", dept: "Maintenance" },
-  { name: "Sofia Tan", dept: "Front Office" },
-  { name: "Carlos Dela Cruz", dept: "Security" },
-  { name: "Rosa Mendez", dept: "Housekeeping" },
-  { name: "Miguel Torres", dept: "F&B" },
-  { name: "Luz Garcia", dept: "Finance" },
-  { name: "Elena Bautista", dept: "Front Office" },
-  { name: "Carmen Flores", dept: "F&B" },
-  { name: "Antonio Pascual", dept: "Maintenance" },
-  { name: "Maricel Hernandez", dept: "Security" },
-  { name: "Ricardo Castro", dept: "F&B" },
-  { name: "Cristina Lopez", dept: "Front Office" },
-];
-
-const weeklyRoster: Record<string, string[]> = {
-  "Maria Santos":     ["M", "M", "M", "A", "A", "O", "O"],
-  "James Reyes":      ["M", "M", "M", "M", "O", "O", "M"],
-  "Ana Cruz":         ["O", "A", "A", "A", "A", "A", "O"],
-  "Pedro Lim":        ["M", "M", "O", "M", "M", "M", "O"],
-  "Sofia Tan":        ["M", "O", "M", "M", "M", "O", "M"],
-  "Carlos Dela Cruz": ["N", "N", "N", "O", "N", "N", "O"],
-  "Rosa Mendez":      ["M", "M", "M", "M", "O", "M", "O"],
-  "Miguel Torres":    ["M", "M", "A", "A", "A", "O", "O"],
-  "Luz Garcia":       ["M", "M", "M", "M", "M", "O", "O"],
-  "Elena Bautista":   ["O", "N", "N", "N", "N", "O", "N"],
-  "Carmen Flores":    ["M", "M", "M", "M", "O", "M", "M"],
-  "Antonio Pascual":  ["M", "O", "M", "M", "M", "O", "L"],
-  "Maricel Hernandez":["M", "M", "O", "M", "M", "M", "O"],
-  "Ricardo Castro":   ["O", "A", "A", "O", "A", "A", "A"],
-  "Cristina Lopez":   ["M", "M", "M", "O", "M", "O", "M"],
-};
-
-const payrollRecords = [
-  { employee: "Patricia Domingo", dept: "HR", basic: 55000, serviceCharge: 4200, overtime: 2100, transport: 1500, tax: 9800, social: 1100, status: "Processed" },
-  { employee: "Fernando Aquino", dept: "Finance", basic: 60000, serviceCharge: 4500, overtime: 0, transport: 1500, tax: 11200, social: 1200, status: "Processed" },
-  { employee: "Carmen Flores", dept: "F&B", basic: 52000, serviceCharge: 5800, overtime: 1500, transport: 1200, tax: 9100, social: 1040, status: "Processed" },
-  { employee: "Rosa Mendez", dept: "Housekeeping", basic: 38000, serviceCharge: 3200, overtime: 900, transport: 1000, tax: 6300, social: 760, status: "Processed" },
-  { employee: "Maricel Hernandez", dept: "Security", basic: 40000, serviceCharge: 2800, overtime: 1200, transport: 1000, tax: 6700, social: 800, status: "Processed" },
-  { employee: "Maria Santos", dept: "Front Office", basic: 42000, serviceCharge: 4100, overtime: 600, transport: 1200, tax: 7200, social: 840, status: "Processed" },
-  { employee: "Pedro Lim", dept: "Maintenance", basic: 38000, serviceCharge: 2200, overtime: 3200, transport: 1000, tax: 6800, social: 760, status: "Processed" },
-  { employee: "Miguel Torres", dept: "F&B", basic: 48000, serviceCharge: 5200, overtime: 800, transport: 1200, tax: 8500, social: 960, status: "Processed" },
-  { employee: "Luz Garcia", dept: "Finance", basic: 50000, serviceCharge: 3800, overtime: 2400, transport: 1500, tax: 9200, social: 1000, status: "Processed" },
-  { employee: "Sofia Tan", dept: "Front Office", basic: 36000, serviceCharge: 3600, overtime: 0, transport: 1000, tax: 5900, social: 720, status: "Processed" },
-  { employee: "Carlos Dela Cruz", dept: "Security", basic: 36000, serviceCharge: 2400, overtime: 1800, transport: 1000, tax: 6000, social: 720, status: "Pending" },
-  { employee: "Elena Bautista", dept: "Front Office", basic: 36000, serviceCharge: 3200, overtime: 2400, transport: 1000, tax: 6200, social: 720, status: "Pending" },
-  { employee: "Antonio Pascual", dept: "Maintenance", basic: 34000, serviceCharge: 2000, overtime: 600, transport: 1000, tax: 5500, social: 680, status: "Pending" },
-  { employee: "Ricardo Castro", dept: "F&B", basic: 22000, serviceCharge: 2800, overtime: 0, transport: 800, tax: 3500, social: 440, status: "On Hold" },
-  { employee: "Ramon Villanueva", dept: "HR", basic: 42000, serviceCharge: 3400, overtime: 0, transport: 1200, tax: 7100, social: 840, status: "Pending" },
-  { employee: "Cristina Lopez", dept: "Front Office", basic: 38000, serviceCharge: 3900, overtime: 0, transport: 1000, tax: 6200, social: 760, status: "Processed" },
-  { employee: "James Reyes", dept: "Housekeeping", basic: 30000, serviceCharge: 2800, overtime: 400, transport: 800, tax: 4800, social: 600, status: "Processed" },
-  { employee: "Jose Ramos", dept: "Housekeeping", basic: 18000, serviceCharge: 1800, overtime: 0, transport: 600, tax: 2800, social: 360, status: "On Hold" },
-];
-
-const leaveRequests = [
-  { id: "LV-0041", employee: "Ramon Villanueva", dept: "HR", type: "Annual", from: "2026-03-25", to: "2026-04-05", days: 10, reason: "Family vacation", status: "Approved", approvedBy: "Patricia Domingo" },
-  { id: "LV-0042", employee: "Eduardo Morales", dept: "Maintenance", type: "Sick", from: "2026-03-30", to: "2026-04-02", days: 4, reason: "Medical procedure", status: "Approved", approvedBy: "Patricia Domingo" },
-  { id: "LV-0043", employee: "Ana Cruz", dept: "F&B", type: "Emergency", from: "2026-04-03", to: "2026-04-04", days: 2, reason: "Family emergency", status: "Pending", approvedBy: "—" },
-  { id: "LV-0044", employee: "Jose Ramos", dept: "Housekeeping", type: "Annual", from: "2026-04-10", to: "2026-04-14", days: 5, reason: "Personal travel", status: "Pending", approvedBy: "—" },
-  { id: "LV-0045", employee: "Maricel Hernandez", dept: "Security", type: "Sick", from: "2026-04-01", to: "2026-04-01", days: 1, reason: "Fever and flu", status: "Approved", approvedBy: "Patricia Domingo" },
-  { id: "LV-0046", employee: "Luz Garcia", dept: "Finance", type: "Annual", from: "2026-04-20", to: "2026-04-24", days: 5, reason: "Rest and recuperation", status: "Pending", approvedBy: "—" },
-  { id: "LV-0047", employee: "Miguel Torres", dept: "F&B", type: "Emergency", from: "2026-03-28", to: "2026-03-29", days: 2, reason: "Flood damage to home", status: "Approved", approvedBy: "Fernando Aquino" },
-  { id: "LV-0048", employee: "Maria Santos", dept: "Front Office", type: "Annual", from: "2026-05-01", to: "2026-05-07", days: 7, reason: "Vacation leave", status: "Pending", approvedBy: "—" },
-  { id: "LV-0049", employee: "Pedro Lim", dept: "Maintenance", type: "Unpaid", from: "2026-04-15", to: "2026-04-16", days: 2, reason: "Personal matter", status: "Rejected", approvedBy: "Patricia Domingo" },
-  { id: "LV-0050", employee: "Elena Bautista", dept: "Front Office", type: "Annual", from: "2026-04-05", to: "2026-04-07", days: 3, reason: "Rest day extension", status: "Approved", approvedBy: "Patricia Domingo" },
-  { id: "LV-0051", employee: "Carmen Flores", dept: "F&B", type: "Maternity", from: "2026-05-15", to: "2026-08-13", days: 90, reason: "Maternity leave", status: "Approved", approvedBy: "Patricia Domingo" },
-  { id: "LV-0052", employee: "Ricardo Castro", dept: "F&B", type: "Sick", from: "2026-04-02", to: "2026-04-03", days: 2, reason: "Stomach issues", status: "Pending", approvedBy: "—" },
-  { id: "LV-0053", employee: "Sofia Tan", dept: "Front Office", type: "Annual", from: "2026-04-22", to: "2026-04-25", days: 4, reason: "Family reunion", status: "Pending", approvedBy: "—" },
-  { id: "LV-0054", employee: "James Reyes", dept: "Housekeeping", type: "Sick", from: "2026-03-20", to: "2026-03-21", days: 2, reason: "Migraine", status: "Approved", approvedBy: "Rosa Mendez" },
-  { id: "LV-0055", employee: "Cristina Lopez", dept: "Front Office", type: "Emergency", from: "2026-04-08", to: "2026-04-08", days: 1, reason: "Child hospitalization", status: "Pending", approvedBy: "—" },
-];
-
-const trainingRecords = [
-  { employee: "Maria Santos", course: "Effective Guest Communication", category: "Skills", provider: "Hotel Academy PH", completed: "2025-10-15", expiry: "2027-10-15", score: 92, certNo: "CERT-2025-0101", status: "Valid" },
-  { employee: "James Reyes", course: "Housekeeping Standards (ISO)", category: "Mandatory", provider: "Internal", completed: "2025-03-01", expiry: "2026-03-01", score: 85, certNo: "CERT-2025-0204", status: "Expired" },
-  { employee: "Pedro Lim", course: "Electrical Safety & OSHA", category: "Compliance", provider: "DOLE Accredited", completed: "2025-08-20", expiry: "2026-08-20", score: 90, certNo: "CERT-2025-0380", status: "Valid" },
-  { employee: "Rosa Mendez", course: "Supervisory Leadership Program", category: "Leadership", provider: "Hotel Academy PH", completed: "2024-11-10", expiry: "2026-11-10", score: 88, certNo: "CERT-2024-0512", status: "Valid" },
-  { employee: "Miguel Torres", course: "Food Safety & HACCP Level 2", category: "Compliance", provider: "NSF International", completed: "2025-06-05", expiry: "2026-06-05", score: 95, certNo: "CERT-2025-0455", status: "Due Soon" },
-  { employee: "Luz Garcia", course: "Anti-Money Laundering Compliance", category: "Compliance", provider: "BSP Accredited", completed: "2025-01-18", expiry: "2026-01-18", score: 87, certNo: "CERT-2025-0101", status: "Expired" },
-  { employee: "Carlos Dela Cruz", course: "Crisis Management & First Response", category: "Mandatory", provider: "Red Cross PH", completed: "2025-09-12", expiry: "2027-09-12", score: 91, certNo: "CERT-2025-0618", status: "Valid" },
-  { employee: "Patricia Domingo", course: "Strategic HR Management", category: "Leadership", provider: "PMAP", completed: "2025-04-22", expiry: "2028-04-22", score: 94, certNo: "CERT-2025-0303", status: "Valid" },
-  { employee: "Fernando Aquino", course: "IFRS Financial Reporting", category: "Skills", provider: "PICPA", completed: "2025-07-30", expiry: "2027-07-30", score: 89, certNo: "CERT-2025-0499", status: "Valid" },
-  { employee: "Elena Bautista", course: "Night Audit Procedures", category: "Skills", provider: "Internal", completed: "2026-01-10", expiry: "2028-01-10", score: 88, certNo: "CERT-2026-0022", status: "Valid" },
-  { employee: "Carmen Flores", course: "Restaurant Management Excellence", category: "Leadership", provider: "Culinary Institute", completed: "2025-02-14", expiry: "2028-02-14", score: 96, certNo: "CERT-2025-0180", status: "Valid" },
-  { employee: "Antonio Pascual", course: "Plumbing Systems Certification", category: "Mandatory", provider: "TESDA", completed: "2024-08-01", expiry: "2026-08-01", score: 82, certNo: "CERT-2024-0610", status: "Due Soon" },
-  { employee: "Maricel Hernandez", course: "Security Operations Management", category: "Mandatory", provider: "PNP Accredited", completed: "2025-11-05", expiry: "2027-11-05", score: 90, certNo: "CERT-2025-0701", status: "Valid" },
-  { employee: "Ricardo Castro", course: "Responsible Service of Alcohol", category: "Compliance", provider: "Internal", completed: "—", expiry: "—", score: 0, certNo: "—", status: "Not Completed" },
-  { employee: "Ramon Villanueva", course: "Labor Law & Employment Relations", category: "Compliance", provider: "DOLE", completed: "2025-05-20", expiry: "2027-05-20", score: 91, certNo: "CERT-2025-0415", status: "Valid" },
-  { employee: "Cristina Lopez", course: "Guest Experience Innovation", category: "Skills", provider: "Hotel Academy PH", completed: "2025-12-03", expiry: "2027-12-03", score: 87, certNo: "CERT-2025-0788", status: "Valid" },
-  { employee: "James Reyes", course: "Chemical Handling & Safety", category: "Compliance", provider: "DOLE Accredited", completed: "—", expiry: "—", score: 0, certNo: "—", status: "Not Completed" },
-  { employee: "Jose Ramos", course: "Housekeeping Standards (ISO)", category: "Mandatory", provider: "Internal", completed: "2026-02-15", expiry: "2028-02-15", score: 80, certNo: "CERT-2026-0044", status: "Valid" },
-  { employee: "Ana Cruz", course: "Food & Beverage Service Standards", category: "Mandatory", provider: "Internal", completed: "2025-10-01", expiry: "2027-10-01", score: 86, certNo: "CERT-2025-0640", status: "Valid" },
-  { employee: "Sofia Tan", course: "Upselling & Revenue Techniques", category: "Skills", provider: "Hotel Academy PH", completed: "2026-03-10", expiry: "2028-03-10", score: 93, certNo: "CERT-2026-0091", status: "Valid" },
-];
-
-const performanceReviews = [
-  { employee: "Patricia Domingo", dept: "HR", period: "Q4 2025", reviewer: "GM Office", score: 4.7, kpisMet: 9, kpisTotal: 10, goals: "Expand HRIS capabilities", status: "Completed", date: "2026-01-15" },
-  { employee: "Fernando Aquino", dept: "Finance", period: "Q4 2025", reviewer: "GM Office", score: 4.5, kpisMet: 9, kpisTotal: 10, goals: "Implement cost control dashboard", status: "Completed", date: "2026-01-18" },
-  { employee: "Carmen Flores", dept: "F&B", period: "Q4 2025", reviewer: "F&B Director", score: 4.8, kpisMet: 10, kpisTotal: 10, goals: "Launch new tasting menu", status: "Completed", date: "2026-01-20" },
-  { employee: "Rosa Mendez", dept: "Housekeeping", period: "Q4 2025", reviewer: "Rooms Division Mgr", score: 4.2, kpisMet: 8, kpisTotal: 10, goals: "Reduce laundry turnaround time", status: "Completed", date: "2026-01-22" },
-  { employee: "Maricel Hernandez", dept: "Security", period: "Q4 2025", reviewer: "GM Office", score: 4.3, kpisMet: 8, kpisTotal: 10, goals: "Upgrade CCTV monitoring protocol", status: "Completed", date: "2026-01-25" },
-  { employee: "Maria Santos", dept: "Front Office", period: "Q4 2025", reviewer: "FO Manager", score: 4.6, kpisMet: 9, kpisTotal: 10, goals: "Achieve 95% guest satisfaction", status: "Completed", date: "2026-01-28" },
-  { employee: "Pedro Lim", dept: "Maintenance", period: "Q4 2025", reviewer: "Chief Engineer", score: 4.1, kpisMet: 7, kpisTotal: 10, goals: "PPM completion rate improvement", status: "Completed", date: "2026-01-30" },
-  { employee: "Miguel Torres", dept: "F&B", period: "Q4 2025", reviewer: "Carmen Flores", score: 4.4, kpisMet: 8, kpisTotal: 10, goals: "Develop team culinary skills", status: "Completed", date: "2026-02-01" },
-  { employee: "Luz Garcia", dept: "Finance", period: "Q4 2025", reviewer: "Fernando Aquino", score: 3.9, kpisMet: 7, kpisTotal: 10, goals: "Reduce month-end close to 3 days", status: "Completed", date: "2026-02-03" },
-  { employee: "Elena Bautista", dept: "Front Office", period: "Q1 2026", reviewer: "FO Manager", score: 0, kpisMet: 0, kpisTotal: 8, goals: "Night audit accuracy improvement", status: "Pending", date: "—" },
-  { employee: "Carlos Dela Cruz", dept: "Security", period: "Q1 2026", reviewer: "Maricel Hernandez", score: 0, kpisMet: 0, kpisTotal: 8, goals: "Incident response time targets", status: "Pending", date: "—" },
-  { employee: "Antonio Pascual", dept: "Maintenance", period: "Q4 2025", reviewer: "Chief Engineer", score: 3.5, kpisMet: 6, kpisTotal: 10, goals: "Complete plumbing certification", status: "Completed", date: "2026-02-10" },
-  { employee: "Ana Cruz", dept: "F&B", period: "Q1 2026", reviewer: "Carmen Flores", score: 0, kpisMet: 0, kpisTotal: 8, goals: "Upselling target achievement", status: "Overdue", date: "—" },
-  { employee: "Sofia Tan", dept: "Front Office", period: "Q4 2025", reviewer: "FO Manager", score: 4.0, kpisMet: 7, kpisTotal: 9, goals: "Guest satisfaction scores", status: "Completed", date: "2026-02-12" },
-  { employee: "Ramon Villanueva", dept: "HR", period: "Q4 2025", reviewer: "Patricia Domingo", score: 3.8, kpisMet: 7, kpisTotal: 10, goals: "Training completion rate", status: "Completed", date: "2026-02-14" },
-];
-
-const disciplinaryRecords = [
-  { id: "DISC-0021", employee: "James Reyes", incident: "Tardiness", date: "2026-03-10", severity: "Warning", hrRep: "Ramon Villanueva", status: "Resolved", resolution: "Verbal warning issued; punctuality improved." },
-  { id: "DISC-0022", employee: "Jose Ramos", incident: "Policy Violation", date: "2026-03-15", severity: "Written Warning", hrRep: "Patricia Domingo", status: "Resolved", resolution: "Written warning filed. Refresher training assigned." },
-  { id: "DISC-0023", employee: "Ricardo Castro", incident: "Misconduct", date: "2026-03-20", severity: "Written Warning", hrRep: "Patricia Domingo", status: "Under Review", resolution: "Investigation ongoing." },
-  { id: "DISC-0024", employee: "Ana Cruz", incident: "Performance", date: "2026-03-22", severity: "Warning", hrRep: "Ramon Villanueva", status: "Resolved", resolution: "Performance improvement plan initiated." },
-  { id: "DISC-0025", employee: "Antonio Pascual", incident: "Tardiness", date: "2026-03-25", severity: "Final Warning", hrRep: "Patricia Domingo", status: "Active", resolution: "Pending 30-day monitoring period." },
-  { id: "DISC-0026", employee: "Carlos Dela Cruz", incident: "Policy Violation", date: "2026-03-28", severity: "Warning", hrRep: "Ramon Villanueva", status: "Resolved", resolution: "Briefing on updated security protocols conducted." },
-  { id: "DISC-0027", employee: "Ricardo Castro", incident: "Misconduct", date: "2026-04-01", severity: "Written Warning", hrRep: "Patricia Domingo", status: "Pending", resolution: "Awaiting HR committee review." },
-  { id: "DISC-0028", employee: "Jose Ramos", incident: "Tardiness", date: "2026-04-01", severity: "Warning", hrRep: "Ramon Villanueva", status: "Pending", resolution: "Attendance review scheduled." },
-];
-
-const grievanceRecords = [
-  { id: "GRIV-0011", employee: "Ana Cruz", category: "Scheduling Dispute", filed: "2026-03-08", status: "Resolved", resolution: "Shift adjusted; employee acknowledged." },
-  { id: "GRIV-0012", employee: "Pedro Lim", category: "Unsafe Working Conditions", filed: "2026-03-12", status: "Resolved", resolution: "Equipment repaired; safety inspection completed." },
-  { id: "GRIV-0013", employee: "Jose Ramos", category: "Workplace Harassment", filed: "2026-03-18", status: "Under Review", resolution: "HR mediation scheduled." },
-  { id: "GRIV-0014", employee: "Elena Bautista", category: "Compensation Discrepancy", filed: "2026-03-22", status: "Resolved", resolution: "Payroll correction processed for March cycle." },
-  { id: "GRIV-0015", employee: "Ricardo Castro", category: "Unfair Treatment", filed: "2026-03-25", status: "Escalated", resolution: "Escalated to GM. Committee review in progress." },
-  { id: "GRIV-0016", employee: "Luz Garcia", category: "Scheduling Dispute", filed: "2026-03-28", status: "Open", resolution: "Under initial HR assessment." },
-  { id: "GRIV-0017", employee: "James Reyes", category: "Inadequate Equipment", filed: "2026-04-01", status: "Open", resolution: "Facilities team notified." },
-  { id: "GRIV-0018", employee: "Sofia Tan", category: "Compensation Discrepancy", filed: "2026-04-01", status: "Under Review", resolution: "Finance team verifying service charge computation." },
-];
-
-// ─── Helper Components ───────────────────────────────────────────────────────
-
-const StatCard = ({
-  title,
-  value,
-  sub,
-  icon: Icon,
-  gradient,
-}: {
-  title: string;
-  value: string | number;
-  sub: string;
-  icon: React.ElementType;
-  gradient: string;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: 16 }}
-    animate={{ opacity: 1, y: 0 }}
-    className={cn("rounded-2xl p-5 text-white shadow-md", gradient)}
-  >
-    <div className="flex items-start justify-between">
-      <div>
-        <p className="text-sm font-medium text-white/75">{title}</p>
-        <p className="mt-1 text-3xl font-bold">{value}</p>
-        <p className="mt-1 text-xs text-white/60">{sub}</p>
-      </div>
-      <div className="rounded-xl bg-white/20 p-2.5">
-        <Icon className="h-5 w-5" />
-      </div>
-    </div>
-  </motion.div>
-);
-
-const badgeStyles: Record<string, string> = {
-  Active: "bg-emerald-100 text-emerald-700",
-  "On Leave": "bg-amber-100 text-amber-700",
-  Probation: "bg-blue-100 text-blue-700",
-  "Full-time": "bg-indigo-100 text-indigo-700",
-  "Part-time": "bg-violet-100 text-violet-700",
-  Casual: "bg-pink-100 text-pink-700",
-  Present: "bg-emerald-100 text-emerald-700",
-  Late: "bg-amber-100 text-amber-700",
-  Absent: "bg-red-100 text-red-700",
-  "Half Day": "bg-orange-100 text-orange-700",
-  Holiday: "bg-sky-100 text-sky-700",
-  "On Duty": "bg-emerald-100 text-emerald-700",
-  Scheduled: "bg-blue-100 text-blue-700",
-  Processed: "bg-emerald-100 text-emerald-700",
-  Pending: "bg-amber-100 text-amber-700",
-  "On Hold": "bg-red-100 text-red-700",
-  Approved: "bg-emerald-100 text-emerald-700",
-  Rejected: "bg-red-100 text-red-700",
-  Annual: "bg-indigo-100 text-indigo-700",
-  Sick: "bg-red-100 text-red-700",
-  Emergency: "bg-orange-100 text-orange-700",
-  Maternity: "bg-pink-100 text-pink-700",
-  Unpaid: "bg-secondary text-foreground",
-  Valid: "bg-emerald-100 text-emerald-700",
-  Expired: "bg-red-100 text-red-700",
-  "Due Soon": "bg-amber-100 text-amber-700",
-  "Not Completed": "bg-secondary text-foreground",
-  Completed: "bg-emerald-100 text-emerald-700",
-  Overdue: "bg-red-100 text-red-700",
-  Mandatory: "bg-red-100 text-red-700",
-  Skills: "bg-blue-100 text-blue-700",
-  Compliance: "bg-orange-100 text-orange-700",
-  Leadership: "bg-purple-100 text-purple-700",
-  Warning: "bg-amber-100 text-amber-700",
-  "Written Warning": "bg-orange-100 text-orange-700",
-  "Final Warning": "bg-red-100 text-red-700",
-  Termination: "bg-red-200 text-red-800",
-  Resolved: "bg-emerald-100 text-emerald-700",
-  "Under Review": "bg-blue-100 text-blue-700",
-  Open: "bg-orange-100 text-orange-700",
-  Escalated: "bg-red-100 text-red-700",
-};
-
-const Badge = ({ label }: { label: string }) => (
-  <span
-    className={cn(
-      "inline-block rounded-full px-2.5 py-0.5 text-xs font-medium",
-      badgeStyles[label] ?? "bg-muted text-muted-foreground"
-    )}
-  >
-    {label}
-  </span>
-);
-
-const ShiftCell = ({ code }: { code: string }) => {
-  const styles: Record<string, string> = {
-    M: "bg-indigo-100 text-indigo-700",
-    A: "bg-amber-100 text-amber-700",
-    N: "bg-slate-200 text-slate-700",
-    O: "bg-muted text-muted-foreground",
-    L: "bg-rose-100 text-rose-700",
-  };
-  const labels: Record<string, string> = {
-    M: "Morning 07:00–15:00",
-    A: "Afternoon 15:00–23:00",
-    N: "Night 23:00–07:00",
-    O: "Day Off",
-    L: "On Leave",
-  };
   return (
-    <div
-      className={cn(
-        "flex h-10 w-full items-center justify-center rounded-lg text-xs font-semibold",
-        styles[code] ?? "bg-muted"
-      )}
-      title={labels[code]}
-    >
-      {code}
-    </div>
-  );
-};
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <KPICard 
+          label="Total Employees" 
+          value="248" 
+          change="+12 this month" 
+          trend="up" 
+          icon={Users} 
+          color="blue" 
+        />
+        <KPICard 
+          label="Active Leave" 
+          value="14" 
+          change="5 pending approval" 
+          trend="neutral" 
+          icon={Calendar} 
+          color="amber" 
+        />
+        <KPICard 
+          label="Open Positions" 
+          value="8" 
+          change="3 new this week" 
+          trend="up" 
+          icon={Briefcase} 
+          color="purple" 
+        />
+        <KPICard 
+          label="Training Progress" 
+          value="82%" 
+          change="+5% from last month" 
+          trend="up" 
+          icon={GraduationCap} 
+          color="emerald" 
+        />
+      </div>
 
-const StarRating = ({ score }: { score: number }) => (
-  <div className="flex items-center gap-0.5">
-    {[1, 2, 3, 4, 5].map((s) => (
-      <Star
-        key={s}
-        className={cn(
-          "h-3.5 w-3.5",
-          s <= Math.round(score)
-            ? "fill-amber-400 text-amber-400"
-            : "fill-muted text-muted-foreground"
-        )}
-      />
-    ))}
-    <span className="ml-1 text-xs text-muted-foreground">
-      {score > 0 ? score.toFixed(1) : "—"}
-    </span>
-  </div>
-);
-
-const SectionCard = ({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => (
-  <div className={cn("rounded-2xl border border-border bg-card shadow-sm", className)}>
-    {children}
-  </div>
-);
-
-const TableWrap = ({ children }: { children: React.ReactNode }) => (
-  <div className="overflow-x-auto">
-    <table className="w-full text-sm">{children}</table>
-  </div>
-);
-
-const Th = ({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => (
-  <th
-    className={cn(
-      "border-b border-border px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground",
-      className
-    )}
-  >
-    {children}
-  </th>
-);
-
-const Td = ({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => (
-  <td
-    className={cn(
-      "border-b border-border/50 px-4 py-3 text-sm text-foreground",
-      className
-    )}
-  >
-    {children}
-  </td>
-);
-
-const avatarColors = [
-  "bg-indigo-500",
-  "bg-violet-500",
-  "bg-pink-500",
-  "bg-emerald-500",
-  "bg-amber-500",
-  "bg-sky-500",
-  "bg-rose-500",
-  "bg-violet-500",
-];
-
-const Avatar = ({
-  name,
-  size = "sm",
-}: {
-  name: string;
-  size?: "sm" | "md";
-}) => {
-  const initials = name
-    .split(" ")
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
-  const colorIdx = name.charCodeAt(0) % avatarColors.length;
-  return (
-    <div
-      className={cn(
-        "flex shrink-0 items-center justify-center rounded-full font-semibold text-white",
-        avatarColors[colorIdx],
-        size === "sm" ? "h-8 w-8 text-xs" : "h-10 w-10 text-sm"
-      )}
-    >
-      {initials}
-    </div>
-  );
-};
-
-const FilterBar = ({ children }: { children: React.ReactNode }) => (
-  <SectionCard className="px-5 py-4">
-    <div className="flex flex-wrap items-center gap-3">{children}</div>
-  </SectionCard>
-);
-
-const SelectFilter = ({
-  value,
-  onChange,
-  options,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: string[];
-}) => (
-  <select
-    className="rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none"
-    value={value}
-    onChange={(e) => onChange(e.target.value)}
-  >
-    {options.map((o) => (
-      <option key={o}>{o}</option>
-    ))}
-  </select>
-);
-
-// ─── Sub-views ───────────────────────────────────────────────────────────────
-
-const OverviewView = () => (
-  <motion.div
-    key="overview"
-    initial={{ opacity: 0, y: 12 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -8 }}
-    className="space-y-6"
-  >
-
-    <div className="grid gap-4 lg:grid-cols-3">
-      <SectionCard className="lg:col-span-2 p-5">
-        <SectionHeader title="Attendance Trend — Last 30 Days" className="mb-4" />
-        <ResponsiveContainer width="100%" height={220}>
-          <AreaChart
-            data={attendanceTrend}
-            margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
-          >
-            <defs>
-              <linearGradient id="hrPresentGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="hrAbsentGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} interval={4} />
-            <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-            <Tooltip
-              contentStyle={{
-                background: "var(--card)",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                fontSize: 12,
-              }}
-            />
-            <Area
-              type="monotone"
-              dataKey="present"
-              stroke="#6366f1"
-              strokeWidth={2}
-              fill="url(#hrPresentGrad)"
-              name="Present"
-            />
-            <Area
-              type="monotone"
-              dataKey="late"
-              stroke="#f59e0b"
-              strokeWidth={1.5}
-              fill="none"
-              name="Late"
-            />
-            <Area
-              type="monotone"
-              dataKey="absent"
-              stroke="#f43f5e"
-              strokeWidth={1.5}
-              fill="url(#hrAbsentGrad)"
-              name="Absent"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </SectionCard>
-
-      <SectionCard className="p-5">
-        <SectionHeader title="Staff by Department" className="mb-4" />
-        <ResponsiveContainer width="100%" height={200}>
-          <PieChart>
-            <Pie
-              data={deptDistribution}
-              cx="50%"
-              cy="50%"
-              innerRadius={55}
-              outerRadius={80}
-              paddingAngle={3}
-              dataKey="value"
-            >
-              {deptDistribution.map((entry, i) => (
-                <Cell key={i} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip
-              contentStyle={{
-                background: "var(--card)",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                fontSize: 12,
-              }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="mt-2 space-y-1">
-          {deptDistribution.map((d) => (
-            <div key={d.name} className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <span
-                  className="inline-block h-2.5 w-2.5 rounded-full"
-                  style={{ background: d.color }}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+          <h3 className="text-lg font-semibold mb-6">Weekly Attendance</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={attendanceData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'hsl(var(--muted-foreground))', fontSize: 12}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: 'hsl(var(--muted-foreground))', fontSize: 12}} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px' }}
+                  itemStyle={{ fontSize: '12px' }}
                 />
-                <span className="text-muted-foreground">{d.name}</span>
-              </div>
-              <span className="font-medium text-foreground">{d.value}</span>
-            </div>
-          ))}
+                <Bar dataKey="present" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="absent" fill="#f43f5e" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-      </SectionCard>
-    </div>
 
-    <SectionCard>
-      <div className="border-b border-border px-5 py-4">
-        <SectionHeader title="Today's Roster" />
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+          <h3 className="text-lg font-semibold mb-6">Department Distribution</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={departmentDistribution}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {departmentDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px' }}
+                />
+                <Legend verticalAlign="bottom" height={36}/>
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
-      <TableWrap>
-        <thead>
-          <tr>
-            <Th>Name</Th>
-            <Th>Department</Th>
-            <Th>Role</Th>
-            <Th>Shift</Th>
-            <Th>Clock In</Th>
-            <Th>Status</Th>
-          </tr>
-        </thead>
-        <tbody>
-          {todayRoster.map((row, i) => (
-            <tr key={i} className="hover:bg-muted/40 transition-colors">
-              <Td>
-                <div className="flex items-center gap-3">
-                  <Avatar name={row.name} />
-                  <span className="font-medium">{row.name}</span>
-                </div>
-              </Td>
-              <Td className="text-muted-foreground">{row.dept}</Td>
-              <Td>{row.role}</Td>
-              <Td>{row.shift}</Td>
-              <Td className="font-mono text-xs">{row.clockIn}</Td>
-              <Td>
-                <Badge label={row.status} />
-              </Td>
-            </tr>
-          ))}
-        </tbody>
-      </TableWrap>
-    </SectionCard>
-  </motion.div>
-);
-
-const StaffDirectoryView = () => {
-  const [search, setSearch] = React.useState("");
-  const [deptFilter, setDeptFilter] = React.useState("All");
-  const [statusFilter, setStatusFilter] = React.useState("All");
-
-  const departments = useMemo(
-    () => ["All", ...Array.from(new Set(staffDirectory.map((s) => s.dept))).sort()],
-    []
+    </div>
   );
+}
 
-  const filtered = useMemo(
-    () =>
-      staffDirectory.filter(
-        (s) =>
-          (deptFilter === "All" || s.dept === deptFilter) &&
-          (statusFilter === "All" || s.status === statusFilter) &&
-          s.name.toLowerCase().includes(search.toLowerCase())
-      ),
-    [search, deptFilter, statusFilter]
-  );
+function EmployeeDirectory() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isAddEmployeeModalOpen, setIsAddEmployeeModalOpen] = useState(false);
+
+  const employees = [
+    { id: "EMP001", name: "Alice Johnson", role: "Front Desk Manager", dept: "Front Desk", status: "Active", email: "alice.j@hotel.com" },
+    { id: "EMP002", name: "Bob Smith", role: "Head Chef", dept: "Food & Beverage", status: "Active", email: "bob.s@hotel.com" },
+    { id: "EMP003", name: "Charlie Davis", role: "Maintenance Lead", dept: "Engineering", status: "On Leave", email: "charlie.d@hotel.com" },
+    { id: "EMP004", name: "Diana Prince", role: "HR Specialist", dept: "Human Resources", status: "Active", email: "diana.p@hotel.com" },
+    { id: "EMP005", name: "Edward Norton", role: "Housekeeping Supervisor", dept: "Housekeeping", status: "Active", email: "edward.n@hotel.com" },
+  ];
+
+  const filteredEmployees = employees.filter(emp => {
+    const query = searchQuery.toLowerCase();
+    return emp.name.toLowerCase().includes(query) || 
+           emp.role.toLowerCase().includes(query) || 
+           emp.dept.toLowerCase().includes(query);
+  });
 
   return (
-    <motion.div
-      key="directory"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      className="space-y-4"
-    >
-      <FilterBar>
-        <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2 text-sm">
-          <Users className="h-4 w-4 text-muted-foreground" />
-          <input
-            className="w-44 bg-transparent outline-none placeholder:text-muted-foreground"
-            placeholder="Search by name…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+    <div className="space-y-4 animate-in fade-in duration-500">
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="relative w-full sm:w-96">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input 
+            type="text" 
+            placeholder="Search employees by name, role, or dept..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
-        <SelectFilter
-          value={deptFilter}
-          onChange={setDeptFilter}
-          options={departments}
-        />
-        <SelectFilter
-          value={statusFilter}
-          onChange={setStatusFilter}
-          options={["All", "Active", "On Leave", "Probation"]}
-        />
-        <span className="ml-auto text-xs text-muted-foreground">
-          {filtered.length} employee{filtered.length !== 1 ? "s" : ""}
-        </span>
-      </FilterBar>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-card border border-border rounded-xl hover:bg-secondary transition-colors text-sm font-medium">
+            <Filter className="w-4 h-4" />
+            Filter
+          </button>
+          <button 
+            onClick={() => setIsAddEmployeeModalOpen(true)}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors text-sm font-medium shadow-sm">
+            <UserPlus className="w-4 h-4" />
+            Add Employee
+          </button>
+        </div>
+      </div>
 
-      <SectionCard>
-        <TableWrap>
-          <thead>
-            <tr>
-              <Th>ID</Th>
-              <Th>Employee</Th>
-              <Th>Department</Th>
-              <Th>Role</Th>
-              <Th>Email</Th>
-              <Th>Phone</Th>
-              <Th>Contract</Th>
-              <Th>Join Date</Th>
-              <Th>Status</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((emp, i) => (
-              <tr key={i} className="hover:bg-muted/40 transition-colors">
-                <Td className="font-mono text-xs text-muted-foreground">{emp.id}</Td>
-                <Td>
-                  <div className="flex items-center gap-3">
-                    <Avatar name={emp.name} />
-                    <span className="font-medium whitespace-nowrap">{emp.name}</span>
-                  </div>
-                </Td>
-                <Td className="text-muted-foreground">{emp.dept}</Td>
-                <Td>{emp.role}</Td>
-                <Td className="text-xs text-muted-foreground">{emp.email}</Td>
-                <Td className="whitespace-nowrap text-xs text-muted-foreground">{emp.phone}</Td>
-                <Td>
-                  <Badge label={emp.contract} />
-                </Td>
-                <Td className="font-mono text-xs text-muted-foreground">{emp.joinDate}</Td>
-                <Td>
-                  <Badge label={emp.status} />
-                </Td>
+      <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+              <tr className="bg-secondary/50 border-b border-border">
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Employee</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Role & Dept</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Contact</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground"></th>
               </tr>
-            ))}
-          </tbody>
-        </TableWrap>
-      </SectionCard>
-    </motion.div>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {filteredEmployees.length > 0 ? (
+                filteredEmployees.map((emp) => (
+                  <tr key={emp.id} className="hover:bg-secondary/30 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                          {emp.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">{emp.name}</p>
+                          <p className="text-xs text-muted-foreground">{emp.id}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm text-foreground">{emp.role}</p>
+                      <p className="text-xs text-muted-foreground">{emp.dept}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={cn(
+                        "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                        emp.status === "Active" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400" : "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400"
+                      )}>
+                        {emp.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">
+                      {emp.email}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="p-2 hover:bg-secondary rounded-lg transition-colors text-muted-foreground">
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
+                    No employees found matching "{searchQuery}"
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {isAddEmployeeModalOpen && (
+          <AddEmployeeModal onClose={() => setIsAddEmployeeModalOpen(false)} />
+        )}
+      </AnimatePresence>
+    </div>
   );
-};
+}
 
-const AttendanceView = () => {
-  const [dateFilter, setDateFilter] = React.useState("All");
-  const [deptFilter, setDeptFilter] = React.useState("All");
-  const [statusFilter, setStatusFilter] = React.useState("All");
-
-  const dates = useMemo(
-    () => ["All", ...Array.from(new Set(attendanceRecords.map((r) => r.date))).sort().reverse()],
-    []
-  );
-  const depts = useMemo(
-    () => ["All", ...Array.from(new Set(attendanceRecords.map((r) => r.dept))).sort()],
-    []
-  );
-
-  const filtered = useMemo(
-    () =>
-      attendanceRecords.filter(
-        (r) =>
-          (dateFilter === "All" || r.date === dateFilter) &&
-          (deptFilter === "All" || r.dept === deptFilter) &&
-          (statusFilter === "All" || r.status === statusFilter)
-      ),
-    [dateFilter, deptFilter, statusFilter]
-  );
-
-  const todayStats = useMemo(() => {
-    const today = attendanceRecords.filter((r) => r.date === "2026-04-01");
-    return {
-      present: today.filter((r) => r.status === "Present").length,
-      late: today.filter((r) => r.status === "Late").length,
-      absent: today.filter((r) => r.status === "Absent").length,
-    };
-  }, []);
-
+function AddEmployeeModal({ onClose }: { onClose: () => void }) {
   return (
-    <motion.div
-      key="attendance"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      className="space-y-4"
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
     >
-      <FilterBar>
-        <SelectFilter value={dateFilter} onChange={setDateFilter} options={dates} />
-        <SelectFilter value={deptFilter} onChange={setDeptFilter} options={depts} />
-        <SelectFilter
-          value={statusFilter}
-          onChange={setStatusFilter}
-          options={["All", "Present", "Late", "Absent", "Half Day", "Holiday"]}
-        />
-        <span className="ml-auto text-xs text-muted-foreground">{filtered.length} records</span>
-      </FilterBar>
-
-      <SectionCard>
-        <TableWrap>
-          <thead>
-            <tr>
-              <Th>Date</Th>
-              <Th>Employee</Th>
-              <Th>Department</Th>
-              <Th>Clock In</Th>
-              <Th>Clock Out</Th>
-              <Th>Hours</Th>
-              <Th>Break</Th>
-              <Th>Overtime</Th>
-              <Th>Status</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((row, i) => (
-              <tr key={i} className="hover:bg-muted/40 transition-colors">
-                <Td className="font-mono text-xs text-muted-foreground">{row.date}</Td>
-                <Td>
-                  <div className="flex items-center gap-2">
-                    <Avatar name={row.employee} />
-                    <span className="whitespace-nowrap font-medium">{row.employee}</span>
-                  </div>
-                </Td>
-                <Td className="text-muted-foreground">{row.dept}</Td>
-                <Td className="font-mono text-xs">{row.clockIn}</Td>
-                <Td className="font-mono text-xs">{row.clockOut}</Td>
-                <Td className="font-mono text-xs">
-                  {row.hoursWorked > 0 ? `${row.hoursWorked.toFixed(2)}h` : "—"}
-                </Td>
-                <Td className="font-mono text-xs">
-                  {row.breakDuration > 0 ? `${row.breakDuration}h` : "—"}
-                </Td>
-                <Td className="font-mono text-xs">
-                  {row.overtime > 0 ? (
-                    <span className="text-indigo-600">+{row.overtime}h</span>
-                  ) : (
-                    "—"
-                  )}
-                </Td>
-                <Td>
-                  <Badge label={row.status} />
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </TableWrap>
-      </SectionCard>
-    </motion.div>
-  );
-};
-
-const ShiftSchedulingView = () => {
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-  const shiftCounts = useMemo(
-    () =>
-      days.map((_, di) =>
-        shiftStaff.filter((s) => {
-          const code = weeklyRoster[s.name]?.[di];
-          return code !== "O" && code !== "L" && code !== undefined;
-        }).length
-      ),
-    []
-  );
-
-  return (
-    <motion.div
-      key="shifts"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      className="space-y-4"
-    >
-      <SectionCard className="overflow-x-auto">
-        <div className="min-w-[680px]">
-          <div className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border">
-            <div className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Staff Member
-            </div>
-            {days.map((d) => (
-              <div
-                key={d}
-                className="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-              >
-                {d}
-              </div>
-            ))}
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose}></div>
+      <motion.div 
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="bg-card w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-xl border border-border overflow-hidden flex flex-col relative z-10"
+      >
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-secondary/30 sticky top-0 z-20">
+          <div>
+            <h3 className="text-lg font-bold text-foreground">Add New Employee</h3>
+            <p className="text-sm text-muted-foreground">Enter comprehensive employee details.</p>
           </div>
-
-          {shiftStaff.map((staff, si) => (
-            <div
-              key={si}
-              className="grid grid-cols-[200px_repeat(7,1fr)] border-b border-border/50 hover:bg-muted/30 transition-colors"
-            >
-              <div className="flex items-center gap-2 px-4 py-2">
-                <Avatar name={staff.name} size="sm" />
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-medium text-foreground">{staff.name}</p>
-                  <p className="text-[10px] text-muted-foreground">{staff.dept}</p>
+          <button onClick={onClose} className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="p-6 overflow-y-auto custom-scrollbar">
+          <form className="space-y-8">
+            {/* Personal Information */}
+            <div>
+              <h4 className="text-sm font-bold text-primary uppercase tracking-wider mb-4 border-b border-border pb-2">Personal Information</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">First Name <span className="text-red-500">*</span></label>
+                  <input type="text" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="e.g. John" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Middle Name</label>
+                  <input type="text" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="e.g. Robert" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Last Name <span className="text-red-500">*</span></label>
+                  <input type="text" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="e.g. Doe" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Date of Birth <span className="text-red-500">*</span></label>
+                  <input type="date" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Gender</label>
+                  <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Non-Binary</option>
+                    <option>Prefer not to say</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Nationality</label>
+                  <input type="text" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="e.g. American" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Marital Status</label>
+                  <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Blood Group</label>
+                  <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                    <option>A+</option><option>A-</option>
+                    <option>B+</option><option>B-</option>
+                    <option>AB+</option><option>AB-</option>
+                    <option>O+</option><option>O-</option>
+                  </select>
                 </div>
               </div>
-              {days.map((_, di) => (
-                <div key={di} className="px-1.5 py-2">
-                  <ShiftCell code={weeklyRoster[staff.name]?.[di] ?? "O"} />
+            </div>
+
+            {/* Contact Information */}
+            <div>
+              <h4 className="text-sm font-bold text-primary uppercase tracking-wider mb-4 border-b border-border pb-2">Contact Information</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Personal Email <span className="text-red-500">*</span></label>
+                  <input type="email" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="john.doe@example.com" />
                 </div>
-              ))}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Phone Number <span className="text-red-500">*</span></label>
+                  <input type="tel" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="+1 (555) 000-0000" />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-medium">Current Address</label>
+                  <textarea className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-[80px]" placeholder="Full street address..."></textarea>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">City</label>
+                  <input type="text" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="City" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">State/Province</label>
+                  <input type="text" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="State" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Postal Code</label>
+                  <input type="text" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="Zip/Postal Code" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Country</label>
+                  <input type="text" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="Country" />
+                </div>
+              </div>
+            </div>
+
+            {/* Employment Details */}
+            <div>
+              <h4 className="text-sm font-bold text-primary uppercase tracking-wider mb-4 border-b border-border pb-2">Employment Details</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Employee ID</label>
+                  <input type="text" className="w-full px-4 py-2 bg-secondary/50 border border-border rounded-xl focus:outline-none" value="EMP-AUTO-GEN" disabled />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Department <span className="text-red-500">*</span></label>
+                  <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                    <option>Front Desk</option>
+                    <option>Housekeeping</option>
+                    <option>Food & Beverage</option>
+                    <option>Engineering</option>
+                    <option>Human Resources</option>
+                    <option>Sales & Revenue</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Designation/Role <span className="text-red-500">*</span></label>
+                  <input type="text" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="e.g. Front Desk Agent" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Employment Type</label>
+                  <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                    <option>Full-Time</option>
+                    <option>Part-Time</option>
+                    <option>Contract</option>
+                    <option>Internship</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Date of Joining <span className="text-red-500">*</span></label>
+                  <input type="date" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Reporting Manager</label>
+                  <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                    <option>Select Manager...</option>
+                    <option>Alice Johnson</option>
+                    <option>Bob Smith</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Work Location</label>
+                  <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                    <option>Main Property</option>
+                    <option>Annex Building</option>
+                    <option>Remote</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Shift Type</label>
+                  <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                    <option>Morning (07:00 - 15:00)</option>
+                    <option>Evening (15:00 - 23:00)</option>
+                    <option>Night (23:00 - 07:00)</option>
+                    <option>General (09:00 - 17:00)</option>
+                    <option>Rotating</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Payroll & Compensation */}
+            <div>
+              <h4 className="text-sm font-bold text-primary uppercase tracking-wider mb-4 border-b border-border pb-2">Payroll & Compensation</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Base Salary (Annual) <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <DollarSign className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <input type="number" className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="0.00" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Currency</label>
+                  <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                    <option>USD ($)</option>
+                    <option>EUR (€)</option>
+                    <option>GBP (£)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Pay Frequency</label>
+                  <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                    <option>Monthly</option>
+                    <option>Bi-Weekly</option>
+                    <option>Weekly</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Bank Name</label>
+                  <input type="text" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="Bank Name" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Account Number</label>
+                  <input type="text" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="Account Number" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Routing/Sort Code</label>
+                  <input type="text" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="Routing Code" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Tax ID / SSN</label>
+                  <input type="password" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="***-**-****" />
+                </div>
+              </div>
+            </div>
+
+            {/* Emergency Contact */}
+            <div>
+              <h4 className="text-sm font-bold text-primary uppercase tracking-wider mb-4 border-b border-border pb-2">Emergency Contact</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Contact Name <span className="text-red-500">*</span></label>
+                  <input type="text" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="Emergency Contact Name" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Relationship <span className="text-red-500">*</span></label>
+                  <input type="text" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="e.g. Spouse, Parent" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Phone Number <span className="text-red-500">*</span></label>
+                  <input type="tel" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="+1 (555) 000-0000" />
+                </div>
+              </div>
+            </div>
+            
+            {/* System Access */}
+            <div>
+              <h4 className="text-sm font-bold text-primary uppercase tracking-wider mb-4 border-b border-border pb-2">System Access & Permissions</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">System Role</label>
+                  <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                    <option>Standard User</option>
+                    <option>Manager</option>
+                    <option>Department Head</option>
+                    <option>Admin</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Work Email (Auto-provisioned)</label>
+                  <input type="email" className="w-full px-4 py-2 bg-secondary/50 border border-border rounded-xl focus:outline-none" placeholder="john.doe@omnistay.com" disabled />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" className="w-4 h-4 rounded border-border text-primary focus:ring-primary" defaultChecked />
+                    <span className="text-sm font-medium">Send welcome email with login credentials</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+          </form>
+        </div>
+
+        <div className="px-6 py-4 border-t border-border bg-secondary/30 flex items-center justify-end gap-3 sticky bottom-0 z-20">
+          <button onClick={onClose} className="px-4 py-2 bg-card border border-border text-foreground rounded-xl text-sm font-medium hover:bg-secondary transition-colors">
+            Cancel
+          </button>
+          <button className="px-6 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4" />
+            Save Employee Record
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function LeaveManagement() {
+  const leaveRequests = [
+    { id: "LR001", name: "John Doe", type: "Annual Leave", duration: "3 Days", dates: "Apr 10 - Apr 12", status: "Pending" },
+    { id: "LR002", name: "Jane Smith", type: "Sick Leave", duration: "1 Day", dates: "Apr 05", status: "Approved" },
+    { id: "LR003", name: "Mike Ross", type: "Personal Leave", duration: "2 Days", dates: "Apr 15 - Apr 16", status: "Rejected" },
+  ];
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <KPICard 
+          label="Available Balance" 
+          value="18 Days" 
+          change="12 days used this year" 
+          icon={Calendar} 
+          color="blue" 
+        />
+        <KPICard 
+          label="Pending Requests" 
+          value="5" 
+          change="Requires your attention" 
+          icon={AlertCircle} 
+          color="amber" 
+        />
+        <KPICard 
+          label="Upcoming Holidays" 
+          value="3" 
+          change="Next: Easter Monday" 
+          icon={Calendar} 
+          color="emerald" 
+        />
+      </div>
+
+      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+          <h3 className="font-semibold">Recent Leave Requests</h3>
+          <button className="text-sm text-primary font-medium hover:underline">View All</button>
+        </div>
+        <div className="divide-y divide-border">
+          {leaveRequests.map((req) => (
+            <div key={req.id} className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="font-medium">{req.name}</p>
+                  <p className="text-xs text-muted-foreground">{req.type} • {req.duration}</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between sm:justify-end gap-6">
+                <div className="text-right hidden sm:block">
+                  <p className="text-sm font-medium">{req.dates}</p>
+                  <p className="text-xs text-muted-foreground">Request ID: {req.id}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={cn(
+                    "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                    req.status === "Approved" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400" :
+                    req.status === "Pending" ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400" :
+                    "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400"
+                  )}>
+                    {req.status}
+                  </span>
+                  <button className="p-1 hover:bg-secondary rounded-md transition-colors">
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+              </div>
             </div>
           ))}
-
-          <div className="grid grid-cols-[200px_repeat(7,1fr)] bg-muted/30">
-            <div className="px-4 py-3 text-xs font-semibold text-muted-foreground">
-              Active Staff
-            </div>
-            {shiftCounts.map((count, di) => (
-              <div key={di} className="flex items-center justify-center py-3">
-                <span
-                  className={cn(
-                    "rounded-full px-2 py-0.5 text-xs font-bold",
-                    count < 8
-                      ? "bg-red-100 text-red-700"
-                      : "bg-emerald-100 text-emerald-700"
-                  )}
-                >
-                  {count}
-                </span>
-              </div>
-            ))}
-          </div>
         </div>
-      </SectionCard>
+      </div>
+    </div>
+  );
+}
 
-      {shiftCounts.some((c) => c < 8) && (
-        <SectionCard className="border-amber-300 bg-amber-50 p-4">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-            <div>
-              <p className="text-sm font-semibold text-amber-800">
-                Understaffing Alert
-              </p>
-              <p className="mt-0.5 text-xs text-amber-700">
-                {days.filter((_, di) => shiftCounts[di] < 8).join(", ")} have fewer than 8 active
-                staff members scheduled. Consider reassigning or calling in additional personnel.
-              </p>
+function LearningDevelopment() {
+  const courses = [
+    { title: "Guest Service Excellence", category: "Soft Skills", progress: 100, status: "Completed", instructor: "Sarah Miller" },
+    { title: "Advanced POS Systems", category: "Technical", progress: 45, status: "In Progress", instructor: "Tech Team" },
+    { title: "Safety & Hygiene Standards", category: "Compliance", progress: 0, status: "Not Started", instructor: "Health Dept" },
+  ];
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Training Programs</h3>
+        <button className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors">
+          Browse Catalog
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {courses.map((course, i) => (
+          <div key={i} className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <span className="px-2 py-1 bg-secondary rounded-lg text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                {course.category}
+              </span>
+              <div className={cn(
+                "w-2 h-2 rounded-full",
+                course.status === "Completed" ? "bg-emerald-500" : 
+                course.status === "In Progress" ? "bg-amber-500" : "bg-muted"
+              )} />
+            </div>
+            <h4 className="font-bold text-lg mb-1">{course.title}</h4>
+            <p className="text-sm text-muted-foreground mb-6">Instructor: {course.instructor}</p>
+            
+            <div className="mt-auto space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Progress</span>
+                <span className="font-bold">{course.progress}%</span>
+              </div>
+              <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                <div 
+                  className={cn(
+                    "h-full transition-all duration-1000",
+                    course.status === "Completed" ? "bg-emerald-500" : "bg-primary"
+                  )} 
+                  style={{ width: `${course.progress}%` }} 
+                />
+              </div>
+              <button className="w-full mt-4 py-2 bg-secondary hover:bg-secondary/80 rounded-xl text-sm font-medium transition-colors">
+                {course.status === "Completed" ? "Review Content" : "Continue Learning"}
+              </button>
             </div>
           </div>
-        </SectionCard>
-      )}
-    </motion.div>
-  );
-};
-
-const PayrollView = () => {
-  const [month, setMonth] = React.useState("March 2026");
-
-  const processedRows = useMemo(
-    () =>
-      payrollRecords.map((r) => ({
-        ...r,
-        netPay: r.basic + r.serviceCharge + r.overtime + r.transport - r.tax - r.social,
-      })),
-    []
-  );
-
-  const totalPayroll = useMemo(
-    () => processedRows.reduce((s, r) => s + r.netPay, 0),
-    [processedRows]
-  );
-  const totalPaid = useMemo(
-    () =>
-      processedRows
-        .filter((r) => r.status === "Processed")
-        .reduce((s, r) => s + r.netPay, 0),
-    [processedRows]
-  );
-  const totalPending = useMemo(
-    () =>
-      processedRows
-        .filter((r) => r.status === "Pending")
-        .reduce((s, r) => s + r.netPay, 0),
-    [processedRows]
-  );
-
-  const fmt = (v: number) =>
-    "₱" + v.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-  return (
-    <motion.div
-      key="payroll"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      className="space-y-4"
-    >
-      <div className="flex flex-wrap items-center gap-3">
-        <label className="text-sm text-muted-foreground">Pay Period:</label>
-        <SelectFilter
-          value={month}
-          onChange={setMonth}
-          options={["January 2026", "February 2026", "March 2026", "April 2026"]}
-        />
-      </div>
-
-      <SectionCard>
-        <TableWrap>
-          <thead>
-            <tr>
-              <Th>Employee</Th>
-              <Th>Department</Th>
-              <Th className="text-right">Basic</Th>
-              <Th className="text-right">Svc Chg</Th>
-              <Th className="text-right">Overtime</Th>
-              <Th className="text-right">Transport</Th>
-              <Th className="text-right">Deductions</Th>
-              <Th className="text-right">Net Pay</Th>
-              <Th>Status</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {processedRows.map((row, i) => (
-              <tr key={i} className="hover:bg-muted/40 transition-colors">
-                <Td>
-                  <div className="flex items-center gap-2">
-                    <Avatar name={row.employee} />
-                    <span className="whitespace-nowrap font-medium">{row.employee}</span>
-                  </div>
-                </Td>
-                <Td className="text-muted-foreground">{row.dept}</Td>
-                <Td className="text-right font-mono text-xs">{fmt(row.basic)}</Td>
-                <Td className="text-right font-mono text-xs">{fmt(row.serviceCharge)}</Td>
-                <Td className="text-right font-mono text-xs">
-                  {row.overtime > 0 ? (
-                    <span className="text-indigo-600">
-                      {fmt(row.overtime)}
-                    </span>
-                  ) : (
-                    "—"
-                  )}
-                </Td>
-                <Td className="text-right font-mono text-xs">{fmt(row.transport)}</Td>
-                <Td className="text-right font-mono text-xs text-red-600">
-                  ({fmt(row.tax + row.social)})
-                </Td>
-                <Td className="text-right font-mono text-xs font-semibold">{fmt(row.netPay)}</Td>
-                <Td>
-                  <Badge label={row.status} />
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </TableWrap>
-      </SectionCard>
-    </motion.div>
-  );
-};
-
-const LeaveManagementView = () => {
-  const [statusFilter, setStatusFilter] = React.useState("All");
-  const [typeFilter, setTypeFilter] = React.useState("All");
-
-  const filtered = useMemo(
-    () =>
-      leaveRequests.filter(
-        (r) =>
-          (statusFilter === "All" || r.status === statusFilter) &&
-          (typeFilter === "All" || r.type === typeFilter)
-      ),
-    [statusFilter, typeFilter]
-  );
-
-  const pendingCount = leaveRequests.filter((r) => r.status === "Pending").length;
-  const annualLeaves = leaveRequests.filter((r) => r.type === "Annual");
-  const annualAvgDays = Math.round(
-    annualLeaves.reduce((s, r) => s + r.days, 0) / (annualLeaves.length || 1)
-  );
-  const approvedCount = leaveRequests.filter((r) => r.status === "Approved").length;
-  const totalDaysTaken = leaveRequests
-    .filter((r) => r.status === "Approved")
-    .reduce((s, r) => s + r.days, 0);
-
-  return (
-    <motion.div
-      key="leave"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      className="space-y-4"
-    >
-      <FilterBar>
-        <SelectFilter
-          value={statusFilter}
-          onChange={setStatusFilter}
-          options={["All", "Pending", "Approved", "Rejected"]}
-        />
-        <SelectFilter
-          value={typeFilter}
-          onChange={setTypeFilter}
-          options={["All", "Annual", "Sick", "Emergency", "Maternity", "Unpaid"]}
-        />
-        <span className="ml-auto text-xs text-muted-foreground">{filtered.length} requests</span>
-      </FilterBar>
-
-      <SectionCard>
-        <TableWrap>
-          <thead>
-            <tr>
-              <Th>Request ID</Th>
-              <Th>Employee</Th>
-              <Th>Department</Th>
-              <Th>Type</Th>
-              <Th>From</Th>
-              <Th>To</Th>
-              <Th>Days</Th>
-              <Th>Reason</Th>
-              <Th>Approved By</Th>
-              <Th>Status</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((row, i) => (
-              <tr key={i} className="hover:bg-muted/40 transition-colors">
-                <Td className="font-mono text-xs text-muted-foreground">{row.id}</Td>
-                <Td>
-                  <div className="flex items-center gap-2">
-                    <Avatar name={row.employee} />
-                    <span className="whitespace-nowrap font-medium">{row.employee}</span>
-                  </div>
-                </Td>
-                <Td className="text-muted-foreground">{row.dept}</Td>
-                <Td>
-                  <Badge label={row.type} />
-                </Td>
-                <Td className="font-mono text-xs">{row.from}</Td>
-                <Td className="font-mono text-xs">{row.to}</Td>
-                <Td className="font-mono text-xs font-semibold">{row.days}d</Td>
-                <Td className="max-w-[160px] truncate text-xs text-muted-foreground">
-                  {row.reason}
-                </Td>
-                <Td className="text-xs text-muted-foreground">{row.approvedBy}</Td>
-                <Td>
-                  <Badge label={row.status} />
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </TableWrap>
-      </SectionCard>
-    </motion.div>
-  );
-};
-
-const TrainingView = () => {
-  const [statusFilter, setStatusFilter] = React.useState("All");
-  const [categoryFilter, setCategoryFilter] = React.useState("All");
-
-  const filtered = useMemo(
-    () =>
-      trainingRecords.filter(
-        (r) =>
-          (statusFilter === "All" || r.status === statusFilter) &&
-          (categoryFilter === "All" || r.category === categoryFilter)
-      ),
-    [statusFilter, categoryFilter]
-  );
-
-  const complianceRate = Math.round(
-    (trainingRecords.filter((r) => r.status === "Valid").length / trainingRecords.length) * 100
-  );
-  const expiredCount = trainingRecords.filter((r) => r.status === "Expired").length;
-  const dueSoonCount = trainingRecords.filter((r) => r.status === "Due Soon").length;
-  const notCompletedCount = trainingRecords.filter((r) => r.status === "Not Completed").length;
-
-  return (
-    <motion.div
-      key="training"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      className="space-y-4"
-    >
-      <FilterBar>
-        <SelectFilter
-          value={statusFilter}
-          onChange={setStatusFilter}
-          options={["All", "Valid", "Expired", "Due Soon", "Not Completed"]}
-        />
-        <SelectFilter
-          value={categoryFilter}
-          onChange={setCategoryFilter}
-          options={["All", "Mandatory", "Skills", "Compliance", "Leadership"]}
-        />
-        <span className="ml-auto text-xs text-muted-foreground">{filtered.length} records</span>
-      </FilterBar>
-
-      <SectionCard>
-        <TableWrap>
-          <thead>
-            <tr>
-              <Th>Employee</Th>
-              <Th>Course</Th>
-              <Th>Category</Th>
-              <Th>Provider</Th>
-              <Th>Completed</Th>
-              <Th>Expiry</Th>
-              <Th>Score</Th>
-              <Th>Cert #</Th>
-              <Th>Status</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((row, i) => (
-              <tr key={i} className="hover:bg-muted/40 transition-colors">
-                <Td>
-                  <div className="flex items-center gap-2">
-                    <Avatar name={row.employee} />
-                    <span className="whitespace-nowrap font-medium">{row.employee}</span>
-                  </div>
-                </Td>
-                <Td className="max-w-[200px]">
-                  <span className="text-sm">{row.course}</span>
-                </Td>
-                <Td>
-                  <Badge label={row.category} />
-                </Td>
-                <Td className="text-xs text-muted-foreground">{row.provider}</Td>
-                <Td className="font-mono text-xs">{row.completed}</Td>
-                <Td className="font-mono text-xs">{row.expiry}</Td>
-                <Td className="font-mono text-xs">
-                  {row.score > 0 ? (
-                    <span
-                      className={cn(
-                        "font-semibold",
-                        row.score >= 90
-                          ? "text-emerald-600"
-                          : row.score >= 75
-                          ? "text-foreground"
-                          : "text-amber-600"
-                      )}
-                    >
-                      {row.score}%
-                    </span>
-                  ) : (
-                    "—"
-                  )}
-                </Td>
-                <Td className="font-mono text-xs text-muted-foreground">{row.certNo}</Td>
-                <Td>
-                  <Badge label={row.status} />
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </TableWrap>
-      </SectionCard>
-    </motion.div>
-  );
-};
-
-const PerformanceView = () => {
-  const deptScores = useMemo(() => {
-    const completed = performanceReviews.filter((r) => r.status === "Completed");
-    const byDept: Record<string, number[]> = {};
-    completed.forEach((r) => {
-      if (!byDept[r.dept]) byDept[r.dept] = [];
-      byDept[r.dept].push(r.score);
-    });
-    return Object.entries(byDept).map(([dept, scores]) => ({
-      dept: dept.split(" ")[0],
-      avg: parseFloat(
-        (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2)
-      ),
-    }));
-  }, []);
-
-  return (
-    <motion.div
-      key="performance"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      className="space-y-4"
-    >
-      <SectionCard className="p-5">
-        <SectionHeader title="Average Performance Score by Department" className="mb-4" />
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={deptScores} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis dataKey="dept" tick={{ fontSize: 11 }} tickLine={false} />
-            <YAxis domain={[0, 5]} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-            <Tooltip
-              contentStyle={{
-                background: "var(--card)",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                fontSize: 12,
-              }}
-              formatter={(v: number) => [v.toFixed(2), "Avg Score"]}
-            />
-            <Bar dataKey="avg" fill="#6366f1" radius={[6, 6, 0, 0]} maxBarSize={48} />
-          </BarChart>
-        </ResponsiveContainer>
-      </SectionCard>
-
-      <SectionCard>
-        <TableWrap>
-          <thead>
-            <tr>
-              <Th>Employee</Th>
-              <Th>Department</Th>
-              <Th>Period</Th>
-              <Th>Reviewer</Th>
-              <Th>Score</Th>
-              <Th>KPIs Met</Th>
-              <Th>Development Goal</Th>
-              <Th>Date</Th>
-              <Th>Status</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {performanceReviews.map((row, i) => (
-              <tr key={i} className="hover:bg-muted/40 transition-colors">
-                <Td>
-                  <div className="flex items-center gap-2">
-                    <Avatar name={row.employee} />
-                    <span className="whitespace-nowrap font-medium">{row.employee}</span>
-                  </div>
-                </Td>
-                <Td className="text-muted-foreground">{row.dept}</Td>
-                <Td className="text-xs">{row.period}</Td>
-                <Td className="text-xs text-muted-foreground">{row.reviewer}</Td>
-                <Td>
-                  {row.status === "Completed" ? (
-                    <StarRating score={row.score} />
-                  ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                  )}
-                </Td>
-                <Td className="text-xs">
-                  {row.status === "Completed" ? (
-                    <span>
-                      <span className="font-semibold text-foreground">{row.kpisMet}</span>
-                      <span className="text-muted-foreground">/{row.kpisTotal}</span>
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">—/{row.kpisTotal}</span>
-                  )}
-                </Td>
-                <Td className="max-w-[180px] truncate text-xs text-muted-foreground">
-                  {row.goals}
-                </Td>
-                <Td className="font-mono text-xs text-muted-foreground">{row.date}</Td>
-                <Td>
-                  <Badge label={row.status} />
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </TableWrap>
-      </SectionCard>
-    </motion.div>
-  );
-};
-
-const DisciplinaryView = () => (
-  <motion.div
-    key="disciplinary"
-    initial={{ opacity: 0, y: 12 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -8 }}
-    className="space-y-6"
-  >
-    <div>
-      <div className="mb-3 flex items-center gap-2">
-        <Shield className="h-4 w-4 text-red-500" />
-        <SectionHeader title="Disciplinary Log" />
-        <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
-          {disciplinaryRecords.length} cases
-        </span>
-      </div>
-      <SectionCard>
-        <TableWrap>
-          <thead>
-            <tr>
-              <Th>Case ID</Th>
-              <Th>Employee</Th>
-              <Th>Incident Type</Th>
-              <Th>Date</Th>
-              <Th>Severity</Th>
-              <Th>HR Rep</Th>
-              <Th>Status</Th>
-              <Th>Resolution</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {disciplinaryRecords.map((row, i) => (
-              <tr key={i} className="hover:bg-muted/40 transition-colors">
-                <Td className="font-mono text-xs text-muted-foreground">{row.id}</Td>
-                <Td>
-                  <div className="flex items-center gap-2">
-                    <Avatar name={row.employee} />
-                    <span className="whitespace-nowrap font-medium">{row.employee}</span>
-                  </div>
-                </Td>
-                <Td className="text-xs">{row.incident}</Td>
-                <Td className="font-mono text-xs">{row.date}</Td>
-                <Td>
-                  <Badge label={row.severity} />
-                </Td>
-                <Td className="text-xs text-muted-foreground">{row.hrRep}</Td>
-                <Td>
-                  <Badge label={row.status} />
-                </Td>
-                <Td className="max-w-[200px] truncate text-xs text-muted-foreground">
-                  {row.resolution}
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </TableWrap>
-      </SectionCard>
-    </div>
-
-    <div>
-      <div className="mb-3 flex items-center gap-2">
-        <Heart className="h-4 w-4 text-violet-500" />
-        <SectionHeader title="Grievance Log" />
-        <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
-          {grievanceRecords.length} cases
-        </span>
-      </div>
-      <SectionCard>
-        <TableWrap>
-          <thead>
-            <tr>
-              <Th>Case ID</Th>
-              <Th>Employee</Th>
-              <Th>Issue Category</Th>
-              <Th>Filed Date</Th>
-              <Th>Status</Th>
-              <Th>Resolution Notes</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {grievanceRecords.map((row, i) => (
-              <tr key={i} className="hover:bg-muted/40 transition-colors">
-                <Td className="font-mono text-xs text-muted-foreground">{row.id}</Td>
-                <Td>
-                  <div className="flex items-center gap-2">
-                    <Avatar name={row.employee} />
-                    <span className="whitespace-nowrap font-medium">{row.employee}</span>
-                  </div>
-                </Td>
-                <Td className="text-sm">{row.category}</Td>
-                <Td className="font-mono text-xs">{row.filed}</Td>
-                <Td>
-                  <Badge label={row.status} />
-                </Td>
-                <Td className="max-w-[240px] truncate text-xs text-muted-foreground">
-                  {row.resolution}
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </TableWrap>
-      </SectionCard>
-    </div>
-  </motion.div>
-);
-
-// ─── Tab Configuration ───────────────────────────────────────────────────────
-
-const TABS = [
-  { key: "overview", label: "Overview", icon: Activity },
-  { key: "directory", label: "Staff Directory", icon: Users },
-  { key: "attendance", label: "Attendance", icon: Clock },
-  { key: "shifts", label: "Shift Scheduling", icon: Calendar },
-  { key: "payroll", label: "Payroll", icon: DollarSign },
-  { key: "leave", label: "Leave Mgmt", icon: Heart },
-  { key: "training", label: "Training & Certs", icon: BookOpen },
-  { key: "performance", label: "Performance", icon: Star },
-  { key: "disciplinary", label: "Disciplinary", icon: Shield },
-] as const;
-
-type TabKey = (typeof TABS)[number]["key"];
-
-const submenuKeyMap: Record<string, TabKey> = {
-  "Staff Directory": "directory",
-  Attendance: "attendance",
-  "Shift Scheduling": "shifts",
-  Payroll: "payroll",
-  "Leave Management": "leave",
-  Training: "training",
-  Performance: "performance",
-  Disciplinary: "disciplinary",
-};
-
-// ─── Main Component ──────────────────────────────────────────────────────────
-
-const HumanResources: React.FC<HumanResourcesProps> = ({ aiEnabled, activeSubmenu }) => {
-  const defaultTab = useMemo<TabKey>(() => {
-    if (activeSubmenu && submenuKeyMap[activeSubmenu]) {
-      return submenuKeyMap[activeSubmenu];
-    }
-    return "overview";
-  }, [activeSubmenu]);
-
-  const [activeTab, setActiveTab] = React.useState<TabKey>(defaultTab);
-  const [search, setSearch] = React.useState("");
-
-  React.useEffect(() => {
-    if (activeSubmenu && submenuKeyMap[activeSubmenu]) {
-      setActiveTab(submenuKeyMap[activeSubmenu]);
-    }
-  }, [activeSubmenu]);
-
-  const isShiftView = activeTab === "shifts";
-
-  return (
-    <PageShell
-      search={<SectionSearch value={search} onChange={setSearch} placeholder="Search staff, schedules..." />}
-      header={
-        <SectionHeader
-          title="Human Resources"
-          subtitle="Staff management, scheduling, payroll & compliance — Singularity Hotel Group"
-          icon={Users}
-          actions={aiEnabled ? (
-            <div className="flex items-center gap-2 rounded-2xl border border-indigo-300 bg-indigo-50 px-3 py-2">
-              <TrendingUp className="h-4 w-4 text-indigo-500" />
-              <span className="text-xs font-medium text-indigo-700">AI Insights Active</span>
-            </div>
-          ) : undefined}
-        />
-      }
-      kpi={<KpiStrip items={[{color:"bg-indigo-500",value:"114",label:"Total Staff"},{color:"bg-emerald-500",value:"78",label:"On Duty Now"},{color:"bg-amber-500",value:"9",label:"On Leave"},{color:"bg-rose-500",value:"6",label:"Open Positions"},{color:"bg-blue-500",value:"92%",label:"Attendance Rate"}]} />}
-      legend={isShiftView ? (
-        <LegendBar items={[
-          { color: "bg-indigo-100 border-indigo-200", label: "Morning" },
-          { color: "bg-amber-100 border-amber-200", label: "Afternoon" },
-          { color: "bg-slate-100 border-slate-200", label: "Night" },
-          { color: "bg-muted border-border", label: "Day Off" },
-          { color: "bg-rose-100 border-rose-200", label: "On Leave" },
-        ]} />
-      ) : undefined}
-    >
-      <div className="flex flex-wrap gap-1.5 rounded-2xl border border-border bg-card p-1.5 mb-4">
-        {TABS.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
-            className={cn(
-              "flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium transition-all",
-              activeTab === key
-                ? "bg-indigo-600 text-white shadow-sm"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            <Icon className="h-3.5 w-3.5" />
-            {label}
-          </button>
         ))}
       </div>
 
-      <AnimatePresence mode="wait">
-        {activeTab === "overview" && <OverviewView key="overview" />}
-        {activeTab === "directory" && <StaffDirectoryView key="directory" />}
-        {activeTab === "attendance" && <AttendanceView key="attendance" />}
-        {activeTab === "shifts" && <ShiftSchedulingView key="shifts" />}
-        {activeTab === "payroll" && <PayrollView key="payroll" />}
-        {activeTab === "leave" && <LeaveManagementView key="leave" />}
-        {activeTab === "training" && <TrainingView key="training" />}
-        {activeTab === "performance" && <PerformanceView key="performance" />}
-        {activeTab === "disciplinary" && <DisciplinaryView key="disciplinary" />}
-      </AnimatePresence>
-    </PageShell>
+      <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+        <h3 className="font-semibold mb-4">L&D Analytics</h3>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={[
+              { month: 'Jan', completed: 12, hours: 45 },
+              { month: 'Feb', completed: 18, hours: 62 },
+              { month: 'Mar', completed: 15, hours: 55 },
+              { month: 'Apr', completed: 25, hours: 88 },
+            ]}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: 'hsl(var(--muted-foreground))', fontSize: 12}} />
+              <YAxis axisLine={false} tickLine={false} tick={{fill: 'hsl(var(--muted-foreground))', fontSize: 12}} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px' }}
+              />
+              <Line type="monotone" dataKey="completed" stroke="#8b5cf6" strokeWidth={3} dot={{fill: '#8b5cf6', r: 4}} />
+              <Line type="monotone" dataKey="hours" stroke="#ec4899" strokeWidth={3} dot={{fill: '#ec4899', r: 4}} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
   );
-};
+}
 
-export default HumanResources;
-export { HumanResources };
+function Compliances() {
+  const checks = [
+    { title: "Health & Safety Certification", due: "In 12 days", status: "Critical", owner: "Safety Officer" },
+    { title: "Data Privacy Training (GDPR)", due: "Completed", status: "Compliant", owner: "IT Dept" },
+    { title: "Labor Law Postings", due: "In 45 days", status: "Warning", owner: "HR Manager" },
+    { title: "Fire Safety Audit", due: "In 5 days", status: "Critical", owner: "Engineering" },
+  ];
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-4">
+          <h3 className="text-lg font-semibold">Compliance Checklist</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {checks.map((check, i) => (
+              <div key={i} className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-start gap-4">
+                <div className={cn(
+                  "p-2 rounded-xl shrink-0",
+                  check.status === "Critical" ? "bg-red-100 text-red-600" :
+                  check.status === "Warning" ? "bg-amber-100 text-amber-600" :
+                  "bg-emerald-100 text-emerald-600"
+                )}>
+                  {check.status === "Compliant" ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-sm truncate">{check.title}</h4>
+                  <p className="text-xs text-muted-foreground mt-1">Due: {check.due}</p>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-[10px] font-medium text-muted-foreground">{check.owner}</span>
+                    <button className="text-[10px] font-bold text-primary hover:underline">Update</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col">
+          <h3 className="text-lg font-semibold mb-6">Compliance Score</h3>
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <div className="relative w-40 h-40">
+              <svg className="w-full h-full" viewBox="0 0 100 100">
+                <circle className="text-secondary stroke-current" strokeWidth="10" fill="transparent" r="40" cx="50" cy="50" />
+                <circle className="text-primary stroke-current" strokeWidth="10" strokeLinecap="round" fill="transparent" r="40" cx="50" cy="50" strokeDasharray="251.2" strokeDashoffset="62.8" />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-3xl font-bold">75%</span>
+                <span className="text-xs text-muted-foreground">Overall</span>
+              </div>
+            </div>
+            <div className="mt-8 w-full space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500" /> Compliant</span>
+                <span className="font-bold">12</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-500" /> Warning</span>
+                <span className="font-bold">3</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500" /> Critical</span>
+                <span className="font-bold">2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ExpenseManagement() {
+  const expenses = [
+    { id: "EXP-902", category: "Travel", amount: "$450.00", date: "Apr 02, 2026", status: "Pending", merchant: "Delta Airlines" },
+    { id: "EXP-899", category: "Meals", amount: "$32.50", date: "Mar 31, 2026", status: "Approved", merchant: "Starbucks" },
+    { id: "EXP-895", category: "Supplies", amount: "$128.90", date: "Mar 28, 2026", status: "Approved", merchant: "Office Depot" },
+  ];
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Expense Claims</h3>
+        <button className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors flex items-center gap-2">
+          <Receipt className="w-4 h-4" />
+          New Claim
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <KPICard 
+          label="Pending" 
+          value="$1,240.00" 
+          change="4 claims awaiting approval" 
+          icon={Clock4} 
+          color="blue" 
+        />
+        <KPICard 
+          label="Approved" 
+          value="$4,890.50" 
+          change="Paid this month" 
+          icon={CheckCircle2} 
+          color="emerald" 
+        />
+        <KPICard 
+          label="Budget Used" 
+          value="62%" 
+          change="Of monthly budget" 
+          icon={TrendingUp} 
+          color="purple" 
+        />
+      </div>
+
+      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+              <tr className="bg-secondary/50 border-b border-border">
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Claim ID</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Merchant & Category</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Amount</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Date</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {expenses.map((exp) => (
+                <tr key={exp.id} className="hover:bg-secondary/30 transition-colors">
+                  <td className="px-6 py-4 text-sm font-medium">{exp.id}</td>
+                  <td className="px-6 py-4">
+                    <p className="text-sm font-medium">{exp.merchant}</p>
+                    <p className="text-xs text-muted-foreground">{exp.category}</p>
+                  </td>
+                  <td className="px-6 py-4 text-sm font-bold">{exp.amount}</td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">{exp.date}</td>
+                  <td className="px-6 py-4">
+                    <span className={cn(
+                      "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                      exp.status === "Approved" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400" : "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400"
+                    )}>
+                      {exp.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button className="p-1 hover:bg-secondary rounded-lg transition-colors">
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HRReports() {
+  const reports = [
+    { title: "Monthly Payroll Summary", type: "Financial", lastGenerated: "Apr 01, 2026", format: "PDF" },
+    { title: "Employee Turnover Analysis", type: "Analytical", lastGenerated: "Mar 15, 2026", format: "Excel" },
+    { title: "Compliance Audit Log", type: "Legal", lastGenerated: "Mar 30, 2026", format: "PDF" },
+    { title: "Training ROI Report", type: "L&D", lastGenerated: "Feb 28, 2026", format: "Excel" },
+  ];
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">HR Reports & Analytics</h3>
+        <button className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors">
+          Generate New Report
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {reports.map((report, i) => (
+          <div key={i} className="bg-card p-6 rounded-2xl border border-border shadow-sm flex items-center justify-between group hover:border-primary/50 transition-all">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                <FileText className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm">{report.title}</h4>
+                <p className="text-xs text-muted-foreground mt-1">{report.type} • Last: {report.lastGenerated}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold px-2 py-1 bg-secondary rounded text-muted-foreground uppercase">{report.format}</span>
+              <button className="p-2 hover:bg-secondary rounded-lg transition-colors">
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+        <h3 className="font-semibold mb-6">Headcount Trend</h3>
+        <div className="h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={[
+              { month: 'Oct', count: 210 },
+              { month: 'Nov', count: 215 },
+              { month: 'Dec', count: 228 },
+              { month: 'Jan', count: 235 },
+              { month: 'Feb', count: 242 },
+              { month: 'Mar', count: 248 },
+            ]}>
+              <defs>
+                <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: 'hsl(var(--muted-foreground))', fontSize: 12}} />
+              <YAxis axisLine={false} tickLine={false} tick={{fill: 'hsl(var(--muted-foreground))', fontSize: 12}} domain={['dataMin - 10', 'dataMax + 10']} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px' }}
+              />
+              <Area type="monotone" dataKey="count" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorCount)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Attendance() {
+  const attendanceLogs = [
+    { name: "Alice Johnson", date: "Apr 03, 2026", checkIn: "08:45 AM", checkOut: "05:15 PM", status: "On Time" },
+    { name: "Bob Smith", date: "Apr 03, 2026", checkIn: "09:10 AM", checkOut: "06:00 PM", status: "Late" },
+    { name: "Diana Prince", date: "Apr 03, 2026", checkIn: "08:30 AM", checkOut: "04:30 PM", status: "On Time" },
+    { name: "Edward Norton", date: "Apr 03, 2026", checkIn: "08:55 AM", checkOut: "---", status: "In Office" },
+  ];
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <KPICard 
+          label="Present Today" 
+          value="232 / 248" 
+          change="93.5% Attendance rate" 
+          icon={UserCheck} 
+          color="emerald" 
+        />
+        <KPICard 
+          label="Late Arrivals" 
+          value="12" 
+          change="Average 15 mins delay" 
+          icon={Clock} 
+          color="amber" 
+        />
+        <KPICard 
+          label="On Leave" 
+          value="14" 
+          change="Approved absences" 
+          icon={Calendar} 
+          color="blue" 
+        />
+      </div>
+
+      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+          <h3 className="font-semibold">Daily Attendance Log</h3>
+          <div className="flex gap-2">
+            <button className="p-2 hover:bg-secondary rounded-lg transition-colors border border-border">
+              <Filter className="w-4 h-4 text-muted-foreground" />
+            </button>
+            <button className="px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-medium">Export CSV</button>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+              <tr className="bg-secondary/50 border-b border-border">
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Employee</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Check In</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Check Out</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {attendanceLogs.map((log, i) => (
+                <tr key={i} className="hover:bg-secondary/30 transition-colors">
+                  <td className="px-6 py-4 text-sm font-medium">{log.name}</td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">{log.checkIn}</td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">{log.checkOut}</td>
+                  <td className="px-6 py-4">
+                    <span className={cn(
+                      "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                      log.status === "On Time" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400" :
+                      log.status === "In Office" ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400" :
+                      "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400"
+                    )}>
+                      {log.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Payroll() {
+  const payrollHistory = [
+    { period: "March 2026", date: "Mar 31, 2026", amount: "$425,800.00", status: "Paid", employees: 248 },
+    { period: "February 2026", date: "Feb 28, 2026", amount: "$418,250.00", status: "Paid", employees: 242 },
+    { period: "January 2026", date: "Jan 31, 2026", amount: "$412,900.00", status: "Paid", employees: 235 },
+  ];
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-card p-6 rounded-2xl border border-border shadow-sm">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-lg font-semibold">Salary Distribution</h3>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">This Year</span>
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            </div>
+          </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={[
+                { dept: 'Front Desk', amount: 85000 },
+                { dept: 'F&B', amount: 120000 },
+                { dept: 'Housekeeping', amount: 95000 },
+                { dept: 'Admin', amount: 75000 },
+                { dept: 'Engineering', amount: 50000 },
+              ]}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                <XAxis dataKey="dept" axisLine={false} tickLine={false} tick={{fill: 'hsl(var(--muted-foreground))', fontSize: 12}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: 'hsl(var(--muted-foreground))', fontSize: 12}} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px' }}
+                />
+                <Bar dataKey="amount" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col">
+          <h3 className="text-lg font-semibold mb-6">Next Payday</h3>
+          <div className="flex-1 flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <Wallet className="w-8 h-8 text-primary" />
+            </div>
+            <p className="text-sm text-muted-foreground">April 30, 2026</p>
+            <h4 className="text-3xl font-bold mt-1">27 Days</h4>
+            <p className="text-xs text-muted-foreground mt-2">Estimated: $432,500.00</p>
+            <button className="w-full mt-8 py-3 bg-primary text-white rounded-xl font-medium shadow-sm hover:bg-primary/90 transition-colors">
+              Process Payroll
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <h3 className="font-semibold">Payroll History</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+              <tr className="bg-secondary/50 border-b border-border">
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Period</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Employees</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Amount</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {payrollHistory.map((pay, i) => (
+                <tr key={i} className="hover:bg-secondary/30 transition-colors">
+                  <td className="px-6 py-4">
+                    <p className="text-sm font-medium">{pay.period}</p>
+                    <p className="text-xs text-muted-foreground">Paid on {pay.date}</p>
+                  </td>
+                  <td className="px-6 py-4 text-sm">{pay.employees}</td>
+                  <td className="px-6 py-4 text-sm font-bold">{pay.amount}</td>
+                  <td className="px-6 py-4">
+                    <span className="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                      {pay.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button className="p-2 hover:bg-secondary rounded-lg transition-colors">
+                      <FileText className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Recruiting() {
+  const [isPostJobModalOpen, setIsPostJobModalOpen] = useState(false);
+
+  const jobs = [
+    { title: "Front Desk Associate", dept: "Front Desk", type: "Full-time", applicants: 24, status: "Active" },
+    { title: "Sous Chef", dept: "Food & Beverage", type: "Full-time", applicants: 12, status: "Active" },
+    { title: "Housekeeping Supervisor", dept: "Housekeeping", type: "Full-time", applicants: 8, status: "Paused" },
+    { title: "Marketing Intern", dept: "Marketing", type: "Internship", applicants: 45, status: "Active" },
+  ];
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Active Job Openings</h3>
+        <button 
+          onClick={() => setIsPostJobModalOpen(true)}
+          className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors flex items-center gap-2">
+          <Briefcase className="w-4 h-4" />
+          Post New Job
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <KPICard 
+          label="Total Applicants" 
+          value="156" 
+          icon={Users} 
+          color="blue" 
+        />
+        <KPICard 
+          label="Interviews Today" 
+          value="8" 
+          icon={Calendar} 
+          color="purple" 
+        />
+        <KPICard 
+          label="Hired this Month" 
+          value="12" 
+          icon={UserCheck} 
+          color="emerald" 
+        />
+        <KPICard 
+          label="Avg. Time to Hire" 
+          value="18d" 
+          icon={Clock} 
+          color="amber" 
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-border">
+            <h3 className="font-semibold">Job Pipeline</h3>
+          </div>
+          <div className="divide-y divide-border">
+            {jobs.map((job, i) => (
+              <div key={i} className="px-6 py-4 flex items-center justify-between hover:bg-secondary/30 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                    <UserSearch className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm">{job.title}</p>
+                    <p className="text-xs text-muted-foreground">{job.dept} • {job.type}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6">
+                  <div className="text-right">
+                    <p className="text-sm font-bold">{job.applicants}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold">Applicants</p>
+                  </div>
+                  <span className={cn(
+                    "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                    job.status === "Active" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400" : "bg-secondary text-muted-foreground"
+                  )}>
+                    {job.status}
+                  </span>
+                  <button className="p-1 hover:bg-secondary rounded-lg transition-colors">
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+          <h3 className="text-lg font-semibold mb-6">Candidate Sources</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: 'LinkedIn', value: 45 },
+                    { name: 'Referral', value: 30 },
+                    { name: 'Website', value: 15 },
+                    { name: 'Agency', value: 10 },
+                  ]}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {COLORS.map((color, index) => (
+                    <Cell key={`cell-${index}`} fill={color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend verticalAlign="bottom" height={36}/>
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {isPostJobModalOpen && (
+          <PostJobModal onClose={() => setIsPostJobModalOpen(false)} />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function PostJobModal({ onClose }: { onClose: () => void }) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+    >
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose}></div>
+      <motion.div 
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="bg-card w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-xl border border-border overflow-hidden flex flex-col relative z-10"
+      >
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-secondary/30 sticky top-0 z-20">
+          <div>
+            <h3 className="text-lg font-bold text-foreground">Post New Job</h3>
+            <p className="text-sm text-muted-foreground">Create a comprehensive job posting.</p>
+          </div>
+          <button onClick={onClose} className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="p-6 overflow-y-auto custom-scrollbar">
+          <form className="space-y-8">
+            {/* Basic Information */}
+            <div>
+              <h4 className="text-sm font-bold text-primary uppercase tracking-wider mb-4 border-b border-border pb-2">Basic Information</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Job Title <span className="text-red-500">*</span></label>
+                  <input type="text" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="e.g. Front Desk Associate" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Department <span className="text-red-500">*</span></label>
+                  <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                    <option>Front Desk</option>
+                    <option>Housekeeping</option>
+                    <option>Food & Beverage</option>
+                    <option>Engineering</option>
+                    <option>Human Resources</option>
+                    <option>Sales & Revenue</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Employment Type <span className="text-red-500">*</span></label>
+                  <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                    <option>Full-Time</option>
+                    <option>Part-Time</option>
+                    <option>Contract</option>
+                    <option>Internship</option>
+                    <option>Temporary</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Experience Level</label>
+                  <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                    <option>Entry Level</option>
+                    <option>Mid Level</option>
+                    <option>Senior Level</option>
+                    <option>Executive</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Location Type</label>
+                  <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                    <option>On-Site</option>
+                    <option>Hybrid</option>
+                    <option>Remote</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Number of Openings</label>
+                  <input type="number" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="1" defaultValue="1" min="1" />
+                </div>
+              </div>
+            </div>
+
+            {/* Compensation & Timeline */}
+            <div>
+              <h4 className="text-sm font-bold text-primary uppercase tracking-wider mb-4 border-b border-border pb-2">Compensation & Timeline</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Minimum Salary</label>
+                  <div className="relative">
+                    <DollarSign className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <input type="number" className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="0.00" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Maximum Salary</label>
+                  <div className="relative">
+                    <DollarSign className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <input type="number" className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="0.00" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Currency / Period</label>
+                  <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                    <option>USD / Year</option>
+                    <option>USD / Hour</option>
+                    <option>EUR / Year</option>
+                    <option>GBP / Year</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Target Start Date</label>
+                  <input type="date" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Application Deadline</label>
+                  <input type="date" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Hiring Manager</label>
+                  <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                    <option>Select Manager...</option>
+                    <option>Alice Johnson</option>
+                    <option>Bob Smith</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Job Details */}
+            <div>
+              <h4 className="text-sm font-bold text-primary uppercase tracking-wider mb-4 border-b border-border pb-2">Job Details</h4>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Job Description <span className="text-red-500">*</span></label>
+                  <textarea className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-[120px]" placeholder="Describe the role, responsibilities, and day-to-day tasks..."></textarea>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Requirements & Qualifications <span className="text-red-500">*</span></label>
+                  <textarea className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-[120px]" placeholder="List required skills, education, experience, and certifications..."></textarea>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Benefits & Perks</label>
+                  <textarea className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-[80px]" placeholder="Health insurance, PTO, employee discounts..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            {/* Posting Options */}
+            <div>
+              <h4 className="text-sm font-bold text-primary uppercase tracking-wider mb-4 border-b border-border pb-2">Posting Options</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Visibility</label>
+                  <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                    <option>Public (Careers Page & Job Boards)</option>
+                    <option>Internal Only</option>
+                    <option>Private (Direct Link Only)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Required Documents</label>
+                  <div className="flex gap-4 mt-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" className="w-4 h-4 rounded border-border text-primary focus:ring-primary" defaultChecked />
+                      <span className="text-sm">Resume/CV</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" className="w-4 h-4 rounded border-border text-primary focus:ring-primary" />
+                      <span className="text-sm">Cover Letter</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" className="w-4 h-4 rounded border-border text-primary focus:ring-primary" />
+                      <span className="text-sm">Portfolio</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </form>
+        </div>
+
+        <div className="px-6 py-4 border-t border-border bg-secondary/30 flex items-center justify-end gap-3 sticky bottom-0 z-20">
+          <button onClick={onClose} className="px-4 py-2 bg-card border border-border text-foreground rounded-xl text-sm font-medium hover:bg-secondary transition-colors">
+            Cancel
+          </button>
+          <button className="px-6 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4" />
+            Publish Job Post
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// --- Main Component ---
+
+export function HumanResources({ aiEnabled, activeSubmenu }: HRProps) {
+  return (
+    <div className="max-w-7xl mx-auto h-full">
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-[1.5cm] px-[1.5cm] pt-2 pb-4 border-b border-border mb-10">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xs font-bold text-primary uppercase tracking-wider mb-1">Human Resources</h2>
+            <h1 className="text-2xl font-bold text-foreground">{activeSubmenu || "Overview"}</h1>
+            <p className="text-sm text-muted-foreground mt-1">Manage and view {(activeSubmenu || "Overview").toLowerCase()} information.</p>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground bg-secondary/50 px-3 py-1.5 rounded-full">
+            <Clock className="w-3.5 h-3.5" />
+            <span>Last Sync: Just now</span>
+          </div>
+        </div>
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeSubmenu}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2 }}
+        >
+          {activeSubmenu === "Overview" && <HROverview />}
+          {activeSubmenu === "Employee Directory" && <EmployeeDirectory />}
+          {activeSubmenu === "Attendance" && <Attendance />}
+          {activeSubmenu === "Leave Management" && <LeaveManagement />}
+          {activeSubmenu === "Payroll" && <Payroll />}
+          {activeSubmenu === "L&D" && <LearningDevelopment />}
+          {activeSubmenu === "Compliances" && <Compliances />}
+          {activeSubmenu === "Expense Management" && <ExpenseManagement />}
+          {activeSubmenu === "Recruiting" && <Recruiting />}
+          {activeSubmenu === "Reports" && <HRReports />}
+          {activeSubmenu === "Settings" && <HumanResourcesSettings />}
+          
+          {/* Placeholder for other submenus */}
+          {![
+            "Overview", 
+            "Employee Directory", 
+            "Attendance", 
+            "Leave Management", 
+            "Payroll", 
+            "L&D", 
+            "Compliances", 
+            "Expense Management", 
+            "Recruiting", 
+            "Reports",
+            "Settings"
+          ].includes(activeSubmenu || "") && (
+            <div className="flex flex-col items-center justify-center h-[50vh] text-center bg-card rounded-2xl border border-border border-dashed">
+              <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mb-4">
+                <Settings2 className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-bold mb-2">{activeSubmenu} Module</h3>
+              <p className="text-muted-foreground max-w-sm">
+                The {activeSubmenu} module is being connected to your HCM provider. 
+                Real-time data sync will be available shortly.
+              </p>
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+}
+
+
+function HumanResourcesSettings() {
+  return (
+    <div className="space-y-6 max-w-4xl">
+      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-border">
+          <h3 className="text-lg font-bold text-foreground">Human Resources Settings</h3>
+          <p className="text-sm text-muted-foreground">Configure module-specific parameters and preferences.</p>
+        </div>
+        <div className="p-6 space-y-8">
+          <div className="p-8 text-center text-muted-foreground border border-dashed border-border rounded-xl">
+            <p>Settings configuration for HumanResources will be available here.</p>
+          </div>
+        </div>
+        <div className="p-6 border-t border-border bg-secondary/30 flex justify-end">
+          <button className="bg-primary text-primary-foreground px-6 py-2 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm">
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+

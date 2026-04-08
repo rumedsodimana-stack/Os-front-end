@@ -1,21 +1,28 @@
 import React, { useMemo, useState } from "react";
-import { Users, DoorOpen, Key, DollarSign, TrendingUp, TrendingDown, Bed, CheckCircle2, AlertCircle, X } from "lucide-react";
+import { Users, DoorOpen, Key, DollarSign, TrendingUp, TrendingDown, Bed, CheckCircle2, AlertCircle, Plus, X, Star, CalendarCheck, History, Box, Wrench, Wine, Receipt, Lightbulb, Thermometer, Wifi, Tv, MoreHorizontal, Clock, Search, Filter, Phone, Mail, MapPin, Car, Plane, Coffee, MessageSquare, Info, Crown, Calendar } from "lucide-react";
 import { cn } from "../lib/utils";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { motion, AnimatePresence } from "motion/react";
-import { KpiStrip, LegendBar, SectionSearch, SectionHeader, PageShell, RoomCard } from "../components/shared";
+import { KPICard } from "../components/ui/KPICard";
+import { useRooms, Room, RoomStatus, HKStatus } from "../context/RoomContext";
+import { useGuests } from "../context/GuestContext";
+import { useBookings, Booking } from "../context/BookingContext";
+import { useFolios, Folio, FolioItem } from "../context/FolioContext";
+import { useAuth } from "../context/AuthContext";
 
 const getBadgeColor = (status: string) => {
   switch (status) {
     case "Confirmed":
     case "Checked In":
     case "Checked Out":
-      return "bg-emerald-100 text-emerald-700";
+      return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400";
     case "Pending":
-      return "bg-amber-100 text-amber-700";
+    case "Due In":
+    case "Due Out":
+      return "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400";
     case "Cancelled":
     case "OOS":
-      return "bg-red-100 text-red-700";
+      return "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400";
     default:
       return "bg-secondary text-secondary-foreground";
   }
@@ -41,55 +48,82 @@ const statusData = [
   { name: "Vacant", value: 40, color: "#e5e7eb" },
 ];
 
-type RoomStatus = "Stay Over" | "Arrival" | "Departure" | "OOS" | "Vacant";
-type HKStatus = "Clean" | "Dirty" | "Inspected";
-
-interface Room {
-  number: string;
-  type: string;
-  status: RoomStatus;
-  hkStatus: HKStatus;
-  guest?: string;
-  notes?: string;
-}
-
 const mockRooms: Room[] = [
-  { number: "101", type: "Standard King", status: "Stay Over", hkStatus: "Clean", guest: "John Doe" },
-  { number: "102", type: "Standard Double", status: "Departure", hkStatus: "Dirty", guest: "Jane Smith" },
-  { number: "103", type: "Suite", status: "Arrival", hkStatus: "Clean", guest: "Alice Johnson" },
+  { number: "101", type: "Standard King", status: "Stay Over", hkStatus: "Clean", guestName: "John Doe" },
+  { number: "102", type: "Standard Double", status: "Departure", hkStatus: "Dirty", guestName: "Jane Smith" },
+  { number: "103", type: "Suite", status: "Arrival", hkStatus: "Clean", guestName: "Alice Johnson" },
   { number: "104", type: "Standard King", status: "Vacant", hkStatus: "Inspected" },
   { number: "105", type: "Standard Double", status: "OOS", hkStatus: "Dirty", notes: "AC broken" },
-  { number: "106", type: "Suite", status: "Stay Over", hkStatus: "Clean", guest: "Robert Brown" },
-  { number: "107", type: "Standard King", status: "Stay Over", hkStatus: "Dirty", guest: "Emily Davis" },
-  { number: "108", type: "Standard Double", status: "Arrival", hkStatus: "Clean", guest: "Michael Wilson" },
+  { number: "106", type: "Suite", status: "Stay Over", hkStatus: "Clean", guestName: "Robert Brown" },
+  { number: "107", type: "Standard King", status: "Stay Over", hkStatus: "Dirty", guestName: "Emily Davis" },
+  { number: "108", type: "Standard Double", status: "Arrival", hkStatus: "Clean", guestName: "Michael Wilson" },
   { number: "109", type: "Standard King", status: "Vacant", hkStatus: "Clean" },
-  { number: "110", type: "Suite", status: "Departure", hkStatus: "Dirty", guest: "Sarah Miller" },
-  { number: "201", type: "Standard King", status: "Stay Over", hkStatus: "Clean", guest: "David Garcia" },
+  { number: "110", type: "Suite", status: "Departure", hkStatus: "Dirty", guestName: "Sarah Miller" },
+  { number: "201", type: "Standard King", status: "Stay Over", hkStatus: "Clean", guestName: "David Garcia" },
   { number: "202", type: "Standard Double", status: "Vacant", hkStatus: "Inspected" },
-  { number: "203", type: "Suite", status: "Arrival", hkStatus: "Clean", guest: "James Rodriguez" },
+  { number: "203", type: "Suite", status: "Arrival", hkStatus: "Clean", guestName: "James Rodriguez" },
   { number: "204", type: "Standard King", status: "OOS", hkStatus: "Dirty", notes: "Plumbing issue" },
-  { number: "205", type: "Standard Double", status: "Stay Over", hkStatus: "Clean", guest: "Maria Martinez" },
-  { number: "206", type: "Suite", status: "Departure", hkStatus: "Dirty", guest: "William Hernandez" },
+  { number: "205", type: "Standard Double", status: "Stay Over", hkStatus: "Clean", guestName: "Maria Martinez" },
+  { number: "206", type: "Suite", status: "Departure", hkStatus: "Dirty", guestName: "William Hernandez" },
   { number: "207", type: "Standard King", status: "Vacant", hkStatus: "Clean" },
-  { number: "208", type: "Standard Double", status: "Arrival", hkStatus: "Clean", guest: "Richard Lopez" },
+  { number: "208", type: "Standard Double", status: "Arrival", hkStatus: "Clean", guestName: "Richard Lopez" },
 ];
 
 function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const { rooms } = useRooms();
+  const { guests } = useGuests();
+  const { bookings } = useBookings();
+
+  const arrivals = rooms.filter(r => r.status === "Arrival").length;
+  const inHouse = guests.length; // Simplified
+  const departures = rooms.filter(r => r.status === "Departure").length;
+  
+  const occupiedCount = rooms.filter(r => r.status !== "Vacant").length;
+  const vacantCount = rooms.length - occupiedCount;
+  const occupancyRate = rooms.length > 0 ? Math.round((occupiedCount / rooms.length) * 100) : 0;
+
+  const dynamicStatusData = [
+    { name: "Occupied", value: occupiedCount, color: "#8b5cf6" },
+    { name: "Vacant", value: vacantCount, color: "#e5e7eb" },
+  ];
+
   return (
-    <PageShell
-      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search front desk..." />}
-      header={<SectionHeader icon={DoorOpen} title="Front Desk Overview" subtitle="Live hotel metrics and daily activity" />}
-      kpi={<KpiStrip
-        items={[
-          { color: "bg-pink-500", value: "45", label: "Arrivals" },
-          { color: "bg-violet-500", value: "128", label: "In-House" },
-          { color: "bg-emerald-500", value: "32", label: "Departures" },
-          { color: "bg-amber-500", value: "$12,896", label: "Revenue" },
-          { color: "bg-blue-500", value: "60%", label: "Occupancy" },
-        ]}
-      />}
-    >
+    <div className="space-y-6">
+      {/* KPIs */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <KPICard 
+          label="Arrivals" 
+          value={arrivals.toString()} 
+          change="Today" 
+          trend="up" 
+          icon={DoorOpen} 
+          color="rose" 
+        />
+        <KPICard 
+          label="In-House" 
+          value={inHouse.toString()} 
+          change="Total Guests" 
+          trend="up" 
+          icon={Users} 
+          color="purple" 
+        />
+        <KPICard 
+          label="Departures" 
+          value={departures.toString()} 
+          change="Today" 
+          trend="down" 
+          icon={Key} 
+          color="emerald" 
+        />
+        <KPICard 
+          label="Occupancy" 
+          value={`${occupancyRate}%`} 
+          change="Real-time" 
+          trend="up" 
+          icon={TrendingUp} 
+          color="amber" 
+        />
+      </div>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -97,13 +131,17 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
         {/* Area Chart */}
         <div className="lg:col-span-2 bg-card rounded-2xl p-6 shadow-sm border border-border">
           <div className="flex justify-between items-center mb-6">
-            <SectionHeader title="Revenue" />
+            <h2 className="font-semibold text-lg">Revenue</h2>
             <div className="flex items-center gap-4 text-sm">
-              <LegendBar items={[
-                { color: "bg-pink-100 border-pink-200", label: "Room Rev" },
-                { color: "bg-emerald-100 border-emerald-200", label: "F&B Rev" },
-              ]} />
-              <select className="bg-secondary text-secondary-foreground border-none rounded-xl px-3 py-1.5 outline-none cursor-pointer text-xs font-medium ml-2">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-pink-500"></div>
+                <span className="text-muted-foreground">Room Rev</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                <span className="text-muted-foreground">F&B Rev</span>
+              </div>
+              <select className="bg-secondary text-secondary-foreground border-none rounded-md px-3 py-1.5 outline-none cursor-pointer text-xs font-medium ml-2">
                 <option>This Month</option>
               </select>
             </div>
@@ -137,8 +175,8 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
         {/* Donut Chart */}
         <div className="bg-card rounded-2xl p-6 shadow-sm border border-border flex flex-col">
           <div className="flex justify-between items-center mb-2">
-            <SectionHeader title="Status" />
-            <select className="bg-secondary text-secondary-foreground border-none rounded-xl px-3 py-1.5 outline-none cursor-pointer text-xs font-medium">
+            <h2 className="font-semibold text-lg">Status</h2>
+            <select className="bg-secondary text-secondary-foreground border-none rounded-md px-3 py-1.5 outline-none cursor-pointer text-xs font-medium">
               <option>Today</option>
             </select>
           </div>
@@ -147,7 +185,7 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={statusData}
+                    data={dynamicStatusData}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -156,7 +194,7 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
                     dataKey="value"
                     stroke="none"
                   >
-                    {statusData.map((entry, index) => (
+                    {dynamicStatusData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -164,21 +202,21 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
               </ResponsiveContainer>
             </div>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-3xl font-bold text-violet-600">60%</span>
+              <span className="text-3xl font-bold text-violet-600">{occupancyRate}%</span>
               <span className="text-xs text-muted-foreground">Occupied</span>
             </div>
           </div>
           <div className="flex justify-between mt-4 border-t border-border pt-4">
             <div className="text-center">
-              <p className="text-sm font-bold">1598</p>
+              <p className="text-sm font-bold">{rooms.length}</p>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total</p>
             </div>
             <div className="text-center border-l border-r border-border px-6">
-              <p className="text-sm font-bold text-violet-600">958</p>
+              <p className="text-sm font-bold text-violet-600">{occupiedCount}</p>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Occupied</p>
             </div>
             <div className="text-center">
-              <p className="text-sm font-bold text-muted-foreground">640</p>
+              <p className="text-sm font-bold text-gray-400">{vacantCount}</p>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Vacant</p>
             </div>
           </div>
@@ -192,42 +230,43 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
         {/* Main Table */}
         <div className="lg:col-span-2 bg-card rounded-2xl p-6 shadow-sm border border-border">
           <div className="flex justify-between items-center mb-6">
-            <SectionHeader title="Recent Bookings" />
-            <select className="bg-secondary text-secondary-foreground border-none rounded-xl px-3 py-1.5 outline-none cursor-pointer text-xs font-medium">
+            <h2 className="font-semibold text-lg">Recent Bookings</h2>
+            <select className="bg-secondary text-secondary-foreground border-none rounded-md px-3 py-1.5 outline-none cursor-pointer text-xs font-medium">
               <option>This Week</option>
             </select>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
+            <table className="w-full text-sm text-left border-collapse">
               <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
                 <tr>
                   <th className="px-4 py-3 font-medium">Booking ID</th>
                   <th className="px-4 py-3 font-medium">Guest</th>
-                  <th className="px-4 py-3 font-medium">Date</th>
-                  <th className="px-4 py-3 font-medium">Amount</th>
+                  <th className="px-4 py-3 font-medium">Check-In</th>
+                  <th className="px-4 py-3 font-medium text-right">Amount</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
-                {[
-                  { id: "#00458", name: "Kishor Behera", date: "9 Oct 2023", amount: "$165.80", status: "Confirmed" },
-                  { id: "#00459", name: "Santosh Sahu", date: "9 Oct 2023", amount: "$210.50", status: "Pending" },
-                  { id: "#00460", name: "Kishor Behera", date: "9 Oct 2023", amount: "$165.80", status: "Confirmed" },
-                  { id: "#00461", name: "Kishor Behera", date: "9 Oct 2023", amount: "$165.80", status: "Confirmed" },
-                  { id: "#00462", name: "Santosh Sahu", date: "9 Oct 2023", amount: "$210.50", status: "Pending" },
-                ].map((row, i) => (
-                  <tr key={i} className="hover:bg-secondary/30 transition-colors">
-                    <td className="px-4 py-3 text-muted-foreground">{row.id}</td>
-                    <td className="px-4 py-3 font-medium">{row.name}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{row.date}</td>
-                    <td className="px-4 py-3 font-medium">{row.amount}</td>
+                {bookings.slice(0, 5).map((booking) => (
+                  <tr key={booking.id} className="hover:bg-secondary/30 transition-colors group">
+                    <td className="px-4 py-3 text-muted-foreground">#{booking.id.slice(-5).toUpperCase()}</td>
+                    <td className="px-4 py-3 font-medium">{booking.guestName}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{booking.checkIn}</td>
+                    <td className="px-4 py-3 text-right font-bold">${booking.amount.toLocaleString()}</td>
                     <td className="px-4 py-3">
-                      <span className={cn("px-3 py-1 rounded-full text-xs font-medium", getBadgeColor(row.status))}>
-                        {row.status}
+                      <span className={cn("px-3 py-1 rounded-full text-xs font-medium", getBadgeColor(booking.status))}>
+                        {booking.status}
                       </span>
                     </td>
                   </tr>
                 ))}
+                {bookings.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground italic">
+                      No recent bookings found.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -236,13 +275,13 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
         {/* Secondary Table */}
         <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
           <div className="flex justify-between items-center mb-6">
-            <SectionHeader title="Top Regions" />
-            <select className="bg-secondary text-secondary-foreground border-none rounded-xl px-3 py-1.5 outline-none cursor-pointer text-xs font-medium">
+            <h2 className="font-semibold text-lg">Top Regions</h2>
+            <select className="bg-secondary text-secondary-foreground border-none rounded-md px-3 py-1.5 outline-none cursor-pointer text-xs font-medium">
               <option>This Year</option>
             </select>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
+            <table className="w-full text-sm text-left border-collapse">
               <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
                 <tr>
                   <th className="px-4 py-3 font-medium">Region</th>
@@ -268,215 +307,1598 @@ function FrontDeskOverview({ aiEnabled }: { aiEnabled: boolean }) {
         </div>
 
       </div>
-    </PageShell>
+    </div>
   );
 }
 
 function FrontDeskRooms() {
-  const [selectedFloor, setSelectedFloor] = React.useState("Ground");
-  const [selectedRoom, setSelectedRoom] = React.useState<string | null>(null);
+  const { rooms } = useRooms();
+  const [floorFilter, setFloorFilter] = React.useState("All Floors");
+  const [statusFilter, setStatusFilter] = React.useState("All Statuses");
+  const [selectedRoom, setSelectedRoom] = React.useState<Room | null>(null);
 
-  const floors = ["Ground", "Floor 1", "Floor 2", "Floor 3"];
-
-  const getRoomStatusColor = (status: RoomStatus, hkStatus: HKStatus) => {
-    if (status === "Vacant" && hkStatus === "Clean") {
-      return "bg-emerald-100 border-emerald-200 text-emerald-800";
+  const getStatusColor = (status: RoomStatus) => {
+    switch (status) {
+      case "Stay Over": return "bg-blue-100/60 border-blue-200 text-blue-900 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300";
+      case "Arrival": return "bg-emerald-100/60 border-emerald-200 text-emerald-900 dark:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-300";
+      case "Departure": return "bg-amber-100/60 border-amber-200 text-amber-900 dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-300";
+      case "OOS": return "bg-red-100/60 border-red-200 text-red-900 dark:bg-red-900/30 dark:border-red-800 dark:text-red-300";
+      case "Vacant": return "bg-card border-border text-foreground";
     }
-    if (status === "Vacant" && hkStatus === "Dirty") {
-      return "bg-amber-100 border-amber-200 text-amber-800";
-    }
-    if (status === "Stay Over") {
-      return "bg-rose-100 border-rose-200 text-rose-800";
-    }
-    if (status === "Arrival") {
-      return "bg-violet-100 border-violet-200 text-violet-800";
-    }
-    if (status === "Departure") {
-      return "bg-blue-100 border-blue-200 text-blue-800";
-    }
-    if (status === "OOS") {
-      return "bg-slate-100 border-slate-200 text-slate-800";
-    }
-    return "bg-card border-border";
   };
 
-  const getStatusLabel = (status: RoomStatus, hkStatus: HKStatus) => {
-    if (status === "Vacant" && hkStatus === "Clean") return "Available - Clean";
-    if (status === "Vacant" && hkStatus === "Dirty") return "Available - Dirty";
-    if (status === "Stay Over") return "Occupied";
-    if (status === "Arrival") return "Arriving Today";
-    if (status === "Departure") return "Departing Today";
-    if (status === "OOS") return "Out of Service";
-    return status;
+  const getLegendColor = (status: RoomStatus) => {
+    switch (status) {
+      case "Stay Over": return "bg-blue-400";
+      case "Arrival": return "bg-emerald-400";
+      case "Departure": return "bg-amber-400";
+      case "OOS": return "bg-red-400";
+      case "Vacant": return "bg-gray-300 dark:bg-gray-600";
+    }
   };
 
-  const floorRooms = useMemo(() => {
-    const floorNum = floors.indexOf(selectedFloor) + 1; // Ground=1, Floor 1=2, etc.
-    return mockRooms.filter(room => {
-      const roomFloor = parseInt(room.number.charAt(0)) || 0;
-      return roomFloor === floorNum;
+  const filteredRooms = useMemo(() => {
+    return rooms.filter(room => {
+      const floorMatch = floorFilter === "All Floors" || room.number.startsWith(floorFilter.replace("Floor ", ""));
+      const statusMatch = statusFilter === "All Statuses" || room.status === statusFilter;
+      return floorMatch && statusMatch;
     });
-  }, [selectedFloor]);
+  }, [floorFilter, statusFilter, rooms]);
 
-  const stats = useMemo(() => {
-    const total = mockRooms.length;
-    const available = mockRooms.filter(r => r.status === "Vacant" && r.hkStatus === "Clean").length;
-    const occupied = mockRooms.filter(r => r.status === "Stay Over").length;
-    const arrivals = mockRooms.filter(r => r.status === "Arrival").length;
-    const departures = mockRooms.filter(r => r.status === "Departure").length;
-    return {
-      total,
-      available,
-      occupied,
-      availablePercent: Math.round((available / total) * 100),
-      arrivals,
-      departures,
-    };
-  }, []);
-
-  const selectedRoomData = selectedRoom ? mockRooms.find(r => r.number === selectedRoom) : null;
-
-  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <PageShell
-      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search rooms..." />}
-      header={<SectionHeader icon={DoorOpen} title="Room Plan" subtitle="Floor plan view with room status" />}
-      kpi={<KpiStrip items={[
-        { color: "bg-violet-500", value: stats.total, label: "Total Rooms" },
-        { color: "bg-emerald-500", value: stats.available, label: "Available" },
-        { color: "bg-blue-500", value: `${Math.round((stats.occupied / stats.total) * 100)}%`, label: "Occupancy" },
-        { color: "bg-amber-500", value: stats.arrivals, label: "Arrivals" },
-        { color: "bg-rose-500", value: stats.departures, label: "Departures" },
-      ]} />}
-      legend={<LegendBar items={[
-        { color: "bg-emerald-100 border-emerald-200", label: "Available (Clean)" },
-        { color: "bg-amber-100 border-amber-200", label: "Available (Dirty)" },
-        { color: "bg-rose-100 border-rose-200", label: "Occupied" },
-        { color: "bg-violet-100 border-violet-200", label: "Arriving Today" },
-        { color: "bg-blue-100 border-blue-200", label: "Departing Today" },
-        { color: "bg-slate-100 border-slate-200", label: "Out of Service" },
-      ]} />}
+    <div>
+      <div className="mb-6">
+        {/* Legend & Filters */}
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
+          <div className="flex flex-wrap items-center gap-6">
+            {(["Stay Over", "Arrival", "Departure", "Vacant", "OOS"] as RoomStatus[]).map((status) => (
+              <div key={status} className="flex items-center gap-2">
+                <div className={cn("w-3 h-3 rounded-full", getLegendColor(status))}></div>
+                <span className="text-sm font-medium text-muted-foreground">{status}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <select 
+              className="bg-secondary border-none rounded-lg px-3 py-2 text-sm outline-none cursor-pointer"
+              value={floorFilter}
+              onChange={(e) => setFloorFilter(e.target.value)}
+            >
+              <option>All Floors</option>
+              <option>Floor 1</option>
+              <option>Floor 2</option>
+            </select>
+            <select 
+              className="bg-secondary border-none rounded-lg px-3 py-2 text-sm outline-none cursor-pointer"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option>All Statuses</option>
+              <option>Stay Over</option>
+              <option>Arrival</option>
+              <option>Departure</option>
+              <option>Vacant</option>
+              <option>OOS</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Rooms Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+        {filteredRooms.map((room) => (
+          <div 
+            key={room.number} 
+            onClick={() => setSelectedRoom(room)}
+            className={cn(
+              "p-4 rounded-2xl border shadow-sm flex flex-col gap-3 transition-all hover:shadow-md cursor-pointer", 
+              getStatusColor(room.status)
+            )}
+          >
+            <div className="flex justify-between items-start">
+              <h3 className="text-2xl font-bold">{room.number}</h3>
+              <div className="flex gap-1" title={`Housekeeping: ${room.hkStatus}`}>
+                {room.hkStatus === 'Clean' || room.hkStatus === 'Inspected' ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-red-500" />
+                )}
+              </div>
+            </div>
+            
+            <div className="flex-1">
+              <p className="text-sm font-semibold truncate" title={room.guestName || room.notes || "Vacant"}>
+                {room.guestName || room.notes || "Vacant"}
+              </p>
+              <p className="text-xs opacity-70 truncate" title={room.type}>{room.type}</p>
+            </div>
+            
+            <div className="mt-auto pt-2 flex justify-between items-center text-xs font-medium opacity-80 border-t border-current/10">
+              <span>{room.status}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <AnimatePresence>
+        {selectedRoom && (
+          <RoomProfileModal room={selectedRoom} onClose={() => setSelectedRoom(null)} />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function DetailField({ label, value, className }: { label: string, value?: string | number, className?: string }) {
+  return (
+    <div className="flex flex-col bg-secondary/10 p-2 rounded-md border border-border/50">
+      <span className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5 font-semibold">{label}</span>
+      <span className={cn("font-medium text-sm truncate", className)} title={String(value || "-")}>{value || "-"}</span>
+    </div>
+  );
+}
+
+function ActionButton({ label, color, onClick }: { label: string, color: string, onClick?: () => void }) {
+  return (
+    <button onClick={onClick} className={cn("px-4 py-2 rounded-lg text-xs font-bold shadow-sm transition-all active:scale-95", color)}>
+      {label}
+    </button>
+  );
+}
+
+function WakeUpCallForm({ onClose, showToast }: { onClose: () => void, showToast: (msg: string) => void }) {
+  return (
+    <div className="max-w-2xl mx-auto w-full text-left">
+      <div className="bg-secondary/20 p-4 rounded-xl border border-border mb-6 flex items-start gap-4">
+        <div className="p-3 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 rounded-lg">
+          <Clock className="w-6 h-6" />
+        </div>
+        <div>
+          <h4 className="font-bold text-foreground">Scheduled Calls</h4>
+          <p className="text-sm text-muted-foreground mt-1">No wake-up calls currently scheduled for this room.</p>
+        </div>
+      </div>
+      <h4 className="font-bold mb-4">Schedule New Wake-up Call</h4>
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Date</label>
+          <input type="date" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary" defaultValue="2026-10-13" />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Time</label>
+          <input type="time" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary" defaultValue="07:00" />
+        </div>
+        <div className="space-y-2 col-span-2">
+          <label className="text-sm font-medium text-muted-foreground">Notes (Optional)</label>
+          <input type="text" placeholder="e.g., Guest requested coffee after call" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary" />
+        </div>
+      </div>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 bg-secondary text-foreground rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">Cancel</button>
+        <button onClick={() => { showToast("Wake-up call scheduled"); onClose(); }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">Schedule Call</button>
+      </div>
+    </div>
+  );
+}
+
+function AlertsForm({ onClose, showToast }: { onClose: () => void, showToast: (msg: string) => void }) {
+  return (
+    <div className="max-w-2xl mx-auto w-full text-left">
+      <div className="space-y-3 mb-6">
+        <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 p-4 rounded-xl flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5" />
+          <div>
+            <h5 className="font-bold text-red-800 dark:text-red-300 text-sm">Allergic to Feathers</h5>
+            <p className="text-xs text-red-600/80 dark:text-red-400/80 mt-1">Ensure foam pillows only. Housekeeping notified.</p>
+          </div>
+        </div>
+      </div>
+      <h4 className="font-bold mb-4">Add New Alert</h4>
+      <div className="space-y-4 mb-6">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Alert Area</label>
+          <select className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
+            <option>Front Desk</option>
+            <option>Housekeeping</option>
+            <option>Food & Beverage</option>
+            <option>General</option>
+          </select>
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Alert Message</label>
+          <textarea rows={3} placeholder="Enter alert details..." className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary resize-none"></textarea>
+        </div>
+      </div>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 bg-secondary text-foreground rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">Cancel</button>
+        <button onClick={() => { showToast("Alert added successfully"); onClose(); }} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">Save Alert</button>
+      </div>
+    </div>
+  );
+}
+
+function TracesForm({ onClose, showToast }: { onClose: () => void, showToast: (msg: string) => void }) {
+  return (
+    <div className="max-w-2xl mx-auto w-full text-left">
+      <div className="bg-secondary/20 p-4 rounded-xl border border-border mb-6">
+        <h4 className="font-bold text-foreground mb-3">Active Traces</h4>
+        <div className="text-sm text-muted-foreground text-center py-4 border border-dashed border-border rounded-lg">
+          No active traces for this reservation.
+        </div>
+      </div>
+      <h4 className="font-bold mb-4">Create New Trace</h4>
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Department</label>
+          <select className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
+            <option>Housekeeping</option>
+            <option>Maintenance</option>
+            <option>Room Service</option>
+            <option>Concierge</option>
+          </select>
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Action Date</label>
+          <input type="date" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary" defaultValue="2026-10-12" />
+        </div>
+        <div className="space-y-2 col-span-2">
+          <label className="text-sm font-medium text-muted-foreground">Trace Text</label>
+          <textarea rows={3} placeholder="Enter instructions for the department..." className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary resize-none"></textarea>
+        </div>
+      </div>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 bg-secondary text-foreground rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">Cancel</button>
+        <button onClick={() => { showToast("Trace created successfully"); onClose(); }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">Save Trace</button>
+      </div>
+    </div>
+  );
+}
+
+function RoutingForm({ onClose, showToast }: { onClose: () => void, showToast: (msg: string) => void }) {
+  return (
+    <div className="max-w-3xl mx-auto w-full text-left">
+      <div className="grid grid-cols-2 gap-6 mb-6">
+        <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+          <h4 className="font-bold mb-2 flex items-center justify-between">
+            Window 1 (Guest)
+            <span className="text-xs font-normal px-2 py-1 bg-secondary rounded-md">Default</span>
+          </h4>
+          <p className="text-sm text-muted-foreground mb-4">All incidental charges route here.</p>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm"><span>Payment:</span> <span className="font-medium">Visa ending in 4242</span></div>
+            <div className="flex justify-between text-sm"><span>Name:</span> <span className="font-medium">David Lee</span></div>
+          </div>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-4 shadow-sm border-primary/50">
+          <h4 className="font-bold mb-2 flex items-center justify-between">
+            Window 2 (Company)
+            <span className="text-xs font-normal px-2 py-1 bg-primary/10 text-primary rounded-md">Routed</span>
+          </h4>
+          <p className="text-sm text-muted-foreground mb-4">Room & Tax charges route here.</p>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm"><span>Payment:</span> <span className="font-medium">Direct Bill</span></div>
+            <div className="flex justify-between text-sm"><span>Name:</span> <span className="font-medium">Acme Corp</span></div>
+          </div>
+        </div>
+      </div>
+      <h4 className="font-bold mb-4">Setup New Routing</h4>
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Route To</label>
+          <select className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
+            <option>Window 2</option>
+            <option>Window 3</option>
+            <option>Window 4</option>
+            <option>Another Room</option>
+          </select>
+        </div>
+        <div className="space-y-2 col-span-2">
+          <label className="text-sm font-medium text-muted-foreground">Transaction Codes</label>
+          <input type="text" placeholder="e.g., RM, TAX, F&B" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary" defaultValue="RM, TAX" />
+        </div>
+      </div>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 bg-secondary text-foreground rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">Cancel</button>
+        <button onClick={() => { showToast("Routing instructions updated"); onClose(); }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">Save Routing</button>
+      </div>
+    </div>
+  );
+}
+
+function MessagesForm({ onClose, showToast }: { onClose: () => void, showToast: (msg: string) => void }) {
+  return (
+    <div className="max-w-2xl mx-auto w-full text-left">
+      <div className="space-y-4 mb-6">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Recipient</label>
+          <input type="text" className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm outline-none" value="Guest in Room" disabled />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Message</label>
+          <textarea rows={4} placeholder="Type message for guest..." className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary resize-none"></textarea>
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Delivery Method</label>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" defaultChecked /> Front Desk Screen</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" defaultChecked /> In-Room TV</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" /> SMS</label>
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 bg-secondary text-foreground rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">Cancel</button>
+        <button onClick={() => { showToast("Message sent to guest"); onClose(); }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">Send Message</button>
+      </div>
+    </div>
+  );
+}
+
+function RoomMoveForm({ onClose, showToast }: { onClose: () => void, showToast: (msg: string) => void }) {
+  return (
+    <div className="max-w-2xl mx-auto w-full text-left">
+      <div className="grid grid-cols-2 gap-6 mb-6">
+        <div className="bg-secondary/20 p-4 rounded-xl border border-border">
+          <h5 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Current Room</h5>
+          <div className="text-2xl font-bold">Current <span className="text-sm font-normal text-muted-foreground">(Assigned)</span></div>
+        </div>
+        <div className="bg-primary/5 p-4 rounded-xl border border-primary/20">
+          <h5 className="text-xs font-bold uppercase tracking-wider text-primary mb-1">New Room</h5>
+          <select className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary font-bold">
+            <option>Select Room...</option>
+            <option>205 (Suite) - Clean</option>
+            <option>310 (Suite) - Inspected</option>
+          </select>
+        </div>
+      </div>
+      <div className="space-y-4 mb-6">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Reason for Move</label>
+          <select className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
+            <option>Guest Request</option>
+            <option>Maintenance Issue</option>
+            <option>Upgrade</option>
+            <option>Downgrade</option>
+          </select>
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Move Status</label>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 text-sm"><input type="radio" name="moveStatus" defaultChecked /> Move Now</label>
+            <label className="flex items-center gap-2 text-sm"><input type="radio" name="moveStatus" /> Schedule for Later</label>
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 bg-secondary text-foreground rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">Cancel</button>
+        <button onClick={() => { showToast("Room move completed"); onClose(); }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">Execute Move</button>
+      </div>
+    </div>
+  );
+}
+
+function HousekeepingForm({ onClose, showToast }: { onClose: () => void, showToast: (msg: string) => void }) {
+  return (
+    <div className="max-w-2xl mx-auto w-full text-left">
+      <div className="grid grid-cols-2 gap-6 mb-6">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Room Status</label>
+          <select className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
+            <option>Clean</option>
+            <option>Dirty</option>
+            <option>Inspected</option>
+            <option>Out of Service</option>
+          </select>
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Turndown Service</label>
+          <select className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
+            <option>Required</option>
+            <option>Not Required</option>
+            <option>Completed</option>
+          </select>
+        </div>
+        <div className="space-y-2 col-span-2">
+          <label className="text-sm font-medium text-muted-foreground">Housekeeping Notes</label>
+          <textarea rows={3} placeholder="e.g., Extra towels requested..." className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary resize-none"></textarea>
+        </div>
+      </div>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 bg-secondary text-foreground rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">Cancel</button>
+        <button onClick={() => { showToast("Housekeeping status updated"); onClose(); }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">Update Status</button>
+      </div>
+    </div>
+  );
+}
+
+function CreditCardsForm({ onClose, showToast }: { onClose: () => void, showToast: (msg: string) => void }) {
+  return (
+    <div className="max-w-2xl mx-auto w-full text-left">
+      <div className="bg-secondary/20 p-4 rounded-xl border border-border mb-6">
+        <h4 className="font-bold text-foreground mb-3 flex items-center justify-between">
+          Attached Cards
+          <button className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded-md">Add Card</button>
+        </h4>
+        <div className="flex items-center justify-between p-3 bg-card border border-border rounded-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-6 bg-blue-100 text-blue-800 rounded flex items-center justify-center text-[10px] font-bold">VISA</div>
+            <div>
+              <div className="text-sm font-medium">•••• •••• •••• 4242</div>
+              <div className="text-xs text-muted-foreground">Exp: 12/28</div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-sm font-bold text-emerald-600">Auth: $500.00</div>
+            <div className="text-xs text-muted-foreground">Active</div>
+          </div>
+        </div>
+      </div>
+      <h4 className="font-bold mb-4">Manual Authorization</h4>
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Amount</label>
+          <input type="text" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary" placeholder="$0.00" />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Approval Code (Manual)</label>
+          <input type="text" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary" placeholder="Optional" />
+        </div>
+      </div>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 bg-secondary text-foreground rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">Cancel</button>
+        <button onClick={() => { showToast("Authorization processed"); onClose(); }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">Authorize</button>
+      </div>
+    </div>
+  );
+}
+
+function GenericOptionForm({ title, onClose, showToast }: { title: string, onClose: () => void, showToast: (msg: string) => void }) {
+  return (
+    <div className="max-w-3xl mx-auto w-full text-left">
+      <div className="bg-secondary/20 p-4 rounded-xl border border-border mb-6">
+        <h4 className="font-bold text-foreground mb-3">Active {title} Records</h4>
+        <div className="text-sm text-muted-foreground text-center py-8 border border-dashed border-border rounded-lg bg-card">
+          No active records found for {title}.
+        </div>
+      </div>
+      <h4 className="font-bold mb-4">Add New {title}</h4>
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="space-y-2 col-span-2">
+          <label className="text-sm font-medium text-muted-foreground">Description / Details</label>
+          <input type="text" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary" placeholder={`Enter ${title.toLowerCase()} details...`} />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Status</label>
+          <select className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
+            <option>Active</option>
+            <option>Inactive</option>
+            <option>Pending</option>
+          </select>
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Reference</label>
+          <input type="text" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary" placeholder="Optional reference code" />
+        </div>
+      </div>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 bg-secondary text-foreground rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">Cancel</button>
+        <button onClick={() => { showToast(`${title} updated successfully`); onClose(); }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">Save {title}</button>
+      </div>
+    </div>
+  );
+}
+
+function PostChargeForm({ onClose, showToast }: { onClose: () => void, showToast: (msg: string) => void }) {
+  return (
+    <div className="max-w-2xl mx-auto w-full text-left">
+      <div className="bg-secondary/20 p-4 rounded-xl border border-border mb-6">
+        <h4 className="font-bold text-foreground mb-1">Post Charge to Folio</h4>
+        <p className="text-sm text-muted-foreground">Select a transaction code and enter the amount to post a manual charge.</p>
+      </div>
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="space-y-2 col-span-2">
+          <label className="text-sm font-medium text-muted-foreground">Transaction Code</label>
+          <select className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
+            <option>Select Code...</option>
+            <option>REST - Restaurant</option>
+            <option>BAR - Lobby Bar</option>
+            <option>SPA - Spa Services</option>
+            <option>MINI - Mini Bar</option>
+            <option>LNDY - Laundry</option>
+            <option>MISC - Miscellaneous</option>
+          </select>
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Amount</label>
+          <input type="text" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary" placeholder="$0.00" />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Quantity</label>
+          <input type="number" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary" defaultValue={1} min={1} />
+        </div>
+        <div className="space-y-2 col-span-2">
+          <label className="text-sm font-medium text-muted-foreground">Supplement / Reference</label>
+          <input type="text" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary" placeholder="Optional details (e.g., Ticket #1234)" />
+        </div>
+      </div>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 bg-secondary text-foreground rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">Cancel</button>
+        <button onClick={() => { showToast("Charge posted successfully"); onClose(); }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">Post Charge</button>
+      </div>
+    </div>
+  );
+}
+
+function CreateTicketForm({ onClose, showToast }: { onClose: () => void, showToast: (msg: string) => void }) {
+  return (
+    <div className="max-w-2xl mx-auto w-full text-left">
+      <div className="bg-secondary/20 p-4 rounded-xl border border-border mb-6">
+        <h4 className="font-bold text-foreground mb-1">Create Maintenance Ticket</h4>
+        <p className="text-sm text-muted-foreground">Report an issue for this room to the engineering team.</p>
+      </div>
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Category</label>
+          <select className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
+            <option>Plumbing</option>
+            <option>Electrical</option>
+            <option>HVAC</option>
+            <option>Furniture/Fixtures</option>
+            <option>Technology/TV</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-muted-foreground">Priority</label>
+          <select className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+            <option>Urgent (Guest Waiting)</option>
+          </select>
+        </div>
+        <div className="space-y-2 col-span-2">
+          <label className="text-sm font-medium text-muted-foreground">Issue Description</label>
+          <textarea rows={4} placeholder="Describe the problem in detail..." className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary resize-none"></textarea>
+        </div>
+        <div className="space-y-2 col-span-2">
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" defaultChecked /> Permission to enter room if guest is not present
+          </label>
+        </div>
+      </div>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 bg-secondary text-foreground rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">Cancel</button>
+        <button onClick={() => { showToast("Maintenance ticket created"); onClose(); }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">Submit Ticket</button>
+      </div>
+    </div>
+  );
+}
+
+function CheckInWizard({ room, onClose, showToast }: { room: Room, onClose: () => void, showToast: (msg: string) => void }) {
+  const { guests } = useGuests();
+  const { assignGuest } = useRooms();
+  const { addFolio } = useFolios();
+  const [step, setStep] = useState(1);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [keysEncoded, setKeysEncoded] = useState(false);
+  const [selectedGuestId, setSelectedGuestId] = useState("");
+  const steps = ["Guest Selection", "Stay Details", "Payment", "Key Encoding"];
+
+  const selectedGuest = guests.find(g => g.id === selectedGuestId);
+
+  const handleCheckIn = async () => {
+    if (!selectedGuest) {
+      showToast("Please select a guest first");
+      return;
+    }
+    setIsProcessing(true);
+    try {
+      await assignGuest(room.number, selectedGuest.id, `${selectedGuest.firstName} ${selectedGuest.lastName}`);
+      
+      // Create Folio
+      await addFolio({
+        guestId: selectedGuest.id,
+        bookingId: `BK-${Math.random().toString(36).substr(2, 6).toUpperCase()}`, // Mock booking ID if not present
+        roomNumber: room.number,
+        status: "Open"
+      });
+
+      showToast(`Guest ${selectedGuest.firstName} checked in to Room ${room.number}`);
+      onClose();
+    } catch (error) {
+      showToast("Error during check-in");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleAuthorize = () => {
+    setIsProcessing(true);
+    setTimeout(() => {
+      setIsProcessing(false);
+      setIsAuthorized(true);
+      showToast("Payment authorized successfully");
+    }, 1500);
+  };
+
+  const handleEncode = () => {
+    setIsProcessing(true);
+    setTimeout(() => {
+      setIsProcessing(false);
+      setKeysEncoded(true);
+      showToast("Keys encoded successfully");
+    }, 2000);
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto w-full text-left py-4">
+      {/* Progress Bar */}
+      <div className="flex items-center justify-between mb-8 relative">
+        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-secondary -translate-y-1/2 z-0"></div>
+        {steps.map((s, i) => (
+          <div key={i} className="relative z-10 flex flex-col items-center gap-2">
+            <div className={cn(
+              "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors border-2",
+              step > i + 1 ? "bg-emerald-500 border-emerald-500 text-white" : 
+              step === i + 1 ? "bg-primary border-primary text-primary-foreground" : 
+              "bg-card border-border text-muted-foreground"
+            )}>
+              {step > i + 1 ? <CheckCircle2 className="w-5 h-5" /> : i + 1}
+            </div>
+            <span className={cn("text-[10px] font-bold uppercase tracking-wider", step === i + 1 ? "text-primary" : "text-muted-foreground")}>{s}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm min-h-[400px] flex flex-col">
+        {step === 1 && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex justify-between items-center">
+              <h4 className="text-xl font-bold">Select Guest</h4>
+              <button onClick={() => showToast("Scanning ID...")} className="text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-lg font-bold hover:bg-primary/20 transition-colors flex items-center gap-2">
+                <Box className="w-3 h-3" /> Scan ID
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Search Guest</label>
+                <select 
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary"
+                  value={selectedGuestId}
+                  onChange={(e) => setSelectedGuestId(e.target.value)}
+                >
+                  <option value="">Select a guest...</option>
+                  {guests.map(g => (
+                    <option key={g.id} value={g.id}>{g.firstName} {g.lastName} ({g.loyaltyStatus})</option>
+                  ))}
+                </select>
+              </div>
+              
+              {selectedGuest && (
+                <div className="p-4 bg-secondary/20 rounded-xl border border-border space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-bold text-lg">{selectedGuest.firstName} {selectedGuest.lastName}</p>
+                      <p className="text-sm text-muted-foreground">{selectedGuest.location}</p>
+                    </div>
+                    <span className="px-2 py-1 bg-amber-100 text-amber-800 text-[10px] font-bold rounded uppercase tracking-wider">
+                      {selectedGuest.loyaltyStatus}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Total Stays</p>
+                      <p className="font-semibold">{selectedGuest.totalStays}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Loyalty Points</p>
+                      <p className="font-semibold">{selectedGuest.loyaltyPoints}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-xl flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
+              <p className="text-sm text-amber-800 dark:text-amber-300">Ensure guest identification matches the profile before proceeding.</p>
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <h4 className="text-xl font-bold">Confirm Stay Details</h4>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="p-4 bg-secondary/20 rounded-xl border border-border">
+                  <p className="text-xs text-muted-foreground uppercase font-bold mb-1">Dates</p>
+                  <p className="font-bold">Oct 12 - Oct 16, 2026 (4 Nights)</p>
+                </div>
+                <div className="p-4 bg-secondary/20 rounded-xl border border-border">
+                  <p className="text-xs text-muted-foreground uppercase font-bold mb-1">Room Type & Rate</p>
+                  <p className="font-bold">{room.type} • $250.00/night</p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Rate Code</label>
+                  <select className="w-full bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary">
+                    <option>BAR (Best Available Rate)</option>
+                    <option>CORP (Corporate Standard)</option>
+                    <option>GOV (Government Rate)</option>
+                    <option>PROMO (Seasonal Offer)</option>
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Special Requests</label>
+                  <div className="p-3 bg-card border border-border rounded-lg text-sm italic text-muted-foreground">
+                    "High floor, away from elevator if possible. Foam pillows only."
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Market Segment</label>
+                  <select className="w-full bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary">
+                    <option>Corporate</option>
+                    <option>Leisure</option>
+                    <option>Group</option>
+                    <option>OTA (Online Travel Agent)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Source of Business</label>
+                  <select className="w-full bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary">
+                    <option>Direct Call</option>
+                    <option>Website</option>
+                    <option>GDS</option>
+                    <option>Walk-in</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <h4 className="text-xl font-bold">Payment & Authorization</h4>
+            <div className={cn(
+              "p-6 rounded-2xl text-center border transition-colors",
+              isAuthorized ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/30" : "bg-secondary/20 border-border"
+            )}>
+              {isAuthorized ? (
+                <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto mb-4" />
+              ) : (
+                <DollarSign className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              )}
+              <h5 className={cn("text-lg font-bold", isAuthorized ? "text-emerald-800 dark:text-emerald-300" : "text-foreground")}>
+                {isAuthorized ? "Authorization Successful" : "Total Estimated Charges: $1,145.00"}
+              </h5>
+              <p className="text-sm text-muted-foreground mt-1">Includes Room, Tax, and $200.00 Incidentals Deposit</p>
+            </div>
+            <div className="space-y-4">
+              <label className="text-sm font-medium text-muted-foreground">Payment Method</label>
+              <div className="grid grid-cols-3 gap-3">
+                <button className="p-4 border-2 border-primary bg-primary/5 rounded-xl flex flex-col items-center gap-2">
+                  <div className="w-8 h-5 bg-blue-600 rounded text-[8px] text-white flex items-center justify-center font-bold">VISA</div>
+                  <span className="text-xs font-bold">•••• 4242</span>
+                </button>
+                <button className="p-4 border border-border bg-card rounded-xl flex flex-col items-center gap-2 hover:bg-secondary transition-colors">
+                  <DollarSign className="w-6 h-6 text-muted-foreground" />
+                  <span className="text-xs font-bold">Cash/Other</span>
+                </button>
+                <button className="p-4 border border-border bg-card rounded-xl flex flex-col items-center gap-2 hover:bg-secondary transition-colors">
+                  <Plus className="w-6 h-6 text-muted-foreground" />
+                  <span className="text-xs font-bold">Add New</span>
+                </button>
+              </div>
+            </div>
+            {!isAuthorized && (
+              <>
+                <div className="flex items-center gap-2 p-3 bg-secondary/20 rounded-lg border border-border">
+                  <input type="checkbox" id="incidental-auth" defaultChecked className="w-4 h-4 rounded border-border text-primary focus:ring-primary" />
+                  <label htmlFor="incidental-auth" className="text-sm">Authorize for incidentals ($50.00/night)</label>
+                </div>
+                <button 
+                  onClick={handleAuthorize} 
+                  disabled={isProcessing}
+                  className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-sm flex items-center justify-center gap-2"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Clock className="w-5 h-5 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Authorize $1,145.00"
+                  )}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 flex-1 flex flex-col items-center justify-center text-center">
+            <div className={cn(
+              "w-20 h-20 rounded-full flex items-center justify-center mb-6 transition-colors",
+              keysEncoded ? "bg-emerald-100 text-emerald-600" : "bg-violet-100 text-violet-600 animate-pulse"
+            )}>
+              {keysEncoded ? <CheckCircle2 className="w-10 h-10" /> : <Key className="w-10 h-10" />}
+            </div>
+            <h4 className="text-2xl font-bold">{keysEncoded ? "Keys Ready" : "Encode Room Keys"}</h4>
+            <p className="text-muted-foreground max-w-xs mx-auto mb-8">
+              {keysEncoded ? "All keys have been successfully prepared." : `Place 2 keycards on the encoder for Room ${room.number}.`}
+            </p>
+            <div className="flex gap-4 w-full max-w-sm">
+              <button 
+                onClick={handleEncode} 
+                disabled={isProcessing || keysEncoded}
+                className="flex-1 py-3 bg-violet-600 text-white rounded-xl font-bold hover:bg-violet-700 transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isProcessing ? (
+                  <>
+                    <Clock className="w-5 h-5 animate-spin" />
+                    Encoding...
+                  </>
+                ) : keysEncoded ? "Keys Encoded" : "Encode Keys"}
+              </button>
+              <button onClick={() => showToast("Mobile key sent to guest")} className="flex-1 py-3 bg-secondary text-foreground rounded-xl font-bold hover:bg-secondary/80 transition-colors">
+                Send Mobile Key
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-auto pt-8 flex justify-between">
+          <button 
+            onClick={() => step > 1 ? setStep(step - 1) : onClose()} 
+            className="px-6 py-2 bg-secondary text-foreground rounded-xl text-sm font-bold hover:bg-secondary/80 transition-colors"
+          >
+            {step === 1 ? "Cancel" : "Back"}
+          </button>
+          {step < 4 ? (
+            <button 
+              onClick={() => setStep(step + 1)} 
+              className="px-8 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-bold shadow-sm hover:bg-primary/90 transition-colors"
+            >
+              Next
+            </button>
+          ) : (
+            <button 
+              onClick={handleCheckIn} 
+              disabled={isProcessing}
+              className="px-8 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold shadow-sm hover:bg-emerald-700 transition-colors flex items-center gap-2"
+            >
+              {isProcessing && <Clock className="w-4 h-4 animate-spin" />}
+              Complete Check-In
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CheckOutWizard({ room, onClose, showToast }: { room: Room, onClose: () => void, showToast: (msg: string) => void }) {
+  const { checkoutGuest } = useRooms();
+  const { folios, closeFolio } = useFolios();
+  const [step, setStep] = useState(1);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isPaid, setIsPaid] = useState(false);
+  const steps = ["Folio Review", "Payment", "Departure"];
+
+  const currentFolio = folios.find(f => f.roomNumber === room.number && f.status === "Open");
+
+  const handleFinalCheckout = async () => {
+    setIsProcessing(true);
+    try {
+      await checkoutGuest(room.number);
+      if (currentFolio) {
+        await closeFolio(currentFolio.id);
+      }
+      showToast(`Guest ${room.guestName} has been checked out`);
+      onClose();
+    } catch (error) {
+      showToast("Error during checkout");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handlePayment = () => {
+    setIsProcessing(true);
+    setTimeout(() => {
+      setIsProcessing(false);
+      setIsPaid(true);
+      showToast("Payment processed successfully");
+    }, 1500);
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto w-full text-left py-4">
+      {/* Progress Bar */}
+      <div className="flex items-center justify-center gap-12 mb-8 relative">
+        <div className="absolute top-1/2 left-1/4 w-1/2 h-0.5 bg-secondary -translate-y-1/2 z-0"></div>
+        {steps.map((s, i) => (
+          <div key={i} className="relative z-10 flex flex-col items-center gap-2">
+            <div className={cn(
+              "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors border-2",
+              step > i + 1 ? "bg-emerald-500 border-emerald-500 text-white" : 
+              step === i + 1 ? "bg-primary border-primary text-primary-foreground" : 
+              "bg-card border-border text-muted-foreground"
+            )}>
+              {step > i + 1 ? <CheckCircle2 className="w-5 h-5" /> : i + 1}
+            </div>
+            <span className={cn("text-[10px] font-bold uppercase tracking-wider", step === i + 1 ? "text-primary" : "text-muted-foreground")}>{s}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm min-h-[400px] flex flex-col">
+        {step === 1 && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex justify-between items-center">
+              <h4 className="text-xl font-bold">Review Guest Folio</h4>
+              <button onClick={() => showToast("Opening Post Charge...")} className="text-xs bg-secondary px-3 py-1.5 rounded-lg font-bold hover:bg-secondary/80 flex items-center gap-2">
+                <Plus className="w-3 h-3" /> Post Charge
+              </button>
+            </div>
+            <div className="border border-border rounded-xl overflow-hidden">
+              <table className="w-full text-sm text-left border-collapse">
+                <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Description</th>
+                    <th className="px-4 py-2 font-medium text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {currentFolio ? (
+                    <>
+                      {currentFolio.items.map((item) => (
+                        <tr key={item.id}>
+                          <td className="px-4 py-3">
+                            {item.description}
+                            <span className="ml-2 text-[10px] text-muted-foreground uppercase">{item.category}</span>
+                          </td>
+                          <td className={cn(
+                            "px-4 py-2 text-right",
+                            item.type === "Charge" ? "text-rose-600" : "text-emerald-600"
+                          )}>
+                            {item.type === "Charge" ? "" : "-"}${item.amount.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="bg-secondary/10 font-bold">
+                        <td className="px-4 py-3 text-right">Total Balance Due:</td>
+                        <td className={cn(
+                          "px-4 py-3 text-right",
+                          currentFolio.totalBalance > 0 ? "text-rose-600" : "text-emerald-600"
+                        )}>
+                          ${currentFolio.totalBalance.toFixed(2)}
+                        </td>
+                      </tr>
+                    </>
+                  ) : (
+                    <tr>
+                      <td colSpan={2} className="px-4 py-8 text-center text-muted-foreground italic">
+                        No folio found for this room.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <h4 className="text-xl font-bold">Process Payment</h4>
+            <div className={cn(
+              "p-6 rounded-2xl border flex justify-between items-center transition-colors",
+              isPaid ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/30" : "bg-secondary/20 border-border"
+            )}>
+              <div>
+                <p className="text-sm text-muted-foreground">{isPaid ? "Balance Settled" : "Amount to Settle"}</p>
+                <p className={cn("text-3xl font-bold", isPaid ? "text-emerald-600" : "text-foreground")}>
+                  {isPaid ? "$0.00" : `$${currentFolio?.totalBalance.toFixed(2) || "0.00"}`}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Payment Method</p>
+                <p className="font-bold flex items-center gap-2 justify-end">
+                  <span className="w-8 h-5 bg-blue-600 rounded text-[8px] text-white flex items-center justify-center font-bold">VISA</span>
+                  •••• 4242
+                </p>
+              </div>
+            </div>
+            {!isPaid && (
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  onClick={handlePayment} 
+                  disabled={isProcessing}
+                  className="p-4 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors shadow-sm flex flex-col items-center gap-2"
+                >
+                  {isProcessing ? (
+                    <Clock className="w-6 h-6 animate-spin" />
+                  ) : (
+                    <DollarSign className="w-6 h-6" />
+                  )}
+                  <span>{isProcessing ? "Processing..." : "Pay Full Balance"}</span>
+                </button>
+                <button onClick={() => showToast("Opening split payment...")} className="p-4 bg-secondary text-foreground rounded-xl font-bold hover:bg-secondary/80 transition-colors flex flex-col items-center gap-2">
+                  <Users className="w-6 h-6" />
+                  <span>Split Payment</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 flex-1 flex flex-col items-center justify-center text-center">
+            <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
+            <h4 className="text-2xl font-bold">Checkout Complete</h4>
+            <p className="text-muted-foreground max-w-xs mx-auto mb-8">
+              Guest {room.guestName} has been successfully checked out of Room {room.number}.
+            </p>
+            <div className="flex gap-4 w-full max-w-sm">
+              <button onClick={() => showToast("Receipt printed")} className="flex-1 py-3 bg-secondary text-foreground rounded-xl font-bold hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2">
+                <Receipt className="w-5 h-5" /> Print Receipt
+              </button>
+              <button onClick={() => showToast("Receipt emailed to guest")} className="flex-1 py-3 bg-secondary text-foreground rounded-xl font-bold hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2">
+                <DoorOpen className="w-5 h-5" /> Email Receipt
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-auto pt-8 flex justify-between">
+          <button 
+            onClick={() => step > 1 ? setStep(step - 1) : onClose()} 
+            className="px-6 py-2 bg-secondary text-foreground rounded-xl text-sm font-bold hover:bg-secondary/80 transition-colors"
+          >
+            {step === 1 ? "Cancel" : "Back"}
+          </button>
+          {step < 3 ? (
+            <button 
+              onClick={() => setStep(step + 1)} 
+              className="px-8 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-bold shadow-sm hover:bg-primary/90 transition-colors"
+            >
+              Next
+            </button>
+          ) : (
+            <button 
+              onClick={handleFinalCheckout} 
+              disabled={isProcessing}
+              className="px-8 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-bold shadow-sm hover:bg-primary/90 transition-colors flex items-center gap-2"
+            >
+              {isProcessing && <Clock className="w-4 h-4 animate-spin" />}
+              Finish
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RoomProfileModal({ room, onClose, initialWizard = null }: { room: Room; onClose: () => void; initialWizard?: string | null }) {
+  const hasGuest = room.status === "Stay Over" || room.status === "Arrival" || room.status === "Departure";
+  const [activeTab, setActiveTab] = useState("overview");
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [activeOptionModal, setActiveOptionModal] = useState<string | null>(initialWizard);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const tabs = [
+    { id: "overview", label: "Overview", icon: Users },
+    { id: "options", label: "Options", icon: MoreHorizontal },
+    { id: "charges", label: "Folio & Charges", icon: Receipt },
+    { id: "minibar", label: "Mini Bar", icon: Wine },
+    { id: "maintenance", label: "Maintenance", icon: Wrench },
+    { id: "assets", label: "Assets", icon: Box },
+    { id: "history", label: "Room History", icon: History },
+    { id: "smart", label: "Smart Controls", icon: Lightbulb },
+  ];
+
+  const operaOptions = [
+    "Accompanying", "Add On", "Agent/Company", "Alerts", "Attachments", "Billing",
+    "Changes", "Confirmation", "Credit Cards", "Delete", "Deposit/CXL", "Fixed Charges",
+    "History", "Housekeeping", "Locator", "Messages", "Package Option", "Party",
+    "Privileges", "Pro-Forma Folio", "Rate Info", "Register Card", "Resync", "Room Move",
+    "Routing", "Scheduled Activities", "Shares", "Traces", "Track It", "Waitlist",
+    "Wake-up Call", "Web Links"
+  ];
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
     >
-      {/* Floor plan card */}
-      <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
-        {/* Floor tabs */}
-        <div className="flex gap-2 mb-5">
-          {floors.map(floor => (
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose}></div>
+      <motion.div 
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="bg-card w-full max-w-6xl h-[90vh] rounded-2xl shadow-xl border border-border overflow-hidden flex flex-col relative z-10"
+      >
+        {/* Toast Notification */}
+        <AnimatePresence>
+          {toastMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-foreground text-background px-4 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2"
+            >
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              {toastMessage}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-secondary/30 sticky top-0 z-20">
+          <div>
+            <h3 className="text-xl font-bold text-foreground flex items-center gap-3">
+              Room {room.number} Profile
+              <span className={cn("px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider border", 
+                room.status === "Stay Over" ? "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800" :
+                room.status === "Arrival" ? "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800" :
+                room.status === "Departure" ? "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800" :
+                room.status === "OOS" ? "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800" :
+                "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700"
+              )}>
+                {room.status}
+              </span>
+            </h3>
+            <p className="text-sm text-muted-foreground">{room.type}</p>
+          </div>
+          <button onClick={onClose} className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        {/* Tabs Navigation */}
+        <div className="flex gap-2 px-6 pt-4 border-b border-border overflow-x-auto custom-scrollbar sticky top-[73px] bg-card z-10">
+          {tabs.map((tab) => (
             <button
-              key={floor}
-              onClick={() => setSelectedFloor(floor)}
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "px-4 py-2 rounded-xl text-sm font-medium transition-colors",
-                selectedFloor === floor
-                  ? "bg-violet-600 text-white"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                activeTab === tab.id 
+                  ? "border-primary text-primary" 
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               )}
             >
-              {floor}
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
             </button>
           ))}
         </div>
 
-        {/* Room grid */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-9 gap-3">
-          {floorRooms.map(room => (
-            <RoomCard
-              key={room.number}
-              roomNumber={room.number}
-              roomType={room.type}
-              status={getStatusLabel(room.status, room.hkStatus)}
-              statusColor={getRoomStatusColor(room.status, room.hkStatus)}
-              guestName={room.guest}
-              selected={selectedRoom === room.number}
-              onClick={() => setSelectedRoom(room.number)}
-            />
-          ))}
-        </div>
-      </div>
+        <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-muted/10">
+          {activeTab === "overview" && (
+            hasGuest ? (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Column 1: Profile */}
+                <div className="space-y-6">
+                  <div className="bg-card p-5 rounded-xl border border-border shadow-sm">
+                    <h4 className="font-semibold mb-4 border-b border-border pb-2 flex items-center gap-2">
+                      <Users className="w-4 h-4 text-primary" /> Guest Profile
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <DetailField label="Name" value={room.guestName} className="col-span-2 text-base" />
+                      <DetailField label="Phone" value="+1 (555) 123-4567" />
+                      <DetailField label="Language" value="EN" />
+                      <DetailField label="Nationality" value="US" />
+                      <DetailField label="VIP" value="Gold Member" className="text-amber-600 dark:text-amber-400" />
+                      <DetailField label="Company" value="Acme Corp" className="col-span-2" />
+                    </div>
+                  </div>
+                </div>
 
-      {/* Room detail slide-out panel */}
-      <AnimatePresence>
-        {selectedRoomData && (
-          <>
+                {/* Column 2: Stay Details */}
+                <div className="space-y-6">
+                  <div className="bg-card p-5 rounded-xl border border-border shadow-sm">
+                    <h4 className="font-semibold mb-4 border-b border-border pb-2 flex items-center gap-2">
+                      <CalendarCheck className="w-4 h-4 text-primary" /> Stay Details
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <DetailField label="Res. ID" value="RES-1042" className="col-span-2 text-primary font-bold" />
+                      <DetailField label="Arrival" value="Oct 12, 2026" />
+                      <DetailField label="Departure" value="Oct 15, 2026" />
+                      <DetailField label="Nights" value={3} />
+                      <DetailField label="Adults/Child" value="2 / 0" />
+                      <DetailField label="Room Type" value={room.type} />
+                      <DetailField label="Room" value={room.number} />
+                      <DetailField label="Rate Code" value="CORP" />
+                      <DetailField label="Rate" value="$250.00" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Column 3: Payment & Routing */}
+                <div className="space-y-6">
+                  <div className="bg-card p-5 rounded-xl border border-border shadow-sm">
+                    <h4 className="font-semibold mb-4 border-b border-border pb-2 flex items-center gap-2">
+                      <DollarSign className="w-4 h-4 text-primary" /> Payment & Routing
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <DetailField label="Res. Type" value="GUARANTEED" />
+                      <DetailField label="Market" value="CORP" />
+                      <DetailField label="Payment" value="Visa ending in 4242" className="col-span-2" />
+                      <DetailField label="Guest Balance" value="$0.00" className="text-emerald-600 dark:text-emerald-400 font-bold col-span-2 text-lg" />
+                      <DetailField label="Comments" value={room.notes || "Late arrival requested"} className="col-span-2" />
+                      <DetailField label="Billing Info" value="Room & Tax to Company" className="col-span-2" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-card rounded-xl border border-dashed border-border">
+                <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mb-6">
+                  <DoorOpen className="w-10 h-10 text-muted-foreground opacity-50" />
+                </div>
+                <h4 className="text-2xl font-bold text-foreground mb-2">Room {room.number} is Vacant</h4>
+                <p className="text-muted-foreground max-w-md mb-6">
+                  There is no active reservation or guest profile associated with this room currently.
+                </p>
+                <div className="flex gap-4">
+                  <button onClick={() => showToast("Opening Walk-in wizard...")} className="px-6 py-2 bg-primary text-primary-foreground rounded-xl font-medium shadow-sm hover:bg-primary/90 transition-colors">
+                    Create Walk-in
+                  </button>
+                  <button onClick={() => showToast("Opening Status Change dialog...")} className="px-6 py-2 bg-secondary text-secondary-foreground rounded-xl font-medium hover:bg-secondary/80 transition-colors">
+                    Change Status
+                  </button>
+                </div>
+              </div>
+            )
+          )}
+
+          {activeTab === "options" && (
+            <div className="bg-card rounded-xl border border-border shadow-sm p-6 h-full overflow-y-auto">
+              <h4 className="font-semibold mb-6 text-lg border-b border-border pb-2">Reservation Options</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {operaOptions.map(opt => (
+                  <button 
+                    key={opt}
+                    onClick={() => {
+                      if (["Billing", "Wake-up Call", "Traces", "Alerts", "Routing"].includes(opt)) {
+                        setActiveOptionModal(opt);
+                      } else {
+                        showToast(`Opened ${opt} module`);
+                      }
+                    }}
+                    className="p-3 text-sm font-medium bg-secondary/50 hover:bg-secondary border border-border/50 rounded-lg transition-all active:scale-95 text-center flex items-center justify-center min-h-[60px]"
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "charges" && (
+            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-border flex justify-between items-center">
+                <h4 className="font-semibold">Folio Transactions</h4>
+                <button onClick={() => setActiveOptionModal("Post Charge")} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90">Post Charge</button>
+              </div>
+              <table className="w-full text-sm text-left border-collapse">
+                <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Date</th>
+                    <th className="px-4 py-3 font-medium">Code</th>
+                    <th className="px-4 py-3 font-medium">Description</th>
+                    <th className="px-4 py-3 font-medium text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  <tr className="hover:bg-secondary/30">
+                    <td className="px-4 py-3">Oct 12, 2026</td>
+                    <td className="px-4 py-3">RM</td>
+                    <td className="px-4 py-3">Room Charge</td>
+                    <td className="px-4 py-3 text-right">$250.00</td>
+                  </tr>
+                  <tr className="hover:bg-secondary/30">
+                    <td className="px-4 py-3">Oct 12, 2026</td>
+                    <td className="px-4 py-3">REST</td>
+                    <td className="px-4 py-3">Lobby Bar - Dinner</td>
+                    <td className="px-4 py-3 text-right">$45.50</td>
+                  </tr>
+                  <tr className="hover:bg-secondary/30 font-medium bg-secondary/10">
+                    <td colSpan={3} className="px-4 py-3 text-right">Total Balance:</td>
+                    <td className="px-4 py-3 text-right text-emerald-600 dark:text-emerald-400">$295.50</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === "minibar" && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h4 className="font-semibold">Mini Bar Inventory</h4>
+                <p className="text-sm text-muted-foreground">Last Restocked: Today, 10:00 AM</p>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { name: "Evian Water", price: "$5.00", stock: 2 },
+                  { name: "Coca Cola", price: "$4.00", stock: 2 },
+                  { name: "Heineken", price: "$8.00", stock: 2 },
+                  { name: "Red Wine (375ml)", price: "$25.00", stock: 1 },
+                  { name: "Pringles", price: "$6.00", stock: 1 },
+                  { name: "Toblerone", price: "$7.00", stock: 1 },
+                ].map((item, i) => (
+                  <div key={i} className="bg-card p-4 rounded-xl border border-border shadow-sm flex flex-col items-center text-center gap-2">
+                    <Wine className="w-8 h-8 text-muted-foreground opacity-50 mb-2" />
+                    <span className="font-medium text-sm">{item.name}</span>
+                    <span className="text-xs text-muted-foreground">{item.price} • {item.stock} in stock</span>
+                    <button onClick={() => setActiveOptionModal("Post Charge")} className="mt-2 w-full px-3 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg text-xs font-medium transition-colors">
+                      Post Charge
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "maintenance" && (
+            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-border flex justify-between items-center">
+                <h4 className="font-semibold">Work Orders</h4>
+                <button onClick={() => setActiveOptionModal("Create Ticket")} className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg text-sm font-medium hover:bg-secondary/80">Create Ticket</button>
+              </div>
+              <div className="p-6 text-center text-muted-foreground">
+                <Wrench className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                <p>No active maintenance issues for this room.</p>
+                <p className="text-sm mt-1">Last PM completed: Sept 15, 2026</p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "assets" && (
+            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-border">
+                <h4 className="font-semibold">Room Assets</h4>
+              </div>
+              <ul className="divide-y divide-border/50">
+                {[
+                  { item: "Samsung 55' Smart TV", serial: "SN-9823471", installed: "Jan 2024" },
+                  { item: "Nespresso Machine", serial: "NES-10293", installed: "Mar 2025" },
+                  { item: "Dometic Minibar Fridge", serial: "DOM-4412", installed: "Jan 2024" },
+                  { item: "Elsafe In-Room Safe", serial: "ELS-9912", installed: "Jan 2024" },
+                ].map((asset, i) => (
+                  <li key={i} className="p-4 flex justify-between items-center hover:bg-secondary/20 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
+                        <Tv className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{asset.item}</p>
+                        <p className="text-xs text-muted-foreground">S/N: {asset.serial}</p>
+                      </div>
+                    </div>
+                    <span className="text-xs text-muted-foreground">Installed: {asset.installed}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {activeTab === "history" && (
+            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-border">
+                <h4 className="font-semibold">Recent Stays</h4>
+              </div>
+              <table className="w-full text-sm text-left border-collapse">
+                <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Guest</th>
+                    <th className="px-4 py-3 font-medium">Dates</th>
+                    <th className="px-4 py-3 font-medium">Rate Code</th>
+                    <th className="px-4 py-3 font-medium">Nights</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  <tr className="hover:bg-secondary/30">
+                    <td className="px-4 py-3 font-medium">Michael Scott</td>
+                    <td className="px-4 py-3">Oct 05 - Oct 08, 2026</td>
+                    <td className="px-4 py-3">CORP</td>
+                    <td className="px-4 py-3">3</td>
+                  </tr>
+                  <tr className="hover:bg-secondary/30">
+                    <td className="px-4 py-3 font-medium">Dwight Schrute</td>
+                    <td className="px-4 py-3">Sep 28 - Oct 02, 2026</td>
+                    <td className="px-4 py-3">RACK</td>
+                    <td className="px-4 py-3">4</td>
+                  </tr>
+                  <tr className="hover:bg-secondary/30">
+                    <td className="px-4 py-3 font-medium">Jim Halpert</td>
+                    <td className="px-4 py-3">Sep 20 - Sep 22, 2026</td>
+                    <td className="px-4 py-3">OTA</td>
+                    <td className="px-4 py-3">2</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === "smart" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <h4 className="font-semibold flex items-center gap-2"><Thermometer className="w-5 h-5 text-primary" /> Climate Control</h4>
+                  <span className="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded text-xs font-bold">ONLINE</span>
+                </div>
+                <div className="flex flex-col items-center justify-center py-4">
+                  <span className="text-5xl font-light mb-2">22°C</span>
+                  <span className="text-sm text-muted-foreground">Target: 22°C • Mode: Auto</span>
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <button onClick={() => showToast("Decreased target temperature")} className="flex-1 py-2 bg-secondary rounded-lg font-medium hover:bg-secondary/80">-</button>
+                  <button onClick={() => showToast("Increased target temperature")} className="flex-1 py-2 bg-secondary rounded-lg font-medium hover:bg-secondary/80">+</button>
+                </div>
+              </div>
+
+              <div className="bg-card p-6 rounded-xl border border-border shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <h4 className="font-semibold flex items-center gap-2"><Lightbulb className="w-5 h-5 text-primary" /> Lighting & Status</h4>
+                  <span className="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded text-xs font-bold">ONLINE</span>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg border border-border/50">
+                    <span className="font-medium text-sm">Master Lights</span>
+                    <div onClick={() => showToast("Toggled Master Lights")} className="w-10 h-5 bg-primary rounded-full relative cursor-pointer">
+                      <div className="w-4 h-4 bg-white rounded-full absolute right-0.5 top-0.5"></div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg border border-border/50">
+                    <span className="font-medium text-sm">Do Not Disturb (DND)</span>
+                    <div onClick={() => showToast("Toggled DND")} className="w-10 h-5 bg-secondary rounded-full relative cursor-pointer">
+                      <div className="w-4 h-4 bg-white rounded-full absolute left-0.5 top-0.5 shadow-sm"></div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg border border-border/50">
+                    <span className="font-medium text-sm">Make Up Room (MUR)</span>
+                    <div onClick={() => showToast("Toggled MUR")} className="w-10 h-5 bg-secondary rounded-full relative cursor-pointer">
+                      <div className="w-4 h-4 bg-white rounded-full absolute left-0.5 top-0.5 shadow-sm"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        {/* Footer Actions */}
+        <div className="px-6 py-4 border-t border-border bg-secondary/30 flex flex-col sm:flex-row items-center justify-between gap-4 sticky bottom-0 z-20">
+          {hasGuest ? (
+            <div className="flex flex-wrap gap-2">
+              <ActionButton onClick={() => showToast("Accompany module opened")} label="Accompany" color="bg-card border border-border hover:bg-secondary text-foreground" />
+              <ActionButton onClick={() => showToast("Comments module opened")} label="Comments" color="bg-card border border-border hover:bg-secondary text-foreground" />
+              <ActionButton onClick={() => showToast("Profile Notes module opened")} label="Profile Notes" color="bg-card border border-border hover:bg-secondary text-foreground" />
+              <ActionButton onClick={() => showToast("No Post status toggled")} label="No Post" color="bg-card border border-border hover:bg-secondary text-foreground" />
+              <ActionButton onClick={() => showToast("Alerts module opened")} label="Alerts" color="bg-red-100 text-red-700 border border-red-200 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800" />
+            </div>
+          ) : <div />}
+          <div className="flex gap-3 w-full sm:w-auto justify-end">
+            <button onClick={onClose} className="px-6 py-2 bg-card border border-border text-foreground rounded-xl text-sm font-bold hover:bg-secondary transition-colors">
+              Close
+            </button>
+            {room.status === "Arrival" && (
+              <button onClick={() => setActiveOptionModal("Check In")} className="px-6 py-2 bg-violet-600 text-white rounded-xl text-sm font-bold shadow-sm hover:bg-violet-700 transition-colors">
+                Check In
+              </button>
+            )}
+            {(room.status === "Departure" || room.status === "Stay Over") && (
+              <button onClick={() => setActiveOptionModal("Check Out")} className="px-6 py-2 bg-violet-600 text-white rounded-xl text-sm font-bold shadow-sm hover:bg-violet-700 transition-colors">
+                Check Out
+              </button>
+            )}
+            {hasGuest && (
+              <button onClick={() => showToast("Changes saved successfully")} className="px-8 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-bold shadow-sm hover:bg-primary/90 transition-colors">
+                Save
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Sub-Modal for specific options */}
+        <AnimatePresence>
+          {activeOptionModal && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedRoom(null)}
-              className="fixed inset-0 bg-black/50 z-40"
-            />
-            <motion.div
-              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
-              className="fixed right-0 top-0 h-full w-96 bg-card border-l border-border shadow-2xl z-40 overflow-y-auto"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="absolute inset-0 z-50 bg-card flex flex-col"
             >
-              <div className="p-6 border-b border-border flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Room {selectedRoomData.number}</h2>
-                <button onClick={() => setSelectedRoom(null)} className="p-2 hover:bg-secondary rounded-xl transition-colors">
+              <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-secondary/30">
+                <h3 className="text-lg font-bold text-foreground">{activeOptionModal} Module</h3>
+                <button onClick={() => setActiveOptionModal(null)} className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="p-6 space-y-4">
-                <div className="bg-secondary/30 rounded-xl p-4">
-                  <p className="text-xs text-muted-foreground mb-1">Room Type</p>
-                  <p className="font-semibold">{selectedRoomData.type}</p>
-                </div>
-                <div className="bg-secondary/30 rounded-xl p-4">
-                  <p className="text-xs text-muted-foreground mb-1">Status</p>
-                  <p className="font-semibold">{getStatusLabel(selectedRoomData.status, selectedRoomData.hkStatus)}</p>
-                </div>
-                {selectedRoomData.guest && (
-                  <div className="bg-secondary/30 rounded-xl p-4">
-                    <p className="text-xs text-muted-foreground mb-1">Guest Name</p>
-                    <p className="font-semibold">{selectedRoomData.guest}</p>
-                  </div>
+              <div className="flex-1 p-6 overflow-y-auto flex flex-col">
+                {activeOptionModal === "Wake-up Call" ? (
+                  <WakeUpCallForm onClose={() => setActiveOptionModal(null)} showToast={showToast} />
+                ) : activeOptionModal === "Alerts" ? (
+                  <AlertsForm onClose={() => setActiveOptionModal(null)} showToast={showToast} />
+                ) : activeOptionModal === "Traces" ? (
+                  <TracesForm onClose={() => setActiveOptionModal(null)} showToast={showToast} />
+                ) : activeOptionModal === "Routing" || activeOptionModal === "Billing" ? (
+                  <RoutingForm onClose={() => setActiveOptionModal(null)} showToast={showToast} />
+                ) : activeOptionModal === "Messages" ? (
+                  <MessagesForm onClose={() => setActiveOptionModal(null)} showToast={showToast} />
+                ) : activeOptionModal === "Room Move" ? (
+                  <RoomMoveForm onClose={() => setActiveOptionModal(null)} showToast={showToast} />
+                ) : activeOptionModal === "Housekeeping" ? (
+                  <HousekeepingForm onClose={() => setActiveOptionModal(null)} showToast={showToast} />
+                ) : activeOptionModal === "Credit Cards" ? (
+                  <CreditCardsForm onClose={() => setActiveOptionModal(null)} showToast={showToast} />
+                ) : activeOptionModal === "Post Charge" ? (
+                  <PostChargeForm onClose={() => setActiveOptionModal(null)} showToast={showToast} />
+                ) : activeOptionModal === "Create Ticket" ? (
+                  <CreateTicketForm onClose={() => setActiveOptionModal(null)} showToast={showToast} />
+                ) : activeOptionModal === "Check In" ? (
+                  <CheckInWizard room={room} onClose={() => setActiveOptionModal(null)} showToast={showToast} />
+                ) : activeOptionModal === "Check Out" ? (
+                  <CheckOutWizard room={room} onClose={() => setActiveOptionModal(null)} showToast={showToast} />
+                ) : (
+                  <GenericOptionForm title={activeOptionModal} onClose={() => setActiveOptionModal(null)} showToast={showToast} />
                 )}
-                <div className="bg-secondary/30 rounded-xl p-4">
-                  <p className="text-xs text-muted-foreground mb-1">Housekeeping Status</p>
-                  <p className="font-semibold">{selectedRoomData.hkStatus}</p>
-                </div>
-                {selectedRoomData.notes && (
-                  <div className="bg-secondary/30 rounded-xl p-4">
-                    <p className="text-xs text-muted-foreground mb-1">Notes</p>
-                    <p className="font-semibold text-orange-600">{selectedRoomData.notes}</p>
-                  </div>
-                )}
-                <div className="pt-4 border-t border-border space-y-2">
-                  <button className="w-full bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors">
-                    Check In
-                  </button>
-                  <button className="w-full bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors">
-                    Check Out
-                  </button>
-                  <button className="w-full bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 rounded-xl text-sm font-medium transition-colors">
-                    Assign Guest
-                  </button>
-                  <button className="w-full bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 rounded-xl text-sm font-medium transition-colors">
-                    Raise Issue
-                  </button>
-                </div>
               </div>
             </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </PageShell>
+          )}
+        </AnimatePresence>
+
+      </motion.div>
+    </motion.div>
   );
 }
 
-
 const mockArrivals = [
-  { guest: "Ahmed Al-Mansouri", roomNumber: "301", roomType: "Deluxe Suite", eta: "14:00", hkStatus: "Clean", status: "Confirmed", vip: true },
-  { guest: "Sarah Johnson", roomNumber: "204", roomType: "Superior Room", eta: "15:30", hkStatus: "Clean", status: "Confirmed", vip: false },
-  { guest: "Mohammed Al-Hassan", roomNumber: "512", roomType: "Ocean View Suite", eta: "13:00", hkStatus: "Dirty", status: "Arriving Soon", vip: true },
-  { guest: "Emily Chen", roomNumber: "118", roomType: "Standard Twin", eta: "16:00", hkStatus: "Clean", status: "Confirmed", vip: false },
-  { guest: "James Wilson", roomNumber: "405", roomType: "Junior Suite", eta: "12:45", hkStatus: "Clean", status: "Checked In", vip: false },
-  { guest: "Fatima Al-Zahrawi", roomNumber: "607", roomType: "Presidential Suite", eta: "11:00", hkStatus: "Clean", status: "Checked In", vip: true },
-  { guest: "Carlos Mendez", roomNumber: "223", roomType: "Superior Double", eta: "17:00", hkStatus: "Clean", status: "Confirmed", vip: false },
-  { guest: "Aisha Rahman", roomNumber: "315", roomType: "Deluxe Room", eta: "18:30", hkStatus: "Dirty", status: "Arriving Soon", vip: false },
+  { id: "ARR-001", guest: "Alice Johnson", roomType: "Suite", roomNumber: "103", eta: "14:00", vip: true, status: "Due In", hkStatus: "Clean" },
+  { id: "ARR-002", guest: "Michael Wilson", roomType: "Standard Double", roomNumber: "108", eta: "15:30", vip: false, status: "Checked In", hkStatus: "Clean" },
+  { id: "ARR-003", guest: "James Rodriguez", roomType: "Suite", roomNumber: "203", eta: "16:00", vip: true, status: "Due In", hkStatus: "Clean" },
+  { id: "ARR-004", guest: "Richard Lopez", roomType: "Standard Double", roomNumber: "208", eta: "18:00", vip: false, status: "Due In", hkStatus: "Clean" },
+  { id: "ARR-005", guest: "Emma Thompson", roomType: "Standard King", roomNumber: "Unassigned", eta: "19:30", vip: false, status: "Due In", hkStatus: "N/A" },
 ];
 
 function FrontDeskArrivals() {
   const [statusFilter, setStatusFilter] = React.useState("All Arrivals");
+  const [toastMessage, setToastMessage] = React.useState<string | null>(null);
+  const [selectedArrival, setSelectedArrival] = React.useState<any | null>(null);
+  const [wizardMode, setWizardMode] = React.useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleAction = (arrival: any) => {
+    const room: Room = {
+      number: arrival.roomNumber,
+      type: arrival.roomType,
+      status: "Arrival",
+      hkStatus: arrival.hkStatus as HKStatus,
+      guestName: arrival.guest
+    };
+    setSelectedArrival(room);
+    setWizardMode("Check In");
+  };
 
   const filteredArrivals = useMemo(() => {
     return mockArrivals.filter(arr => {
@@ -486,41 +1908,57 @@ function FrontDeskArrivals() {
     });
   }, [statusFilter]);
 
-  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <PageShell
-      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search arrivals..." />}
-      header={<SectionHeader icon={DoorOpen} title="Arrival List" subtitle="Today's expected guest arrivals" />}
-      kpi={<KpiStrip items={[
-        { color: "bg-violet-500", value: mockArrivals.length, label: "Total Arrivals" },
-        { color: "bg-emerald-500", value: mockArrivals.filter(a => a.status === "Checked In").length, label: "Checked In" },
-        { color: "bg-amber-500", value: mockArrivals.filter(a => a.status === "Confirmed").length, label: "Confirmed" },
-        { color: "bg-purple-500", value: mockArrivals.filter(a => a.vip).length, label: "VIP" },
-        { color: "bg-red-500", value: mockArrivals.filter(a => a.hkStatus === "Dirty").length, label: "HK Pending" },
-      ]} />}
-      legend={<LegendBar items={[
-        { color: "bg-emerald-100 border-emerald-200", label: "Checked In" },
-        { color: "bg-amber-100 border-amber-200", label: "Pending" },
-        { color: "bg-purple-100 border-purple-200", label: "VIP" },
-      ]} />}
-    >
-      <div className="flex items-center gap-2 mb-4">
-        <select
-          className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option>All Arrivals</option>
-          <option>Pending</option>
-          <option>Checked In</option>
-          <option>VIP Only</option>
-        </select>
+    <div className="relative">
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute top-0 left-1/2 -translate-x-1/2 z-50 bg-foreground text-background px-4 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2"
+          >
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            {toastMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="mb-6">
+        {/* Legend & Filters */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
+              <span className="text-sm font-medium text-muted-foreground">Checked In</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-amber-400"></div>
+              <span className="text-sm font-medium text-muted-foreground">Due In</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-purple-400"></div>
+              <span className="text-sm font-medium text-muted-foreground">VIP</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <select 
+              className="bg-secondary border-none rounded-lg px-3 py-2 text-sm outline-none cursor-pointer"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option>All Arrivals</option>
+              <option>Due In</option>
+              <option>Checked In</option>
+              <option>VIP Only</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Arrivals List */}
       <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-left border-collapse">
             <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
               <tr>
                 <th className="px-6 py-4 font-medium">Guest</th>
@@ -538,7 +1976,7 @@ function FrontDeskArrivals() {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{arrival.guest}</span>
                       {arrival.vip && (
-                        <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold uppercase tracking-wider">VIP</span>
+                        <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 text-[10px] font-bold uppercase tracking-wider">VIP</span>
                       )}
                     </div>
                   </td>
@@ -569,7 +2007,8 @@ function FrontDeskArrivals() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button 
-                      className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={() => handleAction(arrival)}
+                      className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={arrival.status === "Checked In"}
                     >
                       {arrival.status === "Checked In" ? "Checked In" : "Check In"}
@@ -581,18 +2020,48 @@ function FrontDeskArrivals() {
           </table>
         </div>
       </div>
-    </PageShell>
+
+      <AnimatePresence>
+        {selectedArrival && (
+          <RoomProfileModal 
+            room={selectedArrival} 
+            onClose={() => { setSelectedArrival(null); setWizardMode(null); }} 
+            initialWizard={wizardMode}
+          />
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
 const mockDepartures = [
-  { id: "DEP-001", guest: "Jane Smith", roomType: "Standard Double", roomNumber: "102", time: "10:30", vip: false, status: "Pending", balance: "$0.00" },
+  { id: "DEP-001", guest: "Jane Smith", roomType: "Standard Double", roomNumber: "102", time: "10:30", vip: false, status: "Due Out", balance: "$0.00" },
   { id: "DEP-002", guest: "Sarah Miller", roomType: "Suite", roomNumber: "110", time: "11:00", vip: true, status: "Checked Out", balance: "$0.00" },
-  { id: "DEP-003", guest: "William Hernandez", roomType: "Suite", roomNumber: "206", time: "12:00", vip: false, status: "Pending", balance: "$45.50" },
+  { id: "DEP-003", guest: "William Hernandez", roomType: "Suite", roomNumber: "206", time: "12:00", vip: false, status: "Due Out", balance: "$45.50" },
 ];
 
 function FrontDeskDepartures() {
   const [statusFilter, setStatusFilter] = React.useState("All Departures");
+  const [toastMessage, setToastMessage] = React.useState<string | null>(null);
+  const [selectedDeparture, setSelectedDeparture] = React.useState<any | null>(null);
+  const [wizardMode, setWizardMode] = React.useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleAction = (departure: any) => {
+    const room: Room = {
+      number: departure.roomNumber,
+      type: departure.roomType,
+      status: "Departure",
+      hkStatus: "Clean", // Default for departure view
+      guestName: departure.guest
+    };
+    setSelectedDeparture(room);
+    setWizardMode("Check Out");
+  };
 
   const filteredDepartures = useMemo(() => {
     return mockDepartures.filter(dep => {
@@ -603,42 +2072,58 @@ function FrontDeskDepartures() {
     });
   }, [statusFilter]);
 
-  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <PageShell
-      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search departures..." />}
-      header={<SectionHeader icon={DoorOpen} title="Departure List" subtitle="Today's guest departures" />}
-      kpi={<KpiStrip items={[
-        { color: "bg-violet-500", value: mockDepartures.length, label: "Total Departures" },
-        { color: "bg-emerald-500", value: mockDepartures.filter(d => d.status === "Checked Out").length, label: "Checked Out" },
-        { color: "bg-amber-500", value: mockDepartures.filter(d => d.status === "Pending").length, label: "Pending" },
-        { color: "bg-red-500", value: mockDepartures.filter(d => d.balance !== "$0.00").length, label: "Has Balance" },
-        { color: "bg-purple-500", value: mockDepartures.filter(d => d.vip).length, label: "VIP" },
-      ]} />}
-      legend={<LegendBar items={[
-        { color: "bg-emerald-100 border-emerald-200", label: "Checked Out" },
-        { color: "bg-amber-100 border-amber-200", label: "Pending" },
-        { color: "bg-red-100 border-red-200", label: "Has Balance" },
-      ]} />}
-    >
-      <div className="flex items-center gap-2 mb-4">
-        <select
-          className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option>All Departures</option>
-          <option>Pending</option>
-          <option>Checked Out</option>
-          <option>Has Balance</option>
-          <option>VIP Only</option>
-        </select>
+    <div className="relative">
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute top-0 left-1/2 -translate-x-1/2 z-50 bg-foreground text-background px-4 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2"
+          >
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            {toastMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="mb-6">
+        {/* Legend & Filters */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
+              <span className="text-sm font-medium text-muted-foreground">Checked Out</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-amber-400"></div>
+              <span className="text-sm font-medium text-muted-foreground">Due Out</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-400"></div>
+              <span className="text-sm font-medium text-muted-foreground">Has Balance</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <select 
+              className="bg-secondary border-none rounded-lg px-3 py-2 text-sm outline-none cursor-pointer"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option>All Departures</option>
+              <option>Due Out</option>
+              <option>Checked Out</option>
+              <option>Has Balance</option>
+              <option>VIP Only</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Departures List */}
       <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-left border-collapse">
             <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
               <tr>
                 <th className="px-6 py-4 font-medium">Guest</th>
@@ -656,7 +2141,7 @@ function FrontDeskDepartures() {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{departure.guest}</span>
                       {departure.vip && (
-                        <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold uppercase tracking-wider">VIP</span>
+                        <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 text-[10px] font-bold uppercase tracking-wider">VIP</span>
                       )}
                     </div>
                   </td>
@@ -682,9 +2167,9 @@ function FrontDeskDepartures() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button 
-                      className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={departure.status === "Checked Out" || departure.balance !== "$0.00"}
-                      title={departure.balance !== "$0.00" ? "Clear balance before checkout" : ""}
+                      onClick={() => handleAction(departure)}
+                      className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={departure.status === "Checked Out"}
                     >
                       {departure.status === "Checked Out" ? "Checked Out" : "Check Out"}
                     </button>
@@ -695,7 +2180,17 @@ function FrontDeskDepartures() {
           </table>
         </div>
       </div>
-    </PageShell>
+
+      <AnimatePresence>
+        {selectedDeparture && (
+          <RoomProfileModal 
+            room={selectedDeparture} 
+            onClose={() => { setSelectedDeparture(null); setWizardMode(null); }} 
+            initialWizard={wizardMode}
+          />
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -707,477 +2202,101 @@ const mockReservations = [
 ];
 
 function FrontDeskReservations() {
-  const [showNewBooking, setShowNewBooking] = React.useState(false);
-  const [bookingStep, setBookingStep] = React.useState(1);
   const [statusFilter, setStatusFilter] = React.useState("All Reservations");
 
-  const [searchParams, setSearchParams] = React.useState({
-    checkIn: "2024-10-12",
-    checkOut: "2024-10-15",
-    adults: 1,
-    children: 0,
-    roomType: "Suite",
-  });
-
-  const [selectedRoom, setSelectedRoom] = React.useState<string | null>(null);
-  const [guestDetails, setGuestDetails] = React.useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    nationality: "",
-    idType: "Passport",
-    idNumber: "",
-    specialRequests: "",
-  });
-
-  const [paymentMethod, setPaymentMethod] = React.useState("Room Account");
-  const [showSuccess, setShowSuccess] = React.useState(false);
-  const [bookingNumber, setBookingNumber] = React.useState("");
-
-  const mockAvailableRooms = [
-    { id: "suite-101", type: "Suite", amenities: ["WiFi", "Mini Bar", "Jacuzzi"], nightly: 250, total: 750, photos: "🏨" },
-    { id: "deluxe-102", type: "Deluxe Room", amenities: ["WiFi", "Mini Bar", "Balcony"], nightly: 180, total: 540, photos: "🏨" },
-    { id: "standard-103", type: "Standard Room", amenities: ["WiFi", "Air-Con"], nightly: 120, total: 360, photos: "🏨" },
-    { id: "family-104", type: "Family Suite", amenities: ["WiFi", "Kitchen", "2 Bathrooms"], nightly: 300, total: 900, photos: "🏨" },
-  ];
-
-  const filteredReservations = React.useMemo(() => {
+  const filteredReservations = useMemo(() => {
     return mockReservations.filter(res => {
       if (statusFilter === "All Reservations") return true;
       return res.status === statusFilter;
     });
   }, [statusFilter]);
 
-  const handleNewBooking = () => {
-    setShowNewBooking(true);
-    setBookingStep(1);
-  };
-
-  const handleCheckAvailability = () => {
-    setBookingStep(2);
-  };
-
-  const handleSelectRoom = (roomId: string) => {
-    setSelectedRoom(roomId);
-    setBookingStep(3);
-  };
-
-  const handleGuestDetailsSubmit = () => {
-    setBookingStep(4);
-  };
-
-  const handleConfirmBooking = () => {
-    const newBookingNumber = `BK-2024-${Math.floor(Math.random() * 9000) + 1000}`;
-    setBookingNumber(newBookingNumber);
-    setShowSuccess(true);
-    setTimeout(() => {
-      setShowNewBooking(false);
-      setShowSuccess(false);
-      setBookingStep(1);
-    }, 2000);
-  };
-
-  const stepTitles = ["Search Availability", "Select Room", "Guest Details", "Confirm Booking"];
-
-  const getSourceBadgeColor = (source: string) => {
-    switch (source) {
-      case "Direct": return "bg-blue-100 text-blue-700";
-      case "Booking.com": return "bg-amber-100 text-amber-700";
-      case "Expedia": return "bg-violet-100 text-violet-700";
-      default: return "bg-secondary text-secondary-foreground";
-    }
-  };
-
-  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <PageShell
-      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search reservations..." />}
-      header={<SectionHeader icon={DoorOpen} title="Reservations" subtitle="Manage bookings and new reservations" actions={
-        <button
-          onClick={handleNewBooking}
-          className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
-        >
-          New Booking
-        </button>
-      } />}
-      kpi={<KpiStrip items={[
-        { color: "bg-violet-500", value: mockReservations.length, label: "Total Reservations" },
-        { color: "bg-emerald-500", value: mockReservations.filter(r => r.status === "Confirmed").length, label: "Confirmed" },
-        { color: "bg-amber-500", value: mockReservations.filter(r => r.status === "Pending").length, label: "Pending" },
-        { color: "bg-red-500", value: mockReservations.filter(r => r.status === "Cancelled").length, label: "Cancelled" },
-        { color: "bg-blue-500", value: mockReservations.filter(r => r.source === "Direct").length, label: "Direct" },
-      ]} />}
-      legend={<LegendBar items={[
-        { color: "bg-emerald-100 border-emerald-200", label: "Confirmed" },
-        { color: "bg-amber-100 border-amber-200", label: "Pending" },
-        { color: "bg-red-100 border-red-200", label: "Cancelled" },
-      ]} />}
-    >
-      <div className="flex items-center gap-2 mb-4">
-        <select
-          className="bg-secondary border-none rounded-xl px-3 py-2 text-sm outline-none cursor-pointer"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option>All Reservations</option>
-          <option>Confirmed</option>
-          <option>Pending</option>
-          <option>Cancelled</option>
-        </select>
-      </div>
-
-      {/* Reservations Table */}
-      <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-secondary/50">
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Booking ID</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Guest</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Room Type</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Nights</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Check In</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Check Out</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Source</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Status</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground text-right">Amount</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border/50">
-            {filteredReservations.map((res, i) => (
-              <tr key={i} className="hover:bg-secondary/30 transition-colors">
-                <td className="px-4 py-3 text-sm text-muted-foreground">{res.id}</td>
-                <td className="px-4 py-3 text-sm font-medium">{res.guest}</td>
-                <td className="px-4 py-3 text-sm text-muted-foreground">{res.roomType}</td>
-                <td className="px-4 py-3 text-sm text-muted-foreground">3</td>
-                <td className="px-4 py-3 text-sm">{res.checkIn}</td>
-                <td className="px-4 py-3 text-sm">{res.checkOut}</td>
-                <td className="px-4 py-3 text-sm">
-                  <span className={cn("px-3 py-1 rounded-full text-xs font-medium", getSourceBadgeColor(res.source))}>
-                    {res.source}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-sm">
-                  <span className={cn("px-3 py-1 rounded-full text-xs font-medium", getBadgeColor(res.status))}>
-                    {res.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-sm text-right font-medium">{res.amount}</td>
-                <td className="px-4 py-3 text-sm text-right">
-                  <button className="text-violet-600 hover:text-violet-700 font-medium text-xs mr-3">Modify</button>
-                  <button className="text-rose-600 hover:text-rose-700 font-medium text-xs">Cancel</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* New Booking Modal */}
-      <AnimatePresence>
-        {showNewBooking && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowNewBooking(false)}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.95, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 20 }}
-              onClick={e => e.stopPropagation()}
-              className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+    <div>
+      <div className="mb-6">
+        {/* Legend & Filters */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
+              <span className="text-sm font-medium text-muted-foreground">Confirmed</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-amber-400"></div>
+              <span className="text-sm font-medium text-muted-foreground">Pending</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-400"></div>
+              <span className="text-sm font-medium text-muted-foreground">Cancelled</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <select 
+              className="bg-secondary border-none rounded-lg px-3 py-2 text-sm outline-none cursor-pointer"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
             >
-              {!showSuccess ? (
-                <>
-                  <div className="p-6 border-b border-border flex items-center justify-between">
-                    <div>
-                      <h2 className="text-xl font-semibold">New Booking</h2>
-                      <p className="text-xs text-muted-foreground mt-1">Step {bookingStep} of 4: {stepTitles[bookingStep - 1]}</p>
-                    </div>
-                    <button onClick={() => setShowNewBooking(false)} className="p-2 hover:bg-secondary rounded-xl transition-colors">
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <div className="p-6">
-                    {/* Progress bar */}
-                    <div className="flex gap-1 mb-6">
-                      {[1, 2, 3, 4].map(step => (
-                        <div
-                          key={step}
-                          className={cn(
-                            "h-2 flex-1 rounded-full transition-colors",
-                            step <= bookingStep ? "bg-violet-600" : "bg-secondary"
-                          )}
-                        />
-                      ))}
-                    </div>
+              <option>All Reservations</option>
+              <option>Confirmed</option>
+              <option>Pending</option>
+              <option>Cancelled</option>
+            </select>
+          </div>
+        </div>
+      </div>
 
-                    {/* Step 1: Search */}
-                    {bookingStep === 1 && (
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-2">Check-In Date</label>
-                            <input
-                              type="date"
-                              value={searchParams.checkIn}
-                              onChange={(e) => setSearchParams({...searchParams, checkIn: e.target.value})}
-                              className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none text-sm"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-2">Check-Out Date</label>
-                            <input
-                              type="date"
-                              value={searchParams.checkOut}
-                              onChange={(e) => setSearchParams({...searchParams, checkOut: e.target.value})}
-                              className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none text-sm"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-2">Adults</label>
-                            <input
-                              type="number"
-                              min="1"
-                              value={searchParams.adults}
-                              onChange={(e) => setSearchParams({...searchParams, adults: parseInt(e.target.value)})}
-                              className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none text-sm"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-2">Children</label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={searchParams.children}
-                              onChange={(e) => setSearchParams({...searchParams, children: parseInt(e.target.value)})}
-                              className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none text-sm"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Room Type</label>
-                          <select
-                            value={searchParams.roomType}
-                            onChange={(e) => setSearchParams({...searchParams, roomType: e.target.value})}
-                            className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none cursor-pointer text-sm"
-                          >
-                            <option>Suite</option>
-                            <option>Deluxe Room</option>
-                            <option>Standard Room</option>
-                            <option>Family Suite</option>
-                          </select>
-                        </div>
-                        <button
-                          onClick={handleCheckAvailability}
-                          className="w-full bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors mt-2"
-                        >
-                          Check Availability
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Step 2: Select Room */}
-                    {bookingStep === 2 && (
-                      <div className="space-y-3">
-                        {mockAvailableRooms.map(room => (
-                          <motion.div
-                            key={room.id}
-                            whileHover={{ scale: 1.01 }}
-                            onClick={() => handleSelectRoom(room.id)}
-                            className="bg-card rounded-2xl shadow-sm border border-border p-4 hover:border-violet-400 cursor-pointer transition-all"
-                          >
-                            <div className="flex justify-between items-start mb-3">
-                              <div>
-                                <h3 className="font-semibold">{room.type}</h3>
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                  {room.amenities.map(amenity => (
-                                    <span key={amenity} className="text-xs bg-secondary rounded-full px-2 py-1">{amenity}</span>
-                                  ))}
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-xl font-bold text-violet-600">${room.nightly}</p>
-                                <p className="text-xs text-muted-foreground">per night</p>
-                              </div>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <p className="text-sm font-medium">Total: <span className="font-bold">${room.total}</span></p>
-                              <button className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors">
-                                Select
-                              </button>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Step 3: Guest Details */}
-                    {bookingStep === 3 && (
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Full Name</label>
-                          <input
-                            type="text"
-                            value={guestDetails.fullName}
-                            onChange={(e) => setGuestDetails({...guestDetails, fullName: e.target.value})}
-                            className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none text-sm"
-                            placeholder="John Doe"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-2">Email</label>
-                            <input
-                              type="email"
-                              value={guestDetails.email}
-                              onChange={(e) => setGuestDetails({...guestDetails, email: e.target.value})}
-                              className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none text-sm"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-2">Phone</label>
-                            <input
-                              type="tel"
-                              value={guestDetails.phone}
-                              onChange={(e) => setGuestDetails({...guestDetails, phone: e.target.value})}
-                              className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none text-sm"
-                            />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-2">Nationality</label>
-                            <input
-                              type="text"
-                              value={guestDetails.nationality}
-                              onChange={(e) => setGuestDetails({...guestDetails, nationality: e.target.value})}
-                              className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none text-sm"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-2">ID Type</label>
-                            <select
-                              value={guestDetails.idType}
-                              onChange={(e) => setGuestDetails({...guestDetails, idType: e.target.value})}
-                              className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none cursor-pointer text-sm"
-                            >
-                              <option>Passport</option>
-                              <option>Drivers License</option>
-                              <option>National ID</option>
-                            </select>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-2">ID Number</label>
-                          <input
-                            type="text"
-                            value={guestDetails.idNumber}
-                            onChange={(e) => setGuestDetails({...guestDetails, idNumber: e.target.value})}
-                            className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Special Requests</label>
-                          <textarea
-                            value={guestDetails.specialRequests}
-                            onChange={(e) => setGuestDetails({...guestDetails, specialRequests: e.target.value})}
-                            className="w-full bg-secondary border-none rounded-xl px-4 py-2 outline-none resize-none text-sm"
-                            rows={3}
-                            placeholder="Any special requests..."
-                          />
-                        </div>
-                        <button
-                          onClick={handleGuestDetailsSubmit}
-                          className="w-full bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
-                        >
-                          Continue to Confirmation
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Step 4: Confirm */}
-                    {bookingStep === 4 && (
-                      <div className="space-y-6">
-                        <div className="bg-card rounded-2xl shadow-sm border border-border p-6 space-y-3">
-                          <SectionHeader title="Booking Summary" />
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Guest:</span>
-                            <span className="font-medium">{guestDetails.fullName}</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Check-In:</span>
-                            <span className="font-medium">{searchParams.checkIn}</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Check-Out:</span>
-                            <span className="font-medium">{searchParams.checkOut}</span>
-                          </div>
-                          <div className="flex justify-between pt-3 border-t border-border text-sm">
-                            <span className="text-muted-foreground">Total:</span>
-                            <span className="font-bold text-base">$750</span>
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium mb-3">Payment Method</label>
-                          <div className="grid grid-cols-2 gap-2">
-                            {["Room Account", "Credit Card", "Corporate Account", "OTA Collect"].map(method => (
-                              <button
-                                key={method}
-                                onClick={() => setPaymentMethod(method)}
-                                className={cn(
-                                  "p-3 rounded-xl border-2 transition-all text-sm font-medium",
-                                  paymentMethod === method
-                                    ? "border-violet-600 bg-violet-50 text-violet-600"
-                                    : "border-border bg-secondary/30 text-muted-foreground hover:border-violet-300"
-                                )}
-                              >
-                                {method}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={handleConfirmBooking}
-                          className="w-full bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
-                        >
-                          Confirm Booking
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center"
-                  >
-                    <svg className="w-8 h-8 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </motion.div>
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground mb-2">Booking Confirmed</p>
-                    <p className="text-2xl font-bold">{bookingNumber}</p>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </PageShell>
+      {/* Reservations List */}
+      <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+              <tr>
+                <th className="px-6 py-4 font-medium">Booking ID</th>
+                <th className="px-6 py-4 font-medium">Guest</th>
+                <th className="px-6 py-4 font-medium">Room Type</th>
+                <th className="px-6 py-4 font-medium">Check In</th>
+                <th className="px-6 py-4 font-medium">Check Out</th>
+                <th className="px-6 py-4 font-medium">Source</th>
+                <th className="px-6 py-4 font-medium">Status</th>
+                <th className="px-6 py-4 font-medium text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {filteredReservations.map((res, i) => (
+                <tr key={i} className="hover:bg-secondary/30 transition-colors">
+                  <td className="px-6 py-4 text-muted-foreground">{res.id}</td>
+                  <td className="px-6 py-4 font-medium">{res.guest}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{res.roomType}</td>
+                  <td className="px-6 py-4">{res.checkIn}</td>
+                  <td className="px-6 py-4">{res.checkOut}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{res.source}</td>
+                  <td className="px-6 py-4">
+                    <span className={cn(
+                      "px-3 py-1 rounded-full text-xs font-medium",
+                      getBadgeColor(res.status)
+                    )}>
+                      {res.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right font-medium">{res.amount}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }
 
 function FrontDeskTimeline() {
+  const [toastMessage, setToastMessage] = React.useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
   const dates = useMemo(() => {
     const today = new Date();
     // Generate next 14 days
@@ -1222,38 +2341,68 @@ function FrontDeskTimeline() {
     { room: "206", guest: "Brie Larson", startIdx: 2, duration: 3, status: "Confirmed", color: "bg-emerald-500" },
   ], []);
 
-  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <PageShell
-      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search timeline..." />}
-      header={<SectionHeader icon={DoorOpen} title="Timeline" subtitle="14-day reservation timeline view" />}
-      kpi={<KpiStrip items={[
-        { color: "bg-blue-500", value: bookings.filter(b => b.status === "Stay Over").length, label: "Stay Over" },
-        { color: "bg-emerald-500", value: bookings.filter(b => b.status === "Confirmed").length, label: "Confirmed" },
-        { color: "bg-amber-500", value: bookings.filter(b => b.status === "Departure").length, label: "Departures" },
-        { color: "bg-violet-500", value: bookings.filter(b => b.status === "Arrival").length, label: "Arrivals" },
-        { color: "bg-red-500", value: bookings.filter(b => b.status === "OOS").length, label: "Out of Order" },
-      ]} />}
-      legend={<LegendBar items={[
-        { color: "bg-blue-100 border-blue-200", label: "Stay Over" },
-        { color: "bg-emerald-100 border-emerald-200", label: "Arrival / Confirmed" },
-        { color: "bg-amber-100 border-amber-200", label: "Departure" },
-        { color: "bg-red-100 border-red-200", label: "Out of Order" },
-      ]} />}
-    >
+    <div className="flex flex-col h-[calc(100vh-140px)] relative">
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute top-0 left-1/2 -translate-x-1/2 z-50 bg-foreground text-background px-4 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2"
+          >
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            {toastMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="flex-none mb-6">
+        {/* Legend & Filters */}
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+              <span className="text-sm font-medium text-muted-foreground">Stay Over</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+              <span className="text-sm font-medium text-muted-foreground">Arrival / Confirmed</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+              <span className="text-sm font-medium text-muted-foreground">Departure</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <span className="text-sm font-medium text-muted-foreground">Out of Order</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => showToast("Timeline reset to today")} className="bg-secondary border-none rounded-lg px-3 py-2 text-sm outline-none cursor-pointer hover:bg-secondary/80 transition-colors">
+              Today
+            </button>
+            <select className="bg-secondary border-none rounded-lg px-3 py-2 text-sm outline-none cursor-pointer">
+              <option>14 Days</option>
+              <option>7 Days</option>
+              <option>30 Days</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       {/* Timeline Grid */}
       <div className="flex-1 bg-card rounded-2xl shadow-sm border border-border overflow-hidden relative">
         <div className="absolute inset-0 overflow-auto">
-          <table className="w-full border-collapse min-w-max">
-            <thead>
+          <table className="w-full text-sm text-left border-collapse">
+            <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
               <tr>
-                <th className="sticky top-0 left-0 z-30 bg-secondary/90 backdrop-blur border-b border-r border-border p-4 min-w-[120px] text-left font-semibold shadow-sm">
+                <th className="sticky top-0 left-0 z-30 bg-secondary/90 backdrop-blur border-b border-r border-border p-4 min-w-[120px] text-left font-semibold shadow-[2px_2px_0_0_rgba(0,0,0,0.05)] dark:shadow-[2px_2px_0_0_rgba(255,255,255,0.02)]">
                   Room
                 </th>
                 {dates.map((d, i) => (
                   <th key={i} className={cn(
-                    "sticky top-0 z-20 bg-secondary/90 backdrop-blur border-b border-r border-border p-3 min-w-[120px] text-center font-medium shadow-sm",
-                    i === 0 && "bg-violet-100/50 text-violet-700"
+                    "sticky top-0 z-20 bg-secondary/90 backdrop-blur border-b border-r border-border p-3 min-w-[120px] text-center font-medium shadow-[0_2px_0_0_rgba(0,0,0,0.05)] dark:shadow-[0_2px_0_0_rgba(255,255,255,0.02)]",
+                    i === 0 && "bg-violet-100/50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300"
                   )}>
                     <div className="text-xs uppercase tracking-wider opacity-70">{d.dayStr}</div>
                     <div className="text-sm">{d.dateStr}</div>
@@ -1261,12 +2410,12 @@ function FrontDeskTimeline() {
                 ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border/50">
               {rooms.map(room => {
                 const roomBookings = bookings.filter(b => b.room === room);
                 return (
                   <tr key={room} className="hover:bg-secondary/20 transition-colors">
-                    <td className="sticky left-0 z-20 bg-card border-b border-r border-border p-4 font-medium shadow-[2px_0_0_0_rgba(0,0,0,0.05)],255,255,0.02)]">
+                    <td className="sticky left-0 z-20 bg-card border-b border-r border-border p-4 font-medium shadow-[2px_0_0_0_rgba(0,0,0,0.05)] dark:shadow-[2px_0_0_0_rgba(255,255,255,0.02)]">
                       {room}
                     </td>
                     {dates.map((_, i) => {
@@ -1276,12 +2425,12 @@ function FrontDeskTimeline() {
                       return (
                         <td key={i} className={cn(
                           "border-b border-r border-border relative h-14 p-1",
-                          i === 0 && "bg-violet-50/30"
+                          i === 0 && "bg-violet-50/30 dark:bg-violet-900/10"
                         )}>
                           {booking && (
                             <div 
                               className={cn(
-                                "absolute top-1.5 bottom-1.5 left-1 rounded-xl px-3 py-1.5 text-xs text-white font-medium shadow-sm flex items-center overflow-hidden z-10 cursor-pointer hover:brightness-110 transition-all",
+                                "absolute top-1.5 bottom-1.5 left-1 rounded-md px-3 py-1.5 text-xs text-white font-medium shadow-sm flex items-center overflow-hidden z-10 cursor-pointer hover:brightness-110 transition-all",
                                 booking.color
                               )}
                               style={{ 
@@ -1302,15 +2451,261 @@ function FrontDeskTimeline() {
           </table>
         </div>
       </div>
-    </PageShell>
+    </div>
+  );
+}
+
+function FrontDeskBilling() {
+  const { folios, addFolioItem, closeFolio } = useFolios();
+  const { bookings } = useBookings();
+  const [selectedFolio, setSelectedFolio] = useState<Folio | null>(null);
+  const [isAddingItem, setIsAddingItem] = useState(false);
+  const [newItem, setNewItem] = useState({
+    description: "",
+    amount: 0,
+    type: "Charge" as const,
+    category: "Other" as const
+  });
+
+  const handleAddItem = async () => {
+    if (!selectedFolio) return;
+    await addFolioItem(selectedFolio.id, newItem);
+    setIsAddingItem(false);
+    setNewItem({ description: "", amount: 0, type: "Charge", category: "Other" });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Folio List */}
+        <div className="lg:col-span-1 space-y-4">
+          <h3 className="text-lg font-bold">Active Folios</h3>
+          <div className="space-y-2">
+            {folios.filter(f => f.status === "Open").map(folio => {
+              const booking = bookings.find(b => b.id === folio.bookingId);
+              return (
+                <button
+                  key={folio.id}
+                  onClick={() => setSelectedFolio(folio)}
+                  className={cn(
+                    "w-full text-left p-4 rounded-2xl border transition-all",
+                    selectedFolio?.id === folio.id 
+                      ? "bg-primary text-primary-foreground border-primary shadow-lg scale-[1.02]" 
+                      : "bg-card text-card-foreground border-border hover:border-primary/50"
+                  )}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="font-bold">{booking?.guestName || "Unknown Guest"}</span>
+                    <span className="text-xs opacity-80">Room {folio.roomNumber}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm opacity-90">Balance</span>
+                    <span className="text-lg font-bold">${folio.totalBalance.toFixed(2)}</span>
+                  </div>
+                </button>
+              );
+            })}
+            {folios.filter(f => f.status === "Open").length === 0 && (
+              <div className="p-8 text-center text-muted-foreground bg-secondary/20 rounded-2xl border border-dashed border-border">
+                No active folios found.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Folio Details */}
+        <div className="lg:col-span-2">
+          {selectedFolio ? (
+            <div className="bg-card rounded-3xl border border-border shadow-xl overflow-hidden flex flex-col h-[70vh]">
+              <div className="p-6 border-b border-border bg-secondary/10 flex justify-between items-center">
+                <div>
+                  <h3 className="text-xl font-bold">Folio Details</h3>
+                  <p className="text-sm text-muted-foreground">ID: {selectedFolio.id}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setIsAddingItem(true)}
+                    className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-bold hover:bg-primary/90 transition-all"
+                  >
+                    <Plus className="w-4 h-4" /> Add Item
+                  </button>
+                  <button 
+                    onClick={() => closeFolio(selectedFolio.id)}
+                    className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-xl text-sm font-bold hover:bg-secondary/80 transition-all"
+                  >
+                    Close Folio
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6">
+                <table className="w-full text-sm text-left border-collapse">
+                  <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+                    <tr className="text-muted-foreground border-b border-border">
+                      <th className="pb-4 font-bold text-left">Date</th>
+                      <th className="pb-4 font-bold text-left">Description</th>
+                      <th className="pb-4 font-bold text-left">Category</th>
+                      <th className="pb-4 font-bold text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/50">
+                    {selectedFolio.items.map((item) => (
+                      <tr key={item.id} className="hover:bg-secondary/20 transition-colors">
+                        <td className="py-4 text-muted-foreground">
+                          {new Date(item.timestamp).toLocaleDateString()}
+                        </td>
+                        <td className="py-4">
+                          <div className="font-medium">{item.description}</div>
+                          <div className="text-[10px] uppercase tracking-wider font-bold opacity-50">{item.type}</div>
+                        </td>
+                        <td className="py-4">
+                          <span className="px-2 py-0.5 rounded-full bg-secondary text-[10px] font-bold uppercase tracking-wider">
+                            {item.category}
+                          </span>
+                        </td>
+                        <td className={cn(
+                          "py-4 text-right font-bold",
+                          item.type === "Charge" ? "text-rose-500" : "text-emerald-500"
+                        )}>
+                          {item.type === "Charge" ? "+" : "-"}${item.amount.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="p-6 bg-secondary/10 border-t border-border">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-bold">Total Balance</span>
+                  <span className={cn(
+                    "text-3xl font-black",
+                    selectedFolio.totalBalance > 0 ? "text-rose-500" : "text-emerald-500"
+                  )}>
+                    ${selectedFolio.totalBalance.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="h-[70vh] flex flex-col items-center justify-center bg-card rounded-3xl border border-border border-dashed text-muted-foreground">
+              <Receipt className="w-16 h-16 mb-4 opacity-20" />
+              <p className="text-lg font-medium">Select a folio to view details</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Add Item Modal */}
+      <AnimatePresence>
+        {isAddingItem && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
+            >
+              <div className="p-6 border-b border-border flex justify-between items-center">
+                <h3 className="text-xl font-bold">Add Folio Item</h3>
+                <button onClick={() => setIsAddingItem(false)} className="p-2 hover:bg-secondary rounded-full transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description</label>
+                  <input 
+                    type="text" 
+                    value={newItem.description}
+                    onChange={(e) => setNewItem({...newItem, description: e.target.value})}
+                    className="w-full bg-secondary border-none rounded-xl px-4 py-3 outline-none focus:ring-2 ring-primary/50 transition-all"
+                    placeholder="e.g. Mini Bar Charge"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Amount</label>
+                    <input 
+                      type="number" 
+                      value={newItem.amount}
+                      onChange={(e) => setNewItem({...newItem, amount: parseFloat(e.target.value)})}
+                      className="w-full bg-secondary border-none rounded-xl px-4 py-3 outline-none focus:ring-2 ring-primary/50 transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Type</label>
+                    <select 
+                      value={newItem.type}
+                      onChange={(e) => setNewItem({...newItem, type: e.target.value as any})}
+                      className="w-full bg-secondary border-none rounded-xl px-4 py-3 outline-none focus:ring-2 ring-primary/50 transition-all"
+                    >
+                      <option value="Charge">Charge</option>
+                      <option value="Payment">Payment</option>
+                      <option value="Adjustment">Adjustment</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Category</label>
+                  <select 
+                    value={newItem.category}
+                    onChange={(e) => setNewItem({...newItem, category: e.target.value as any})}
+                    className="w-full bg-secondary border-none rounded-xl px-4 py-3 outline-none focus:ring-2 ring-primary/50 transition-all"
+                  >
+                    <option value="Room">Room</option>
+                    <option value="F&B">F&B</option>
+                    <option value="Tax">Tax</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div className="p-6 bg-secondary/10 border-t border-border flex gap-3">
+                <button 
+                  onClick={() => setIsAddingItem(false)}
+                  className="flex-1 px-4 py-3 bg-secondary text-secondary-foreground rounded-xl font-bold hover:bg-secondary/80 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleAddItem}
+                  className="flex-1 px-4 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-all"
+                >
+                  Add Item
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
 export function FrontDesk({ aiEnabled, activeSubmenu = "Overview" }: FrontDeskProps) {
+  const { loading: roomsLoading } = useRooms();
+  const { loading: guestsLoading } = useGuests();
+  const { loading: bookingsLoading } = useBookings();
+  const { loading: foliosLoading } = useFolios();
+
+  if (roomsLoading || guestsLoading || bookingsLoading || foliosLoading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   const renderContent = () => {
     switch (activeSubmenu) {
       case "Overview":
         return <FrontDeskOverview aiEnabled={aiEnabled} />;
+      case "VIP Arrivals":
+        return <VIPArrivals />;
+      case "Guest Profiles":
+        return <GuestProfiles />;
+      case "Concierge Desk":
+        return <ConciergeDesk />;
       case "Rooms":
         return <FrontDeskRooms />;
       case "Arrivals":
@@ -1321,34 +2716,703 @@ export function FrontDesk({ aiEnabled, activeSubmenu = "Overview" }: FrontDeskPr
         return <FrontDeskReservations />;
       case "Timeline":
         return <FrontDeskTimeline />;
+      case "Billing":
+        return <FrontDeskBilling />;
+      case "Settings":
+        return <FrontDeskSettings />;
       default:
-        return (
-          <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-            <div className="w-24 h-24 bg-secondary rounded-full flex items-center justify-center mb-6">
-              <span className="text-4xl">🚧</span>
-            </div>
-            <SectionHeader title={`Front Desk - ${activeSubmenu}`} />
-            <p className="text-muted-foreground max-w-md">
-              The {activeSubmenu} view is currently under construction.
-            </p>
-          </div>
-        );
+        return <GenericView title={activeSubmenu} />;
     }
   };
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={activeSubmenu}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.2 }}
-        className="h-full"
-      >
-        {renderContent()}
-      </motion.div>
-    </AnimatePresence>
+    <div className="max-w-7xl mx-auto h-full">
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-[1.5cm] px-[1.5cm] pt-2 pb-4 border-b border-border mb-10">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xs font-bold text-primary uppercase tracking-wider mb-1">Front Desk</h2>
+            <h1 className="text-2xl font-bold text-foreground">{activeSubmenu}</h1>
+            <p className="text-sm text-muted-foreground mt-1">Manage and view {activeSubmenu.toLowerCase()} information.</p>
+          </div>
+        </div>
+      </div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeSubmenu}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2 }}
+          className="h-full"
+        >
+          {renderContent()}
+        </motion.div>
+      </AnimatePresence>
+    </div>
   );
 }
 
+
+
+function FrontDeskSettings() {
+  return (
+    <div className="space-y-6 max-w-4xl">
+      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-border">
+          <h3 className="text-lg font-bold text-foreground">Front Desk Settings</h3>
+          <p className="text-sm text-muted-foreground">Configure global parameters for check-in, billing, and guest profiles.</p>
+        </div>
+        <div className="p-6 space-y-8">
+          
+          <div className="space-y-4">
+            <h4 className="font-semibold text-foreground flex items-center gap-2">
+              <DoorOpen className="w-4 h-4 text-primary" />
+              Check-In & Check-Out
+            </h4>
+            <div className="grid gap-4">
+              <div className="flex items-center justify-between p-4 border border-border rounded-xl">
+                <div>
+                  <p className="font-medium text-foreground">Mobile Check-In</p>
+                  <p className="text-sm text-muted-foreground">Allow guests to check in via the mobile app.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <div className="w-11 h-6 bg-secondary peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                </label>
+              </div>
+              <div className="flex items-center justify-between p-4 border border-border rounded-xl">
+                <div>
+                  <p className="font-medium text-foreground">Default Check-Out Time</p>
+                  <p className="text-sm text-muted-foreground">Standard time guests are expected to depart.</p>
+                </div>
+                <input type="time" defaultValue="11:00" className="bg-background border border-border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/50" />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="font-semibold text-foreground flex items-center gap-2">
+              <Receipt className="w-4 h-4 text-primary" />
+              Billing & Folios
+            </h4>
+            <div className="grid gap-4">
+              <div className="flex items-center justify-between p-4 border border-border rounded-xl">
+                <div>
+                  <p className="font-medium text-foreground">Auto-Email Folio</p>
+                  <p className="text-sm text-muted-foreground">Automatically send folio to guest email upon check-out.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <div className="w-11 h-6 bg-secondary peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                </label>
+              </div>
+              <div className="flex items-center justify-between p-4 border border-border rounded-xl">
+                <div>
+                  <p className="font-medium text-foreground">Pre-Authorization Amount</p>
+                  <p className="text-sm text-muted-foreground">Default hold amount for incidentals per night.</p>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <input type="number" defaultValue="50" className="bg-background border border-border rounded-lg pl-7 pr-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/50 w-24" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div className="p-6 border-t border-border bg-secondary/30 flex justify-end">
+          <button className="bg-primary text-primary-foreground px-6 py-2 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm">
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GenericView({ title }: { title: string }) {
+  const [toastMessage, setToastMessage] = React.useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  return (
+    <div className="space-y-6 relative">
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute top-0 left-1/2 -translate-x-1/2 z-50 bg-foreground text-background px-4 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2"
+          >
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            {toastMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="flex justify-between items-center bg-card p-4 rounded-2xl border border-border shadow-sm">
+        <h3 className="font-semibold">{title}</h3>
+        <button onClick={() => showToast(`Opening Add New ${title} dialog...`)} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm">
+          <Plus className="w-4 h-4" /> Add New
+        </button>
+      </div>
+      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+        <div className="p-8 text-center text-muted-foreground">
+          <p>No {title.toLowerCase()} records found.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VIPArrivals() {
+  const vipArrivals = [
+    { id: "VIP-001", name: "Alexander Wright", level: "Diamond", eta: "14:30", flight: "BA 112", room: "Penthouse Suite", host: "Sarah Jenkins", requests: "Feather-free room, chilled champagne" },
+    { id: "VIP-002", name: "Elena Rostova", level: "Platinum", eta: "16:00", flight: "AF 009", room: "Suite 402", host: "Michael Chen", requests: "Extra hangers, late checkout requested" },
+    { id: "VIP-003", name: "David & Emma Thompson", level: "Gold", eta: "11:15", flight: "Private", room: "Suite 310", host: "Unassigned", requests: "Anniversary setup, rose petals" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
+        <div className="flex items-center gap-2 bg-background border border-border rounded-xl px-3 py-2 w-full sm:w-96">
+          <Search className="w-4 h-4 text-muted-foreground" />
+          <input 
+            type="text" 
+            placeholder="Search VIP arrivals..." 
+            className="bg-transparent border-none focus:outline-none text-sm w-full"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-2 bg-secondary text-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">
+            <Filter className="w-4 h-4" /> Filter
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {vipArrivals.map((vip) => (
+          <div key={vip.id} className="bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col relative overflow-hidden group hover:shadow-md transition-shadow">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-amber-600"></div>
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="font-bold text-lg">{vip.name}</h3>
+                <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 mt-1">
+                  <Crown className="w-4 h-4" />
+                  <span className="text-xs font-bold uppercase tracking-wider">{vip.level}</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-primary">{vip.eta}</div>
+                <div className="text-xs text-muted-foreground flex items-center gap-1 justify-end mt-1">
+                  <Plane className="w-3 h-3" /> {vip.flight}
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-3 flex-1 mb-6">
+              <div className="flex items-center gap-3 text-sm">
+                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground">
+                  <DoorOpen className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Assigned Room</p>
+                  <p className="font-medium">{vip.room}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Assigned Host/Butler</p>
+                  <p className={cn("font-medium", vip.host === "Unassigned" ? "text-red-500" : "")}>{vip.host}</p>
+                </div>
+              </div>
+              <div className="p-3 bg-secondary/30 rounded-xl border border-border/50 text-sm mt-2">
+                <p className="text-xs font-bold text-muted-foreground mb-1 uppercase tracking-wider">Special Requests</p>
+                <p className="italic">{vip.requests}</p>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-auto pt-4 border-t border-border">
+              <button className="flex-1 py-2 bg-secondary text-foreground rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">
+                View Profile
+              </button>
+              <button className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm">
+                {vip.host === "Unassigned" ? "Assign Host" : "Update Status"}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GuestProfiles() {
+  const [selectedGuest, setSelectedGuest] = useState<any>(null);
+
+  const guests = [
+    { id: "G-10042", name: "Eleanor Rigby", email: "eleanor.r@example.com", phone: "+44 7700 900077", loyalty: "Platinum", points: 145000, stays: 24, lastStay: "2025-11-12", preferences: ["High Floor", "Extra Pillows", "Earl Grey Tea"], allergies: ["Peanuts"] },
+    { id: "G-10043", name: "Marcus Johnson", email: "mjohnson@example.com", phone: "+1 555 0198", loyalty: "Gold", points: 45000, stays: 8, lastStay: "2026-01-05", preferences: ["Near Elevator", "Late Checkout"], allergies: [] },
+    { id: "G-10044", name: "Sophia Martinez", email: "smartinez@example.com", phone: "+34 600 123 456", loyalty: "Silver", points: 12000, stays: 3, lastStay: "2026-03-20", preferences: ["Sparkling Water", "Firm Mattress"], allergies: ["Gluten"] },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
+        <div className="flex items-center gap-2 bg-background border border-border rounded-xl px-3 py-2 w-full sm:w-96">
+          <Search className="w-4 h-4 text-muted-foreground" />
+          <input 
+            type="text" 
+            placeholder="Search by name, email, or phone..." 
+            className="bg-transparent border-none focus:outline-none text-sm w-full"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-2 bg-secondary text-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">
+            <Filter className="w-4 h-4" /> Filter
+          </button>
+          <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm">
+            <Plus className="w-4 h-4" /> New Profile
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+              <tr>
+                <th className="px-4 py-3 font-medium">Guest Name</th>
+                <th className="px-4 py-3 font-medium">Contact</th>
+                <th className="px-4 py-3 font-medium">Loyalty Status</th>
+                <th className="px-4 py-3 font-medium">Total Stays</th>
+                <th className="px-4 py-3 font-medium">Last Stay</th>
+                <th className="px-4 py-3 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {guests.map((guest) => (
+                <tr key={guest.id} className="border-b border-border hover:bg-secondary/20 transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="font-bold">{guest.name}</div>
+                    <div className="text-xs text-muted-foreground">{guest.id}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="text-sm">{guest.email}</div>
+                    <div className="text-xs text-muted-foreground">{guest.phone}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={cn(
+                      "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                      guest.loyalty === "Platinum" ? "bg-slate-800 text-slate-200 dark:bg-slate-200 dark:text-slate-800" :
+                      guest.loyalty === "Gold" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                      "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                    )}>
+                      {guest.loyalty}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">{guest.stays}</td>
+                  <td className="p-4 text-muted-foreground text-sm">{guest.lastStay}</td>
+                  <td className="px-4 py-3 text-right">
+                    <button 
+                      onClick={() => setSelectedGuest(guest)}
+                      className="px-3 py-1.5 bg-secondary text-foreground rounded-lg text-xs font-medium hover:bg-secondary/80 transition-colors"
+                    >
+                      View Details
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {selectedGuest && (
+          <GuestProfileModal guest={selectedGuest} onClose={() => setSelectedGuest(null)} />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function GuestProfileModal({ guest, onClose }: { guest: any, onClose: () => void }) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+    >
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose}></div>
+      <motion.div 
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="bg-card w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-xl border border-border overflow-hidden flex flex-col relative z-10"
+      >
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-secondary/30 sticky top-0 z-20">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xl font-bold">
+              {guest.name.charAt(0)}
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+                {guest.name}
+                <span className={cn(
+                  "px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider",
+                  guest.loyalty === "Platinum" ? "bg-slate-800 text-slate-200 dark:bg-slate-200 dark:text-slate-800" :
+                  guest.loyalty === "Gold" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                  "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                )}>
+                  {guest.loyalty}
+                </span>
+              </h3>
+              <p className="text-sm text-muted-foreground">{guest.id} • {guest.points.toLocaleString()} Points</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-6">
+              <div className="bg-secondary/20 p-4 rounded-xl border border-border">
+                <h4 className="font-bold text-sm mb-4 uppercase tracking-wider text-muted-foreground">Contact Info</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-sm">
+                    <Mail className="w-4 h-4 text-muted-foreground" />
+                    <span>{guest.email}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <Phone className="w-4 h-4 text-muted-foreground" />
+                    <span>{guest.phone}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <MapPin className="w-4 h-4 text-muted-foreground" />
+                    <span>London, United Kingdom</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-secondary/20 p-4 rounded-xl border border-border">
+                <h4 className="font-bold text-sm mb-4 uppercase tracking-wider text-muted-foreground">Stay Statistics</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-2xl font-bold text-primary">{guest.stays}</p>
+                    <p className="text-xs text-muted-foreground">Total Stays</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-primary">42</p>
+                    <p className="text-xs text-muted-foreground">Total Nights</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-lg font-bold text-foreground">$18,450</p>
+                    <p className="text-xs text-muted-foreground">Lifetime Spend</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="md:col-span-2 space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+                  <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
+                    <Star className="w-4 h-4 text-amber-500" /> Preferences
+                  </h4>
+                  <ul className="space-y-2">
+                    {guest.preferences.map((pref: string, i: number) => (
+                      <li key={i} className="flex items-center gap-2 text-sm bg-secondary/30 px-3 py-1.5 rounded-lg">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500" /> {pref}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-xl p-4 shadow-sm">
+                  <h4 className="font-bold text-sm mb-3 flex items-center gap-2 text-red-800 dark:text-red-300">
+                    <AlertCircle className="w-4 h-4" /> Allergies & Alerts
+                  </h4>
+                  {guest.allergies.length > 0 ? (
+                    <ul className="space-y-2">
+                      {guest.allergies.map((allergy: string, i: number) => (
+                        <li key={i} className="flex items-center gap-2 text-sm text-red-700 dark:text-red-400 font-medium bg-red-100/50 dark:bg-red-900/20 px-3 py-1.5 rounded-lg">
+                          {allergy}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No known allergies.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-border bg-secondary/30">
+                  <h4 className="font-bold text-sm">Recent Stay History</h4>
+                </div>
+                <table className="w-full text-sm text-left border-collapse">
+                  <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">Dates</th>
+                      <th className="px-4 py-3 font-medium">Room</th>
+                      <th className="px-4 py-2 font-medium text-right">Rate</th>
+                      <th className="px-4 py-2 font-medium text-right">Total Spend</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/50">
+                    <tr className="hover:bg-secondary/30 transition-colors group">
+                      <td className="px-4 py-3">Nov 12 - Nov 15, 2025</td>
+                      <td className="px-4 py-3">Penthouse Suite</td>
+                      <td className="px-4 py-3 text-right">$850</td>
+                      <td className="px-4 py-3 text-right font-medium">$3,240</td>
+                    </tr>
+                    <tr className="hover:bg-secondary/30 transition-colors group">
+                      <td className="px-4 py-3">Aug 05 - Aug 08, 2025</td>
+                      <td className="px-4 py-3">Suite 402</td>
+                      <td className="px-4 py-3 text-right">$650</td>
+                      <td className="px-4 py-3 text-right font-medium">$2,100</td>
+                    </tr>
+                    <tr className="hover:bg-secondary/30 transition-colors group">
+                      <td className="px-4 py-3">Mar 10 - Mar 12, 2025</td>
+                      <td className="px-4 py-3">Suite 310</td>
+                      <td className="px-4 py-3 text-right">$650</td>
+                      <td className="px-4 py-3 text-right font-medium">$1,450</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 py-4 border-t border-border bg-secondary/30 flex items-center justify-end gap-3 sticky bottom-0 z-20">
+          <button onClick={onClose} className="px-4 py-2 bg-card border border-border text-foreground rounded-xl text-sm font-medium hover:bg-secondary transition-colors">
+            Close
+          </button>
+          <button className="px-6 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors flex items-center gap-2">
+            Edit Profile
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function ConciergeDesk() {
+  const [isLogRequestModalOpen, setIsLogRequestModalOpen] = useState(false);
+
+  const requests = [
+    { id: "REQ-101", guest: "Alexander Wright", room: "Penthouse", type: "Restaurant", details: "Reservation at Le Bernardin for 2 at 20:00", status: "Confirmed", time: "Today, 10:00 AM" },
+    { id: "REQ-102", guest: "Elena Rostova", room: "402", type: "Transportation", details: "Airport transfer to JFK tomorrow at 08:00 AM", status: "Pending", time: "Today, 11:30 AM" },
+    { id: "REQ-103", guest: "David Thompson", room: "310", type: "Tickets", details: "2 Tickets for Hamilton tonight", status: "In Progress", time: "Today, 12:15 PM" },
+    { id: "REQ-104", guest: "Sarah Miller", room: "110", type: "Amenities", details: "Extra feather pillows and chamomile tea", status: "Completed", time: "Yesterday, 21:00 PM" },
+  ];
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Confirmed":
+      case "Completed":
+        return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400";
+      case "Pending":
+        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+      case "In Progress":
+        return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
+      default:
+        return "bg-secondary text-secondary-foreground";
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case "Restaurant": return <Coffee className="w-4 h-4" />;
+      case "Transportation": return <Car className="w-4 h-4" />;
+      case "Tickets": return <Star className="w-4 h-4" />;
+      case "Amenities": return <Bed className="w-4 h-4" />;
+      default: return <Info className="w-4 h-4" />;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
+        <div className="flex items-center gap-2 bg-background border border-border rounded-xl px-3 py-2 w-full sm:w-96">
+          <Search className="w-4 h-4 text-muted-foreground" />
+          <input 
+            type="text" 
+            placeholder="Search requests..." 
+            className="bg-transparent border-none focus:outline-none text-sm w-full"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-2 bg-secondary text-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">
+            <Filter className="w-4 h-4" /> Filter
+          </button>
+          <button 
+            onClick={() => setIsLogRequestModalOpen(true)}
+            className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4" /> Log Request
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+              <tr>
+                <th className="px-4 py-3 font-medium">Request ID</th>
+                <th className="px-4 py-3 font-medium">Guest & Room</th>
+                <th className="px-4 py-3 font-medium">Type</th>
+                <th className="px-4 py-3 font-medium">Details</th>
+                <th className="px-4 py-3 font-medium">Logged At</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {requests.map((req) => (
+                <tr key={req.id} className="border-b border-border hover:bg-secondary/20 transition-colors">
+                  <td className="p-4 font-medium text-muted-foreground">{req.id}</td>
+                  <td className="px-4 py-3">
+                    <div className="font-bold">{req.guest}</div>
+                    <div className="text-xs text-muted-foreground">Room {req.room}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <div className="p-1.5 bg-secondary rounded-md text-muted-foreground">
+                        {getTypeIcon(req.type)}
+                      </div>
+                      {req.type}
+                    </div>
+                  </td>
+                  <td className="p-4 text-sm max-w-xs truncate" title={req.details}>{req.details}</td>
+                  <td className="p-4 text-muted-foreground text-sm">{req.time}</td>
+                  <td className="px-4 py-3">
+                    <span className={cn(
+                      "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                      getStatusColor(req.status)
+                    )}>
+                      {req.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button className="px-3 py-1.5 bg-secondary text-foreground rounded-lg text-xs font-medium hover:bg-secondary/80 transition-colors">
+                      Manage
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {isLogRequestModalOpen && (
+          <LogConciergeRequestModal onClose={() => setIsLogRequestModalOpen(false)} />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function LogConciergeRequestModal({ onClose }: { onClose: () => void }) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+    >
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose}></div>
+      <motion.div 
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="bg-card w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-xl border border-border overflow-hidden flex flex-col relative z-10"
+      >
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-secondary/30 sticky top-0 z-20">
+          <div>
+            <h3 className="text-lg font-bold text-foreground">Log Concierge Request</h3>
+            <p className="text-sm text-muted-foreground">Record a new request or inquiry from a guest.</p>
+          </div>
+          <button onClick={onClose} className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="p-6 overflow-y-auto custom-scrollbar">
+          <form className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Guest Name / Room <span className="text-red-500">*</span></label>
+                <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20">
+                  <option value="">Select Guest...</option>
+                  <option value="1">Alexander Wright (Penthouse)</option>
+                  <option value="2">Elena Rostova (402)</option>
+                  <option value="3">David Thompson (310)</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Request Type <span className="text-red-500">*</span></label>
+                <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20">
+                  <option value="">Select Type...</option>
+                  <option value="restaurant">Restaurant Reservation</option>
+                  <option value="transportation">Transportation / Car Service</option>
+                  <option value="tickets">Tickets / Entertainment</option>
+                  <option value="amenities">Room Amenities</option>
+                  <option value="other">Other Inquiry</option>
+                </select>
+              </div>
+              <div className="space-y-2 col-span-2">
+                <label className="text-sm font-medium">Request Details <span className="text-red-500">*</span></label>
+                <textarea 
+                  rows={4} 
+                  className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" 
+                  placeholder="Provide full details of the guest's request..."
+                ></textarea>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Date Required</label>
+                <input type="date" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Time Required</label>
+                <input type="time" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              </div>
+              <div className="space-y-2 col-span-2">
+                <label className="text-sm font-medium">Initial Status</label>
+                <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20">
+                  <option value="pending">Pending (Needs Action)</option>
+                  <option value="in-progress">In Progress (Working on it)</option>
+                  <option value="confirmed">Confirmed (Action Completed)</option>
+                </select>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div className="px-6 py-4 border-t border-border bg-secondary/30 flex items-center justify-end gap-3 sticky bottom-0 z-20">
+          <button onClick={onClose} className="px-4 py-2 bg-card border border-border text-foreground rounded-xl text-sm font-medium hover:bg-secondary transition-colors">
+            Cancel
+          </button>
+          <button className="px-6 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4" />
+            Save Request
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}

@@ -2,38 +2,38 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
 import { 
-  Building2, 
+  Flower2, 
   Plus, 
   Search, 
   Filter, 
-  TrendingUp, 
-  PieChart, 
-  Target, 
-  FileText,
+  Calendar, 
+  Bed, 
+  Users, 
+  Clock,
   X,
   CheckCircle2
 } from "lucide-react";
 import { KPICard } from "../components/ui/KPICard";
 
-interface ExecutiveProps {
+interface SpaAndWellnessProps {
   aiEnabled: boolean;
   activeSubmenu: string;
 }
 
-export function Executive({ aiEnabled, activeSubmenu }: ExecutiveProps) {
+export function SpaAndWellness({ aiEnabled, activeSubmenu }: SpaAndWellnessProps) {
   const renderContent = () => {
     switch (activeSubmenu) {
       case "Overview":
-        return <ExecutiveOverview />;
-      case "Property Performance":
-        return <PropertyPerformance />;
-      case "Strategic Planning":
-        return <StrategicPlanning />;
-      case "Compliance & Risk":
-        return <ComplianceAndRisk />;
+        return <SpaOverview />;
+      case "Appointments":
+        return <Appointments />;
+      case "Treatment Rooms":
+        return <TreatmentRooms />;
+      case "Memberships":
+        return <Memberships />;
       case "Settings":
 
-        return <ExecutiveSettings />;
+        return <SpaAndWellnessSettings />;
 
       default:
         return <GenericView title={activeSubmenu} />;
@@ -45,7 +45,7 @@ export function Executive({ aiEnabled, activeSubmenu }: ExecutiveProps) {
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-[1.5cm] px-[1.5cm] pt-2 pb-4 border-b border-border mb-10">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xs font-bold text-primary uppercase tracking-wider mb-1">Executive</h2>
+            <h2 className="text-xs font-bold text-primary uppercase tracking-wider mb-1">Spa & Wellness</h2>
             <h1 className="text-2xl font-bold text-foreground">{activeSubmenu}</h1>
             <p className="text-sm text-muted-foreground mt-1">Manage and view {activeSubmenu.toLowerCase()} information.</p>
           </div>
@@ -66,40 +66,40 @@ export function Executive({ aiEnabled, activeSubmenu }: ExecutiveProps) {
   );
 }
 
-function ExecutiveOverview() {
+function SpaOverview() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KPICard 
-          label="GOPPAR" 
-          value="$124.50" 
-          change="+8.2% vs last year" 
+          label="Today's Appointments" 
+          value="24" 
+          change="8 remaining" 
           trend="up" 
-          icon={TrendingUp} 
-          color="emerald" 
-        />
-        <KPICard 
-          label="Market Penetration" 
-          value="105.2" 
-          change="Leading compset" 
-          trend="up" 
-          icon={Target} 
+          icon={Calendar} 
           color="blue" 
         />
         <KPICard 
-          label="EBITDA Margin" 
-          value="32.4%" 
-          change="+1.5% vs budget" 
+          label="Room Utilization" 
+          value="85%" 
+          change="+5% vs last week" 
           trend="up" 
-          icon={PieChart} 
+          icon={Bed} 
+          color="emerald" 
+        />
+        <KPICard 
+          label="Active Memberships" 
+          value="156" 
+          change="+12 this month" 
+          trend="up" 
+          icon={Users} 
           color="purple" 
         />
         <KPICard 
-          label="Compliance Score" 
-          value="98/100" 
-          change="Audit passed" 
+          label="Avg Treatment Time" 
+          value="65m" 
+          change="On target" 
           trend="neutral" 
-          icon={FileText} 
+          icon={Clock} 
           color="amber" 
         />
       </div>
@@ -107,44 +107,35 @@ function ExecutiveOverview() {
   );
 }
 
-function PropertyPerformance() {
-  return (
-    <div className="flex flex-col items-center justify-center h-[40vh] text-center">
-      <h2 className="text-xl font-bold text-foreground mb-2">Property Performance</h2>
-      <p className="text-muted-foreground">View high-level property performance metrics here.</p>
-    </div>
-  );
-}
-
-function StrategicPlanning() {
-  const [isAddGoalModalOpen, setIsAddGoalModalOpen] = useState(false);
+function Appointments() {
+  const [isAddAppointmentModalOpen, setIsAddAppointmentModalOpen] = useState(false);
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center bg-card p-4 rounded-2xl border border-border shadow-sm">
-        <h3 className="font-semibold">Strategic Goals</h3>
+        <h3 className="font-semibold">Spa Appointments</h3>
         <button 
-          onClick={() => setIsAddGoalModalOpen(true)}
+          onClick={() => setIsAddAppointmentModalOpen(true)}
           className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
         >
-          <Plus className="w-4 h-4" /> New Strategic Goal
+          <Plus className="w-4 h-4" /> New Appointment
         </button>
       </div>
       
       <div className="flex flex-col items-center justify-center h-[30vh] text-center border border-dashed border-border rounded-2xl">
-        <p className="text-muted-foreground">Strategic goals list will appear here.</p>
+        <p className="text-muted-foreground">Appointments calendar will appear here.</p>
       </div>
 
       <AnimatePresence>
-        {isAddGoalModalOpen && (
-          <AddGoalModal onClose={() => setIsAddGoalModalOpen(false)} />
+        {isAddAppointmentModalOpen && (
+          <AddAppointmentModal onClose={() => setIsAddAppointmentModalOpen(false)} />
         )}
       </AnimatePresence>
     </div>
   );
 }
 
-function AddGoalModal({ onClose }: { onClose: () => void }) {
+function AddAppointmentModal({ onClose }: { onClose: () => void }) {
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -161,8 +152,8 @@ function AddGoalModal({ onClose }: { onClose: () => void }) {
       >
         <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-secondary/30 sticky top-0 z-20">
           <div>
-            <h3 className="text-lg font-bold text-foreground">New Strategic Goal</h3>
-            <p className="text-sm text-muted-foreground">Define a new high-level objective for the property.</p>
+            <h3 className="text-lg font-bold text-foreground">New Spa Appointment</h3>
+            <p className="text-sm text-muted-foreground">Schedule a treatment for a guest.</p>
           </div>
           <button onClick={onClose} className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors">
             <X className="w-5 h-5" />
@@ -173,29 +164,38 @@ function AddGoalModal({ onClose }: { onClose: () => void }) {
           <form className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium">Goal Title <span className="text-red-500">*</span></label>
-                <input type="text" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="e.g. Increase Q3 RevPAR by 5%" />
+                <label className="text-sm font-medium">Guest Name <span className="text-red-500">*</span></label>
+                <input type="text" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="Search guest or enter name" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Category</label>
+                <label className="text-sm font-medium">Treatment Type <span className="text-red-500">*</span></label>
                 <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
-                  <option>Financial</option>
-                  <option>Guest Experience</option>
-                  <option>Operational Efficiency</option>
-                  <option>Employee Engagement</option>
+                  <option>Swedish Massage (60m)</option>
+                  <option>Deep Tissue Massage (90m)</option>
+                  <option>Facial Rejuvenation (60m)</option>
+                  <option>Hot Stone Therapy (90m)</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Target Date <span className="text-red-500">*</span></label>
+                <label className="text-sm font-medium">Therapist</label>
+                <select className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none">
+                  <option>Any Available</option>
+                  <option>Sarah Jenkins</option>
+                  <option>Michael Chen</option>
+                  <option>Emma Watson</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Date <span className="text-red-500">*</span></label>
                 <input type="date" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" />
               </div>
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium">Key Results (Metrics)</label>
-                <textarea className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-[100px]" placeholder="Define how success will be measured..."></textarea>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Time <span className="text-red-500">*</span></label>
+                <input type="time" className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20" />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium">Description & Strategy</label>
-                <textarea className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-[100px]" placeholder="Detail the strategy to achieve this goal..."></textarea>
+                <label className="text-sm font-medium">Special Requests / Health Notes</label>
+                <textarea className="w-full px-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-[100px]" placeholder="Enter any allergies, injuries, or preferences..."></textarea>
               </div>
             </div>
           </form>
@@ -207,7 +207,7 @@ function AddGoalModal({ onClose }: { onClose: () => void }) {
           </button>
           <button className="px-6 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4" />
-            Save Goal
+            Book Appointment
           </button>
         </div>
       </motion.div>
@@ -215,28 +215,37 @@ function AddGoalModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function ComplianceAndRisk() {
+function TreatmentRooms() {
   return (
     <div className="flex flex-col items-center justify-center h-[40vh] text-center">
-      <h2 className="text-xl font-bold text-foreground mb-2">Compliance & Risk</h2>
-      <p className="text-muted-foreground">Manage compliance and risk assessments here.</p>
+      <h2 className="text-xl font-bold text-foreground mb-2">Treatment Rooms</h2>
+      <p className="text-muted-foreground">Manage room availability here.</p>
+    </div>
+  );
+}
+
+function Memberships() {
+  return (
+    <div className="flex flex-col items-center justify-center h-[40vh] text-center">
+      <h2 className="text-xl font-bold text-foreground mb-2">Memberships</h2>
+      <p className="text-muted-foreground">Manage spa memberships here.</p>
     </div>
   );
 }
 
 
 
-function ExecutiveSettings() {
+function SpaAndWellnessSettings() {
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
         <div className="p-6 border-b border-border">
-          <h3 className="text-lg font-bold text-foreground">Executive Settings</h3>
+          <h3 className="text-lg font-bold text-foreground">Spa And Wellness Settings</h3>
           <p className="text-sm text-muted-foreground">Configure module-specific parameters and preferences.</p>
         </div>
         <div className="p-6 space-y-8">
           <div className="p-8 text-center text-muted-foreground border border-dashed border-border rounded-xl">
-            <p>Settings configuration for Executive will be available here.</p>
+            <p>Settings configuration for SpaAndWellness will be available here.</p>
           </div>
         </div>
         <div className="p-6 border-t border-border bg-secondary/30 flex justify-end">

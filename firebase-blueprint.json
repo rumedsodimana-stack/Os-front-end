@@ -1,0 +1,213 @@
+{
+  "entities": {
+    "Notification": {
+      "title": "Notification",
+      "description": "A system-wide notification for staff.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["info", "success", "warning", "error", "urgent"] },
+        "department": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "read": { "type": "boolean" },
+        "uid": { "type": "string", "description": "The UID of the user who should receive this notification, or 'global' for all staff." }
+      },
+      "required": ["title", "message", "type", "timestamp", "read"]
+    },
+    "Guest": {
+      "title": "Guest",
+      "description": "A guest profile in the hotel system.",
+      "type": "object",
+      "properties": {
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "location": { "type": "string" },
+        "loyaltyStatus": { "type": "string", "enum": ["Standard", "Silver", "Gold", "Platinum", "Diamond"] },
+        "vip": { "type": "boolean" },
+        "preferences": { "type": "array", "items": { "type": "string" } },
+        "lastStay": { "type": "string", "format": "date-time" },
+        "totalStays": { "type": "integer" },
+        "totalSpend": { "type": "number" },
+        "loyaltyPoints": { "type": "integer" },
+        "avatar": { "type": "string" },
+        "notes": { "type": "string" },
+        "stayHistory": { 
+          "type": "array", 
+          "items": { 
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "date": { "type": "string" },
+              "roomType": { "type": "string" },
+              "amount": { "type": "number" },
+              "status": { "type": "string", "enum": ["Completed", "Cancelled", "Upcoming"] }
+            }
+          }
+        },
+        "spendData": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "month": { "type": "string" },
+              "amount": { "type": "number" }
+            }
+          }
+        }
+      },
+      "required": ["firstName", "lastName", "loyaltyStatus", "vip", "totalStays", "totalSpend", "loyaltyPoints"]
+    },
+    "Room": {
+      "title": "Room",
+      "description": "A hotel room.",
+      "type": "object",
+      "properties": {
+        "number": { "type": "string" },
+        "type": { "type": "string" },
+        "status": { "type": "string", "enum": ["Vacant", "Stay Over", "Arrival", "Departure", "OOS"] },
+        "hkStatus": { "type": "string", "enum": ["Clean", "Dirty", "Inspected"] },
+        "guestId": { "type": "string" }
+      },
+      "required": ["number", "type", "status", "hkStatus"]
+    },
+    "MenuItem": {
+      "title": "MenuItem",
+      "description": "A food or beverage item.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "stock": { "type": "integer" },
+        "image": { "type": "string" },
+        "available": { "type": "boolean" },
+        "rating": { "type": "number" },
+        "prepTime": { "type": "string" }
+      },
+      "required": ["name", "price", "category", "stock", "available"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "A POS order.",
+      "type": "object",
+      "properties": {
+        "guestId": { "type": "string" },
+        "roomNumber": { "type": "string" },
+        "items": { "type": "array", "items": { "type": "object" } },
+        "total": { "type": "number" },
+        "status": { "type": "string", "enum": ["Pending", "Preparing", "Delivered", "Cancelled"] },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["items", "total", "status", "timestamp"]
+    },
+    "Table": {
+      "title": "Table",
+      "description": "A restaurant table.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "capacity": { "type": "integer" },
+        "status": { "type": "string", "enum": ["Available", "Occupied", "Reserved", "Needs Cleaning"] },
+        "time": { "type": "string" },
+        "server": { "type": "string" },
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      },
+      "required": ["id", "capacity", "status", "x", "y"]
+    },
+    "Room": {
+      "title": "Room",
+      "description": "A hotel room.",
+      "type": "object",
+      "properties": {
+        "number": { "type": "string" },
+        "type": { "type": "string" },
+        "status": { "type": "string", "enum": ["Stay Over", "Arrival", "Departure", "OOS", "Vacant"] },
+        "hkStatus": { "type": "string", "enum": ["Clean", "Dirty", "Inspected"] },
+        "guestId": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "required": ["number", "type", "status", "hkStatus"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "A hotel booking.",
+      "type": "object",
+      "properties": {
+        "guestName": { "type": "string" },
+        "roomNumber": { "type": "string" },
+        "checkIn": { "type": "string" },
+        "checkOut": { "type": "string" },
+        "status": { "type": "string", "enum": ["Confirmed", "Checked In", "Checked Out", "Cancelled"] },
+        "amount": { "type": "number" }
+      },
+      "required": ["guestName", "roomNumber", "checkIn", "checkOut", "status", "amount"]
+    },
+    "Folio": {
+      "title": "Folio",
+      "description": "A guest's financial record for a stay.",
+      "type": "object",
+      "properties": {
+        "guestId": { "type": "string" },
+        "bookingId": { "type": "string" },
+        "roomNumber": { "type": "string" },
+        "status": { "type": "string", "enum": ["Open", "Closed"] },
+        "totalBalance": { "type": "number" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "description": { "type": "string" },
+              "amount": { "type": "number" },
+              "type": { "type": "string", "enum": ["Charge", "Payment", "Adjustment"] },
+              "category": { "type": "string", "enum": ["Room", "F&B", "Tax", "Other"] },
+              "timestamp": { "type": "string", "format": "date-time" }
+            },
+            "required": ["id", "description", "amount", "type", "category", "timestamp"]
+          }
+        }
+      },
+      "required": ["guestId", "bookingId", "roomNumber", "status", "totalBalance", "items"]
+    }
+  },
+  "firestore": {
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "System-wide notifications."
+    },
+    "/guests/{guestId}": {
+      "schema": "Guest",
+      "description": "Guest profiles."
+    },
+    "/rooms/{roomNumber}": {
+      "schema": "Room",
+      "description": "Hotel rooms."
+    },
+    "/menu/{itemId}": {
+      "schema": "MenuItem",
+      "description": "F&B Menu items."
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "F&B orders."
+    },
+    "/tables/{tableId}": {
+      "schema": "Table",
+      "description": "Restaurant tables."
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Hotel bookings."
+    },
+    "/folios/{folioId}": {
+      "schema": "Folio",
+      "description": "Guest folios and billing."
+    }
+  }
+}

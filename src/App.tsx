@@ -1,126 +1,180 @@
 import React, { useState } from "react";
-import { Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./components/theme-provider";
-import { ThemeApplier } from "./components/ThemeApplier";
 import { Layout } from "./components/Layout";
+import { NotificationProvider } from "./context/NotificationContext";
+import { GuestProvider } from "./context/GuestContext";
+import { MenuProvider } from "./context/MenuContext";
+import { TableProvider } from "./context/TableContext";
+import { RoomProvider } from "./context/RoomContext";
+import { BookingProvider } from "./context/BookingContext";
+import { FolioProvider } from "./context/FolioContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import { Hotel } from "lucide-react";
 import { FrontDesk } from "./pages/FrontDesk";
 import { Housekeeping } from "./pages/Housekeeping";
 import { FoodAndBeverage } from "./pages/FoodAndBeverage";
-import { SalesRevenue } from "./pages/SalesRevenue";
-import { Team } from "./pages/Team";
-import { Engineering as Maintenance } from "./pages/Engineering";
-import { Insights } from "./pages/Insights";
-import { Guests } from "./pages/Guests";
-import { Finance } from "./pages/Finance";
+import { HumanResources } from "./pages/HumanResources";
+import { Configuration } from "./pages/Configuration";
+import { Purchasing } from "./pages/Purchasing";
+import { SalesAndRevenue } from "./pages/SalesAndRevenue";
+import { Engineering } from "./pages/Engineering";
+import { Concierge } from "./pages/Concierge";
+import { EventsAndBanquets } from "./pages/EventsAndBanquets";
+import { MarketingAndPR } from "./pages/MarketingAndPR";
+import { Connect } from "./pages/Connect";
+import { GuestRelations } from "./pages/GuestRelations";
+import { FinanceAndAccounting } from "./pages/FinanceAndAccounting";
+import { SpaAndWellness } from "./pages/SpaAndWellness";
+import { Executive } from "./pages/Executive";
 import { Security } from "./pages/Security";
-import { Comms } from "./pages/Comms";
-import { Events } from "./pages/Events";
-import { Procurement } from "./pages/Procurement";
-import { Portfolio } from "./pages/Portfolio";
-import { Settings } from "./pages/Settings";
-import { Login } from "./pages/Login";
-import { StyleGuide } from "./pages/StyleGuide";
-import { GuestApp } from "./pages/GuestApp";
+import { ITAndSystems } from "./pages/ITAndSystems";
+import { Reservations } from "./pages/Reservations";
+import { LegalAndCompliance } from "./pages/LegalAndCompliance";
+import { Readme } from "./pages/Readme";
 
-export type Department =
-  | "Dashboard"
-  | "Front Desk"
-  | "Housekeeping"
-  | "Food & Beverage"
-  | "Sales & Revenue"
-  | "Team"
-  | "Maintenance"
-  | "Insights"
-  | "Guests"
-  | "Finance"
+type Department = 
+  | "Front Desk" 
+  | "Housekeeping" 
+  | "Food & Beverage" 
+  | "Sales & Revenue" 
+  | "Human Resources" 
+  | "Engineering" 
+  | "Executive"
+  | "Concierge"
+  | "Spa & Wellness"
+  | "Events & Banquets"
   | "Security"
-  | "Comms"
-  | "Events"
-  | "Procurement"
-  | "Portfolio"
-  | "Settings";
-
-function DashboardApp() {
-  const [activeDepartment, setActiveDepartment] = useState<Department>("Dashboard");
-  const [activeSubmenu, setActiveSubmenu] = useState<string>("Overview");
-  const [aiEnabled, setAiEnabled] = useState(true);
-
-  return (
-    <Layout
-      activeDepartment={activeDepartment}
-      setActiveDepartment={setActiveDepartment}
-      activeSubmenu={activeSubmenu}
-      setActiveSubmenu={setActiveSubmenu}
-      aiEnabled={aiEnabled}
-      setAiEnabled={setAiEnabled}
-    >
-      {(activeDepartment === "Dashboard" || activeDepartment === "Front Desk") && (
-        <FrontDesk aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
-      )}
-      {activeDepartment === "Housekeeping" && (
-        <Housekeeping aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
-      )}
-      {activeDepartment === "Food & Beverage" && (
-        <FoodAndBeverage aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
-      )}
-      {activeDepartment === "Sales & Revenue" && (
-        <SalesRevenue aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
-      )}
-      {activeDepartment === "Team" && (
-        <Team aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
-      )}
-      {activeDepartment === "Maintenance" && (
-        <Maintenance aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
-      )}
-      {activeDepartment === "Insights" && (
-        <Insights aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
-      )}
-      {activeDepartment === "Guests" && (
-        <Guests aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
-      )}
-      {activeDepartment === "Finance" && (
-        <Finance aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
-      )}
-      {activeDepartment === "Security" && (
-        <Security aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
-      )}
-      {activeDepartment === "Comms" && (
-        <Comms aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
-      )}
-      {activeDepartment === "Events" && (
-        <Events aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
-      )}
-      {activeDepartment === "Procurement" && (
-        <Procurement aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
-      )}
-      {activeDepartment === "Portfolio" && (
-        <Portfolio aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
-      )}
-      {activeDepartment === "Settings" && (
-        <Settings aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />
-      )}
-    </Layout>
-  );
-}
+  | "IT & Systems"
+  | "Finance & Accounting"
+  | "Marketing & PR"
+  | "Purchasing & Procurement"
+  | "Reservations"
+  | "Legal & Compliance"
+  | "Configuration"
+  | "Guest Relations"
+  | "Connect"
+  | "Readme";
 
 export default function App() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="travelbook-hotel-os-theme">
-      <ThemeApplier />
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/style-guide" element={<StyleGuideWrapper />} />
-        <Route path="/guest" element={<GuestApp />} />
-        <Route path="/*" element={<DashboardApp />} />
-      </Routes>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider defaultTheme="system" storageKey="omnistay-theme">
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 
-function StyleGuideWrapper() {
+function AppContent() {
+  const { user, loading } = useAuth();
+  const [activeDepartment, setActiveDepartment] = useState<Department>("Front Desk");
+  const [activeSubmenu, setActiveSubmenu] = useState<string>("Overview");
+  const [aiEnabled, setAiEnabled] = useState(true);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginScreen />;
+  }
+
   return (
-    <div className="min-h-screen bg-background font-sans">
-      <StyleGuide />
+    <NotificationProvider>
+      <GuestProvider>
+        <MenuProvider>
+          <TableProvider>
+            <RoomProvider>
+              <BookingProvider>
+                <FolioProvider>
+                  <Layout 
+                    activeDepartment={activeDepartment} 
+                    setActiveDepartment={setActiveDepartment}
+                    activeSubmenu={activeSubmenu}
+                    setActiveSubmenu={setActiveSubmenu}
+                    aiEnabled={aiEnabled}
+                    setAiEnabled={setAiEnabled}
+                  >
+                    {activeDepartment === "Front Desk" && <FrontDesk aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Housekeeping" && <Housekeeping aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Food & Beverage" && <FoodAndBeverage aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Human Resources" && <HumanResources aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Configuration" && <Configuration activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Purchasing & Procurement" && <Purchasing aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Sales & Revenue" && <SalesAndRevenue aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Engineering" && <Engineering aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Concierge" && <Concierge aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Events & Banquets" && <EventsAndBanquets aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Marketing & PR" && <MarketingAndPR aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Connect" && <Connect aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Guest Relations" && <GuestRelations aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Finance & Accounting" && <FinanceAndAccounting aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Spa & Wellness" && <SpaAndWellness aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Executive" && <Executive aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Security" && <Security aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "IT & Systems" && <ITAndSystems aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Reservations" && <Reservations aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Legal & Compliance" && <LegalAndCompliance aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Readme" && <Readme activeSubmenu={activeSubmenu} />}
+                  </Layout>
+                </FolioProvider>
+              </BookingProvider>
+            </RoomProvider>
+          </TableProvider>
+        </MenuProvider>
+      </GuestProvider>
+    </NotificationProvider>
+  );
+}
+
+function LoginScreen() {
+  const { login } = useAuth();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  const handleLogin = async () => {
+    setIsLoggingIn(true);
+    try {
+      await login();
+    } catch (error) {
+      console.error("Login failed:", error);
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="max-w-md w-full bg-card border border-border rounded-3xl p-10 shadow-2xl text-center">
+        <div className="w-20 h-20 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner">
+          <Hotel className="w-10 h-10" />
+        </div>
+        <h1 className="text-3xl font-bold mb-2 tracking-tight">OmniStay</h1>
+        <p className="text-muted-foreground mb-10">
+          Advanced Hotel Management & Intelligence Platform
+        </p>
+        <button
+          onClick={handleLogin}
+          disabled={isLoggingIn}
+          className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-primary text-primary-foreground rounded-2xl font-bold hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50"
+        >
+          {isLoggingIn ? (
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 bg-white rounded-full p-0.5" alt="Google" />
+          )}
+          Sign in with Google
+        </button>
+        <p className="mt-8 text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+          Authorized Personnel Only
+        </p>
+      </div>
     </div>
   );
 }

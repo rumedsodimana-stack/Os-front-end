@@ -1,0 +1,191 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: notifications
+    // Document ID: notificationId
+    // Fields:
+    //   - title: string (required)
+    //   - message: string (required)
+    //   - type: string (required, enum: info, success, warning, error, urgent)
+    //   - department: string (optional)
+    //   - timestamp: timestamp (required)
+    //   - read: bool (required)
+    //   - uid: string (optional, 'global' or specific user UID)
+    //
+    // Collection: guests
+    // Document ID: guestId
+    // Fields:
+    //   - name: string (required)
+    //   - email: string (optional, format: email)
+    //   - phone: string (optional)
+    //   - loyaltyStatus: string (optional, enum: Standard, Silver, Gold, Platinum)
+    //   - vip: bool (optional)
+    //   - preferences: list (optional)
+    //
+    // Collection: rooms
+    // Document ID: roomNumber
+    // Fields:
+    //   - number: string (required)
+    //   - type: string (required)
+    //   - status: string (required, enum: Vacant, Stay Over, Arrival, Departure, OOS)
+    //   - hkStatus: string (required, enum: Clean, Dirty, Inspected)
+    //   - guestId: string (optional)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "rumedsodimana@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string &&
+        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidNotification(data) {
+      return hasRequiredFields(['title', 'message', 'type', 'timestamp', 'read']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 100 &&
+             data.message is string && data.message.size() > 0 && data.message.size() < 500 &&
+             data.type in ['info', 'success', 'warning', 'error', 'urgent'] &&
+             data.timestamp is timestamp &&
+             data.read is bool &&
+             (!('department' in data) || (data.department is string && data.department.size() < 50)) &&
+             (!('uid' in data) || (data.uid is string && data.uid.size() < 50));
+    }
+
+    function isValidGuest(data) {
+      return hasRequiredFields(['firstName', 'lastName']) &&
+             data.firstName is string && data.firstName.size() > 0 && data.firstName.size() < 50 &&
+             data.lastName is string && data.lastName.size() > 0 && data.lastName.size() < 50 &&
+             (!('email' in data) || isValidEmail(data.email)) &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() < 20)) &&
+             (!('loyaltyStatus' in data) || data.loyaltyStatus in ['Standard', 'Silver', 'Gold', 'Platinum', 'Diamond']) &&
+             (!('vip' in data) || data.vip is bool) &&
+             (!('preferences' in data) || data.preferences is list);
+    }
+
+    function isValidRoom(data) {
+      return hasRequiredFields(['number', 'type', 'status', 'hkStatus']) &&
+             data.number is string && data.number.size() > 0 && data.number.size() < 10 &&
+             data.type is string && data.type.size() > 0 && data.type.size() < 50 &&
+             data.status in ['Vacant', 'Stay Over', 'Arrival', 'Departure', 'OOS'] &&
+             data.hkStatus in ['Clean', 'Dirty', 'Inspected'] &&
+             (!('guestId' in data) || (data.guestId is string || data.guestId == null)) &&
+             (!('guestName' in data) || (data.guestName is string || data.guestName == null)) &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() < 500));
+    }
+
+    function isValidBooking(data) {
+      return hasRequiredFields(['guestName', 'roomNumber', 'checkIn', 'checkOut', 'status', 'amount']) &&
+             data.guestName is string && data.guestName.size() > 0 &&
+             data.roomNumber is string &&
+             data.checkIn is string &&
+             data.checkOut is string &&
+             data.status in ['Confirmed', 'Checked In', 'Checked Out', 'Cancelled'] &&
+             data.amount is number;
+    }
+
+    function isValidFolio(data) {
+      return hasRequiredFields(['guestId', 'bookingId', 'roomNumber', 'status', 'totalBalance', 'items']) &&
+             data.guestId is string &&
+             data.bookingId is string &&
+             data.roomNumber is string &&
+             data.status in ['Open', 'Closed'] &&
+             data.totalBalance is number &&
+             data.items is list;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidNotification(request.resource.data);
+      allow update: if isAuthenticated() && isValidNotification(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /guests/{guestId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidGuest(request.resource.data);
+      allow update: if isAuthenticated() && isValidGuest(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /rooms/{roomNumber} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() && isValidRoom(request.resource.data);
+      allow update: if isAuthenticated() && isValidRoom(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /bookings/{bookingId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidBooking(request.resource.data);
+      allow update: if isAuthenticated() && isValidBooking(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /menu/{itemId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    match /folios/{folioId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidFolio(request.resource.data);
+      allow update: if isAuthenticated() && isValidFolio(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /tables/{tableId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /test/connection {
+      allow read: if isAuthenticated();
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow update: if isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+  }
+}

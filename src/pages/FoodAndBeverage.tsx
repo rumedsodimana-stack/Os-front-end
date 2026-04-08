@@ -1,6 +1,9 @@
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
+import { useMenu, MenuItem } from "../context/MenuContext";
+import { useTables, Table } from "../context/TableContext";
+import { KPICard } from "../components/ui/KPICard";
 import { 
   UtensilsCrossed, 
   Search, 
@@ -22,9 +25,13 @@ import {
   Printer,
   Send,
   BedDouble,
-  BarChart2
+  Sparkles,
+  X,
+  CheckCircle2,
+  AlertCircle,
+  Calendar
 } from "lucide-react";
-import { KpiStrip, LegendBar, SectionSearch, SectionHeader, PageShell } from "../components/shared";
+import { GoogleGenAI } from "@google/genai";
 
 interface FoodAndBeverageProps {
   aiEnabled: boolean;
@@ -32,6 +39,16 @@ interface FoodAndBeverageProps {
 }
 
 export function FoodAndBeverage({ aiEnabled, activeSubmenu = "Overview" }: FoodAndBeverageProps) {
+  const { loading } = useMenu();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   const renderContent = () => {
     switch (activeSubmenu) {
       case "Overview":
@@ -39,76 +56,114 @@ export function FoodAndBeverage({ aiEnabled, activeSubmenu = "Overview" }: FoodA
       case "Smart Menu (4D)":
         return <SmartMenu4D />;
       case "POS":
-        return <POSHub />;
+        return <POSSystem />;
       case "Table Management":
         return <TableManagement />;
       case "Room Service":
         return <RoomService />;
-      case "Bar":
-        return <BarManagement />;
       case "Inventory":
         return <FAndBInventory />;
+      case "Settings":
+        return <FAndBSettings />;
       default:
-        return null;
+        return <GenericView title={activeSubmenu} />;
     }
   };
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={activeSubmenu}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.2 }}
-      >
-        {renderContent()}
-      </motion.div>
-    </AnimatePresence>
+    <div className="max-w-7xl mx-auto h-full">
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-[1.5cm] px-[1.5cm] pt-2 pb-4 border-b border-border mb-10">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xs font-bold text-primary uppercase tracking-wider mb-1">Food & Beverage</h2>
+            <h1 className="text-2xl font-bold text-foreground">{activeSubmenu}</h1>
+            <p className="text-sm text-muted-foreground mt-1">Manage and view {activeSubmenu.toLowerCase()} information.</p>
+          </div>
+        </div>
+      </div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeSubmenu}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2 }}
+        >
+          {renderContent()}
+        </motion.div>
+      </AnimatePresence>
+    </div>
   );
 }
 
 function FAndBOverview({ aiEnabled }: { aiEnabled: boolean }) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const { menuItems, orders } = useMenu();
+  
+  const todayRevenue = orders
+    .filter(o => o.status === "Delivered")
+    .reduce((sum, o) => sum + o.total, 0);
+  
+  const activeOrdersCount = orders.filter(o => ["Pending", "Preparing"].includes(o.status)).length;
+  const lowStockItems = menuItems.filter(i => i.stock < 10).length;
+
   return (
-    <PageShell
-      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search F&B..." />}
-      header={<SectionHeader icon={UtensilsCrossed} title="Food & Beverage Overview" subtitle="Live F&B metrics, orders, and kitchen activity" />}
-      kpi={<KpiStrip
-        items={[
-          { color: "bg-blue-500", value: "$4,250", label: "Today's Revenue" },
-          { color: "bg-amber-500", value: "24", label: "Active Orders" },
-          { color: "bg-emerald-500", value: "18m", label: "Avg Prep Time" },
-          { color: "bg-rose-500", value: "12", label: "Low Stock Items" },
-          { color: "bg-violet-500", value: "5", label: "Active Outlets" },
-        ]}
-      />}
-    />
+    <div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <KPICard 
+          label="Today's Revenue" 
+          value={`$${todayRevenue.toLocaleString()}`} 
+          change="Real-time" 
+          trend="up" 
+          icon={UtensilsCrossed} 
+          color="blue" 
+        />
+        <KPICard 
+          label="Active Orders" 
+          value={activeOrdersCount.toString()} 
+          change="Needs attention" 
+          trend="up" 
+          icon={ShoppingCart} 
+          color="amber" 
+        />
+        <KPICard 
+          label="Avg Prep Time" 
+          value="18m" 
+          change="On target" 
+          trend="neutral" 
+          icon={Clock} 
+          color="emerald" 
+        />
+        <KPICard 
+          label="Low Stock Items" 
+          value={lowStockItems.toString()} 
+          change="Needs attention" 
+          trend="down" 
+          icon={Info} 
+          color="rose" 
+        />
+      </div>
+    </div>
   );
 }
 
 // 4D Interactive Smart Menu
 function SmartMenu4D() {
+  const { menuItems, placeOrder } = useMenu();
   const [activeCategory, setActiveCategory] = useState("All");
-  const [cart, setCart] = useState<{item: any, quantity: number}[]>([]);
+  const [cart, setCart] = useState<{item: MenuItem, quantity: number}[]>([]);
+  const [selectedItemForWine, setSelectedItemForWine] = useState<MenuItem | null>(null);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const categories = ["All", "Starters", "Mains", "Desserts", "Beverages"];
-
-  const menuItems = [
-    { id: 1, name: "Truffle Risotto", category: "Mains", price: 28, prepTime: "25m", rating: 4.8, image: "https://images.unsplash.com/photo-1633337474564-1d9e23434199?q=80&w=800&auto=format&fit=crop", description: "Creamy arborio rice with wild mushrooms and black truffle shavings." },
-    { id: 2, name: "Wagyu Beef Burger", category: "Mains", price: 32, prepTime: "20m", rating: 4.9, image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=800&auto=format&fit=crop", description: "Premium wagyu patty, caramelized onions, aged cheddar, brioche bun." },
-    { id: 3, name: "Burrata Salad", category: "Starters", price: 18, prepTime: "10m", rating: 4.7, image: "https://images.unsplash.com/photo-1608897013039-887f21d8c804?q=80&w=800&auto=format&fit=crop", description: "Fresh burrata, heirloom tomatoes, basil pesto, balsamic glaze." },
-    { id: 4, name: "Molten Lava Cake", category: "Desserts", price: 14, prepTime: "15m", rating: 4.9, image: "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?q=80&w=800&auto=format&fit=crop", description: "Warm chocolate cake with a gooey center, served with vanilla bean ice cream." },
-    { id: 5, name: "Artisan Coffee", category: "Beverages", price: 6, prepTime: "5m", rating: 4.6, image: "https://images.unsplash.com/photo-1497935586351-b67a49e012bf?q=80&w=800&auto=format&fit=crop", description: "Locally roasted single-origin espresso with steamed milk." },
-    { id: 6, name: "Signature Cocktail", category: "Beverages", price: 16, prepTime: "8m", rating: 4.8, image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=800&auto=format&fit=crop", description: "Gin, elderflower, fresh cucumber, and a hint of lime." },
-  ];
 
   const filteredItems = useMemo(() => {
     if (activeCategory === "All") return menuItems;
     return menuItems.filter(item => item.category === activeCategory);
-  }, [activeCategory]);
+  }, [activeCategory, menuItems]);
 
-  const addToCart = (item: any) => {
+  const addToCart = (item: MenuItem) => {
+    if (item.stock <= 0) return;
+    
     setCart(prev => {
       const existing = prev.find(i => i.item.id === item.id);
       if (existing) {
@@ -118,24 +173,33 @@ function SmartMenu4D() {
     });
   };
 
+  const handlePlaceOrder = async () => {
+    if (cart.length === 0) return;
+    setIsPlacingOrder(true);
+    try {
+      await placeOrder({
+        items: cart.map(c => ({
+          itemId: c.item.id,
+          name: c.item.name,
+          quantity: c.quantity,
+          price: c.item.price
+        })),
+        total: cart.reduce((sum, c) => sum + (c.item.price * c.quantity), 0)
+      });
+      setCart([]);
+    } catch (error) {
+      console.error("Order failed:", error);
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  };
+
   const cartTotal = cart.reduce((sum, {item, quantity}) => sum + (item.price * quantity), 0);
 
-  const [searchQuery, setSearchQuery] = useState("");
   return (
-    <PageShell
-      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search menu..." />}
-      header={<SectionHeader icon={UtensilsCrossed} title="Interactive Smart Menu" subtitle="Immersive dining experience — tilt cards to view 4D preview" />}
-      kpi={<KpiStrip items={[
-        { color: "bg-blue-500", value: menuItems.length, label: "Menu Items" },
-        { color: "bg-amber-500", value: categories.length - 1, label: "Categories" },
-        { color: "bg-emerald-500", value: `$${cartTotal.toFixed(2)}`, label: "Cart Total" },
-        { color: "bg-violet-500", value: cart.reduce((s, c) => s + c.quantity, 0), label: "Items in Cart" },
-        { color: "bg-rose-500", value: filteredItems.length, label: "Showing" },
-      ]} />}
-    >
     <div className="flex flex-col lg:flex-row gap-8">
       <div className="flex-1">
-        <div className="mb-4">
+        <div className="mb-6">
           {/* Categories */}
           <div className="flex flex-wrap items-center gap-2 bg-card p-2 rounded-2xl border border-border shadow-sm">
             {categories.map(category => (
@@ -158,7 +222,12 @@ function SmartMenu4D() {
         {/* 4D Menu Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-8">
           {filteredItems.map((item) => (
-            <MenuCard4D key={item.id} item={item} onAdd={() => addToCart(item)} />
+            <MenuCard4D 
+              key={item.id} 
+              item={item} 
+              onAdd={() => addToCart(item)} 
+              onWinePairing={() => setSelectedItemForWine(item)}
+            />
           ))}
         </div>
       </div>
@@ -167,7 +236,10 @@ function SmartMenu4D() {
       <div className="w-full lg:w-80 flex-shrink-0">
         <div className="sticky top-8 bg-card border border-border rounded-2xl shadow-lg overflow-hidden flex flex-col h-[calc(100vh-8rem)]">
           <div className="p-4 border-b border-border bg-secondary/30">
-            <SectionHeader title="Your Order" />
+            <h2 className="font-semibold flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5" />
+              Your Order
+            </h2>
           </div>
           
           <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
@@ -202,21 +274,34 @@ function SmartMenu4D() {
               <span className="text-xl font-bold">${cartTotal.toFixed(2)}</span>
             </div>
             <button 
-              disabled={cart.length === 0}
-              className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors shadow-md"
+              disabled={cart.length === 0 || isPlacingOrder}
+              onClick={handlePlaceOrder}
+              className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors shadow-md flex items-center justify-center gap-2"
             >
-              Place Order
+              {isPlacingOrder ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                "Place Order"
+              )}
             </button>
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {selectedItemForWine && (
+          <WinePairingModal 
+            item={selectedItemForWine} 
+            onClose={() => setSelectedItemForWine(null)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
-    </PageShell>
   );
 }
 
 // 4D Interactive Card Component
-function MenuCard4D({ item, onAdd }: { item: any, onAdd: () => void }) {
+function MenuCard4D({ item, onAdd, onWinePairing }: { item: any, onAdd: () => void, onWinePairing: () => void, key?: any }) {
   // 4D Tilt Effect state
   const [rotateX, setRotateX] = useState(0);
   const [rotateY, setRotateY] = useState(0);
@@ -290,9 +375,32 @@ function MenuCard4D({ item, onAdd }: { item: any, onAdd: () => void }) {
             <span className="font-bold text-primary text-lg" style={{ transform: "translateZ(30px)" }}>${item.price}</span>
           </div>
           
-          <p className="text-sm text-muted-foreground mb-4 flex-1" style={{ transform: "translateZ(10px)" }}>
+          <p className="text-sm text-muted-foreground mb-2 flex-1" style={{ transform: "translateZ(10px)" }}>
             {item.description}
           </p>
+
+          <div className="flex items-center gap-4 mb-4" style={{ transform: "translateZ(15px)" }}>
+            <div className={cn(
+              "text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider",
+              item.stock > 10 ? "bg-emerald-100 text-emerald-700" :
+              item.stock > 0 ? "bg-amber-100 text-amber-700" :
+              "bg-rose-100 text-rose-700"
+            )}>
+              {item.stock > 0 ? `${item.stock} in stock` : "Out of stock"}
+            </div>
+            {item.category === "Mains" && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onWinePairing();
+                }}
+                className="flex items-center gap-1.5 text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full hover:bg-purple-100 transition-colors"
+              >
+                <Sparkles className="w-3 h-3" />
+                AI Wine Pairing
+              </button>
+            )}
+          </div>
           
           <div className="flex items-center justify-between mt-auto pt-4 border-t border-border/50" style={{ transform: "translateZ(20px)" }}>
             <div className="flex items-center gap-1 text-xs text-muted-foreground font-medium">
@@ -300,11 +408,12 @@ function MenuCard4D({ item, onAdd }: { item: any, onAdd: () => void }) {
               {item.prepTime}
             </div>
             <button 
+              disabled={item.stock <= 0}
               onClick={(e) => {
                 e.stopPropagation();
                 onAdd();
               }}
-              className="bg-primary/10 hover:bg-primary text-primary hover:text-primary-foreground p-2 rounded-xl transition-colors"
+              className="bg-primary/10 hover:bg-primary text-primary hover:text-primary-foreground p-2 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus className="w-5 h-5" />
             </button>
@@ -315,151 +424,17 @@ function MenuCard4D({ item, onAdd }: { item: any, onAdd: () => void }) {
   );
 }
 
-// POS Hub — wraps Terminal, KDS, Bar, Reports as internal tabs
-type POSTab = "terminal" | "kds" | "reports";
-
-function POSHub() {
-  const [activeTab, setActiveTab] = useState<POSTab>("terminal");
-
-  const tabs: { key: POSTab; label: string; icon: React.ReactNode }[] = [
-    { key: "terminal", label: "Order Terminal", icon: <ShoppingCart className="w-4 h-4" /> },
-    { key: "kds",      label: "Kitchen Display", icon: <ChefHat className="w-4 h-4" /> },
-    { key: "reports",  label: "F&B Reports",     icon: <BarChart2 className="w-4 h-4" /> },
-  ];
-
-  const [searchQuery, setSearchQuery] = useState("");
-  return (
-    <PageShell
-      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search POS..." />}
-      header={<SectionHeader icon={UtensilsCrossed} title="POS Hub" subtitle="Order terminal, kitchen display, and F&B reports" />}
-      kpi={<KpiStrip items={[
-        { color: "bg-blue-500", value: "385", label: "Total Covers" },
-        { color: "bg-emerald-500", value: "$12,010", label: "Today's Revenue" },
-        { color: "bg-amber-500", value: "6", label: "Voided Items" },
-        { color: "bg-violet-500", value: "5", label: "Outlets" },
-        { color: "bg-rose-500", value: "$31.2", label: "Avg Spend" },
-      ]} />}
-    >
-      {/* Internal tab bar */}
-      <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-2xl mb-6 w-fit">
-        {tabs.map(t => (
-          <button
-            key={t.key}
-            onClick={() => setActiveTab(t.key)}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
-              activeTab === t.key
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {t.icon}
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.18 }}
-        >
-          {activeTab === "terminal" && <POSSystem />}
-          {activeTab === "kds"      && <KitchenDisplay />}
-          {activeTab === "reports"  && <FNBReports />}
-        </motion.div>
-      </AnimatePresence>
-    </PageShell>
-  );
-}
-
-// F&B Reports (within POS hub)
-function FNBReports() {
-  const dailyData = [
-    { outlet: "Main Restaurant", covers: 148, revenue: 4820, avgSpend: 32.6, voids: 3 },
-    { outlet: "Room Service",    covers: 64,  revenue: 2310, avgSpend: 36.1, voids: 1 },
-    { outlet: "Bar & Lounge",    covers: 92,  revenue: 1740, avgSpend: 18.9, voids: 2 },
-    { outlet: "Pool Café",       covers: 57,  revenue: 980,  avgSpend: 17.2, voids: 0 },
-    { outlet: "Private Dining",  covers: 24,  revenue: 2160, avgSpend: 90.0, voids: 0 },
-  ];
-  const totals = dailyData.reduce((acc, r) => ({
-    covers: acc.covers + r.covers,
-    revenue: acc.revenue + r.revenue,
-    voids: acc.voids + r.voids,
-  }), { covers: 0, revenue: 0, voids: 0 });
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <SectionHeader title="F&B Reports" />
-        <span className="text-sm text-muted-foreground">Today · {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</span>
-      </div>
-      {/* Outlet breakdown */}
-      <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
-        <div className="px-6 py-4 border-b border-border font-semibold text-foreground">Outlet Breakdown</div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-secondary/50 text-muted-foreground">
-              <tr>
-                {["Outlet", "Covers", "Revenue (BHD)", "Avg Spend", "Voids"].map(h => (
-                  <th key={h} className="px-6 py-3 text-left font-medium">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/50">
-              {dailyData.map(r => (
-                <tr key={r.outlet} className="hover:bg-secondary/30 transition-colors">
-                  <td className="px-6 py-4 font-medium">{r.outlet}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{r.covers}</td>
-                  <td className="px-6 py-4 font-semibold">{r.revenue.toLocaleString()}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{r.avgSpend.toFixed(1)}</td>
-                  <td className="px-6 py-4">
-                    <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", r.voids > 0 ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")}>
-                      {r.voids}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              <tr className="bg-secondary/30 font-semibold">
-                <td className="px-6 py-4">Total</td>
-                <td className="px-6 py-4">{totals.covers}</td>
-                <td className="px-6 py-4">{totals.revenue.toLocaleString()}</td>
-                <td className="px-6 py-4">{(totals.revenue/totals.covers).toFixed(1)}</td>
-                <td className="px-6 py-4">{totals.voids}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // Point of Sale System
 function POSSystem() {
+  const { menuItems, placeOrder } = useMenu();
   const [activeCategory, setActiveCategory] = useState("All");
   const [orderType, setOrderType] = useState<"Dine-in" | "Takeaway" | "Room Service">("Dine-in");
   const [tableOrRoom, setTableOrRoom] = useState("");
-  const [cart, setCart] = useState<{item: any, quantity: number}[]>([]);
+  const [cart, setCart] = useState<{item: MenuItem, quantity: number}[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const categories = ["All", "Starters", "Mains", "Desserts", "Beverages"];
-
-  const menuItems = [
-    { id: 1, name: "Truffle Risotto", category: "Mains", price: 28, image: "https://images.unsplash.com/photo-1633337474564-1d9e23434199?q=80&w=200&auto=format&fit=crop" },
-    { id: 2, name: "Wagyu Beef Burger", category: "Mains", price: 32, image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=200&auto=format&fit=crop" },
-    { id: 3, name: "Burrata Salad", category: "Starters", price: 18, image: "https://images.unsplash.com/photo-1608897013039-887f21d8c804?q=80&w=200&auto=format&fit=crop" },
-    { id: 4, name: "Molten Lava Cake", category: "Desserts", price: 14, image: "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?q=80&w=200&auto=format&fit=crop" },
-    { id: 5, name: "Artisan Coffee", category: "Beverages", price: 6, image: "https://images.unsplash.com/photo-1497935586351-b67a49e012bf?q=80&w=200&auto=format&fit=crop" },
-    { id: 6, name: "Signature Cocktail", category: "Beverages", price: 16, image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=200&auto=format&fit=crop" },
-    { id: 7, name: "Caesar Salad", category: "Starters", price: 15, image: "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?q=80&w=200&auto=format&fit=crop" },
-    { id: 8, name: "Grilled Salmon", category: "Mains", price: 29, image: "https://images.unsplash.com/photo-1485921325833-c519f76c4927?q=80&w=200&auto=format&fit=crop" },
-    { id: 9, name: "Tiramisu", category: "Desserts", price: 12, image: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?q=80&w=200&auto=format&fit=crop" },
-    { id: 10, name: "Sparkling Water", category: "Beverages", price: 5, image: "https://images.unsplash.com/photo-1556881286-fc6915169721?q=80&w=200&auto=format&fit=crop" },
-  ];
 
   const filteredItems = useMemo(() => {
     return menuItems.filter(item => {
@@ -467,9 +442,9 @@ function POSSystem() {
       const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [activeCategory, searchQuery]);
+  }, [activeCategory, searchQuery, menuItems]);
 
-  const addToCart = (item: any) => {
+  const addToCart = (item: MenuItem) => {
     setCart(prev => {
       const existing = prev.find(i => i.item.id === item.id);
       if (existing) {
@@ -479,7 +454,7 @@ function POSSystem() {
     });
   };
 
-  const updateQuantity = (id: number, delta: number) => {
+  const updateQuantity = (id: string, delta: number) => {
     setCart(prev => prev.map(i => {
       if (i.item.id === id) {
         const newQuantity = Math.max(0, i.quantity + delta);
@@ -489,8 +464,31 @@ function POSSystem() {
     }).filter(i => i.quantity > 0));
   };
 
-  const removeFromCart = (id: number) => {
+  const removeFromCart = (id: string) => {
     setCart(prev => prev.filter(i => i.item.id !== id));
+  };
+
+  const handlePlaceOrder = async () => {
+    if (cart.length === 0) return;
+    setIsPlacingOrder(true);
+    try {
+      await placeOrder({
+        items: cart.map(c => ({
+          itemId: c.item.id,
+          name: c.item.name,
+          quantity: c.quantity,
+          price: c.item.price
+        })),
+        total: cart.reduce((sum, c) => sum + (c.item.price * c.quantity), 0),
+        roomNumber: orderType === "Room Service" ? tableOrRoom : undefined
+      });
+      setCart([]);
+      setTableOrRoom("");
+    } catch (error) {
+      console.error("Order failed:", error);
+    } finally {
+      setIsPlacingOrder(false);
+    }
   };
 
   const subtotal = cart.reduce((sum, {item, quantity}) => sum + (item.price * quantity), 0);
@@ -502,9 +500,7 @@ function POSSystem() {
       {/* Main POS Area */}
       <div className="flex-1 flex flex-col px-4 md:px-8 overflow-hidden">
         {/* Header & Controls */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4 border-b border-border">
-          <SectionHeader title="Point of Sale" />
-          
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-end gap-4 py-4 border-b border-border">
           <div className="flex items-center gap-2 bg-secondary/50 p-1 rounded-xl">
             {(["Dine-in", "Takeaway", "Room Service"] as const).map(type => (
               <button
@@ -591,7 +587,7 @@ function POSSystem() {
       <div className="w-full lg:w-96 bg-card border-l border-border flex flex-col h-full flex-shrink-0">
         <div className="p-4 border-b border-border bg-secondary/30">
           <div className="flex items-center justify-between mb-4">
-            <SectionHeader title="Current Order" />
+            <h2 className="font-semibold text-lg">Current Order</h2>
             <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded-md">
               Ticket #4092
             </span>
@@ -690,14 +686,16 @@ function POSSystem() {
           
           <div className="grid grid-cols-2 gap-2">
             <button 
-              disabled={cart.length === 0}
+              disabled={cart.length === 0 || isPlacingOrder}
+              onClick={handlePlaceOrder}
               className="py-3 rounded-xl bg-blue-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors shadow-sm flex items-center justify-center gap-2"
             >
               <CreditCard className="w-4 h-4" />
               Card
             </button>
             <button 
-              disabled={cart.length === 0}
+              disabled={cart.length === 0 || isPlacingOrder}
+              onClick={handlePlaceOrder}
               className="py-3 rounded-xl bg-emerald-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-emerald-600 transition-colors shadow-sm flex items-center justify-center gap-2"
             >
               <Banknote className="w-4 h-4" />
@@ -706,8 +704,9 @@ function POSSystem() {
           </div>
           
           {orderType === "Room Service" && (
-            <button
-              disabled={cart.length === 0 || !tableOrRoom}
+            <button 
+              disabled={cart.length === 0 || !tableOrRoom || isPlacingOrder}
+              onClick={handlePlaceOrder}
               className="w-full mt-2 py-3 rounded-xl bg-primary text-primary-foreground font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors shadow-sm flex items-center justify-center gap-2"
             >
               <BedDouble className="w-4 h-4" />
@@ -720,658 +719,552 @@ function POSSystem() {
   );
 }
 
-// ─── Table Management ────────────────────────────────────────────────────────
-
-type TableStatus = "available" | "occupied" | "reserved" | "cleaning";
-
-interface TableInfo {
-  id: number;
-  name: string;
-  capacity: number;
-  status: TableStatus;
-  occupiedSince?: string;
-  server?: string;
-  x: number;
-  y: number;
-}
-
-const STATUS_COLORS: Record<TableStatus, string> = {
-  available: "bg-emerald-100 border-emerald-300 text-emerald-700",
-  occupied: "bg-amber-100 border-amber-300 text-amber-700",
-  reserved: "bg-violet-100 border-violet-300 text-violet-700",
-  cleaning: "bg-blue-100 border-blue-300 text-blue-700",
-};
-
-const INITIAL_TABLES: TableInfo[] = [
-  { id: 1, name: "T1", capacity: 2, status: "occupied", occupiedSince: "12:30", server: "Marco", x: 8, y: 10 },
-  { id: 2, name: "T2", capacity: 4, status: "available", x: 28, y: 10 },
-  { id: 3, name: "T3", capacity: 4, status: "reserved", x: 48, y: 10 },
-  { id: 4, name: "T4", capacity: 6, status: "occupied", occupiedSince: "13:15", server: "Aisha", x: 68, y: 10 },
-  { id: 5, name: "T5", capacity: 2, status: "cleaning", x: 8, y: 40 },
-  { id: 6, name: "T6", capacity: 4, status: "available", x: 28, y: 40 },
-  { id: 7, name: "T7", capacity: 8, status: "occupied", occupiedSince: "12:00", server: "James", x: 48, y: 40 },
-  { id: 8, name: "T8", capacity: 4, status: "available", x: 72, y: 40 },
-  { id: 9, name: "T9", capacity: 2, status: "reserved", x: 8, y: 70 },
-  { id: 10, name: "T10", capacity: 4, status: "available", x: 28, y: 70 },
-  { id: 11, name: "T11", capacity: 6, status: "occupied", occupiedSince: "13:45", server: "Priya", x: 50, y: 70 },
-  { id: 12, name: "T12", capacity: 4, status: "available", x: 72, y: 70 },
-];
-
-function TableManagement() {
-  const [tables, setTables] = useState<TableInfo[]>(INITIAL_TABLES);
-  const [selected, setSelected] = useState<TableInfo | null>(null);
-
-  const statusCounts = tables.reduce((acc, t) => {
-    acc[t.status] = (acc[t.status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const cycleStatus = (id: number) => {
-    const order: TableStatus[] = ["available", "occupied", "reserved", "cleaning"];
-    setTables(ts =>
-      ts.map(t => {
-        if (t.id !== id) return t;
-        const next = order[(order.indexOf(t.status) + 1) % order.length];
-        return { ...t, status: next };
-      })
-    );
-    setSelected(s => s?.id === id ? { ...s, status: (order[(order.indexOf(s.status) + 1) % order.length]) } : s);
-  };
-
-  const [searchQuery, setSearchQuery] = useState("");
-  return (
-    <PageShell
-      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search tables..." />}
-      header={<SectionHeader icon={UtensilsCrossed} title="Table Management" subtitle="Restaurant floor plan and table status" />}
-      kpi={<KpiStrip items={[
-        { color: "bg-emerald-500", value: statusCounts["available"] || 0, label: "Available" },
-        { color: "bg-blue-500", value: statusCounts["occupied"] || 0, label: "Occupied" },
-        { color: "bg-amber-500", value: statusCounts["reserved"] || 0, label: "Reserved" },
-        { color: "bg-slate-500", value: statusCounts["cleaning"] || 0, label: "Cleaning" },
-        { color: "bg-violet-500", value: tables.length, label: "Total Tables" },
-      ]} />}
-    >
-
-      <div className="flex flex-col xl:flex-row gap-6 pb-8">
-        {/* Floor Plan */}
-        <div className="flex-1 bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-border flex items-center justify-between">
-            <SectionHeader title="Restaurant Floor Plan" />
-            <span className="text-xs text-muted-foreground">Click a table to change status</span>
-          </div>
-          <div className="relative bg-secondary/20 m-4 rounded-xl" style={{ height: 360 }}>
-            {/* Decorative elements */}
-            <div className="absolute top-4 left-4 right-4 h-8 bg-secondary/50 rounded-lg flex items-center px-3">
-              <span className="text-xs text-muted-foreground">Bar Counter</span>
-            </div>
-            <div className="absolute bottom-4 left-4 right-4 h-6 bg-secondary/40 rounded-lg flex items-center px-3">
-              <span className="text-xs text-muted-foreground">Entrance</span>
-            </div>
-            {tables.map(table => (
-              <button
-                key={table.id}
-                onClick={() => { setSelected(table); cycleStatus(table.id); }}
-                style={{ left: `${table.x}%`, top: `${table.y + 14}%`, transform: "translate(-50%,-50%)" }}
-                className={cn(
-                  "absolute flex flex-col items-center justify-center border-2 rounded-xl transition-all hover:scale-110 shadow-sm",
-                  table.capacity <= 2 ? "w-12 h-12" : table.capacity <= 4 ? "w-14 h-14" : "w-16 h-16",
-                  STATUS_COLORS[table.status]
-                )}
-                title={`${table.name} — ${table.status}`}
-              >
-                <span className="text-xs font-bold">{table.name}</span>
-                <span className="text-[9px] opacity-70">{table.capacity}p</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Table List */}
-        <div className="xl:w-80 bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-border">
-            <SectionHeader title="Table Status" />
-          </div>
-          <div className="divide-y divide-border overflow-y-auto" style={{ maxHeight: 400 }}>
-            {tables.map(t => (
-              <div key={t.id} className="flex items-center gap-3 p-3 hover:bg-secondary/30 transition-colors">
-                <div className={cn("w-10 h-10 rounded-lg border flex flex-col items-center justify-center shrink-0", STATUS_COLORS[t.status])}>
-                  <span className="text-xs font-bold">{t.name}</span>
-                  <span className="text-[9px]">{t.capacity}p</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium capitalize">{t.status}</p>
-                  {t.occupiedSince && <p className="text-xs text-muted-foreground">Since {t.occupiedSince} · {t.server}</p>}
-                </div>
-                <button
-                  onClick={() => cycleStatus(t.id)}
-                  className="text-xs px-2 py-1 border border-border rounded-lg hover:bg-secondary transition-colors"
-                >
-                  Change
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </PageShell>
-  );
-}
-
-// ─── Room Service ────────────────────────────────────────────────────────────
-
-interface RoomOrder {
-  id: string;
-  room: string;
-  guest: string;
-  items: string;
-  total: number;
-  status: "received" | "preparing" | "out-for-delivery" | "delivered";
-  time: string;
-}
-
-const STATUS_STEPS = ["received", "preparing", "out-for-delivery", "delivered"] as const;
-
-const ORDER_STATUS_STYLES: Record<string, string> = {
-  received: "bg-blue-100 text-blue-700",
-  preparing: "bg-amber-100 text-amber-700",
-  "out-for-delivery": "bg-violet-100 text-violet-700",
-  delivered: "bg-emerald-100 text-emerald-700",
-};
-
-const INITIAL_ROOM_ORDERS: RoomOrder[] = [
-  { id: "RS-001", room: "214", guest: "Alice Johnson", items: "Wagyu Burger, Artisan Coffee x2", total: 44, status: "out-for-delivery", time: "13:42" },
-  { id: "RS-002", room: "108", guest: "Brian Chen", items: "Truffle Risotto, Signature Cocktail", total: 44, status: "preparing", time: "13:55" },
-  { id: "RS-003", room: "302", guest: "Sofia Martinez", items: "Burrata Salad, Sparkling Water", total: 24, status: "received", time: "14:02" },
-  { id: "RS-004", room: "415", guest: "David Kim", items: "Molten Lava Cake x2, Espresso", total: 34, status: "delivered", time: "13:20" },
-  { id: "RS-005", room: "507", guest: "Emma Wilson", items: "Club Sandwich, Fresh Juice x2", total: 38, status: "preparing", time: "14:10" },
-];
-
-function RoomService() {
-  const [orders, setOrders] = useState<RoomOrder[]>(INITIAL_ROOM_ORDERS);
-
-  const advance = (id: string) => {
-    setOrders(os => os.map(o => {
-      if (o.id !== id) return o;
-      const idx = STATUS_STEPS.indexOf(o.status as typeof STATUS_STEPS[number]);
-      if (idx < STATUS_STEPS.length - 1) return { ...o, status: STATUS_STEPS[idx + 1] };
-      return o;
-    }));
-  };
-
-  const statusCounts = orders.reduce((acc, o) => {
-    acc[o.status] = (acc[o.status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const [searchQuery, setSearchQuery] = useState("");
-  return (
-    <PageShell
-      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search room service..." />}
-      header={<SectionHeader icon={UtensilsCrossed} title="Room Service Orders" subtitle="Track and manage in-room dining orders" />}
-      kpi={<KpiStrip items={[
-        { color: "bg-slate-500", value: statusCounts["received"] || 0, label: "Received" },
-        { color: "bg-amber-500", value: statusCounts["preparing"] || 0, label: "Preparing" },
-        { color: "bg-blue-500", value: statusCounts["out-for-delivery"] || 0, label: "Delivering" },
-        { color: "bg-emerald-500", value: statusCounts["delivered"] || 0, label: "Delivered" },
-        { color: "bg-violet-500", value: orders.length, label: "Total Orders" },
-      ]} />}
-    >
-
-      <div className="grid grid-cols-1 gap-4 pb-8">
-        {orders.map(order => {
-          const stepIdx = STATUS_STEPS.indexOf(order.status as typeof STATUS_STEPS[number]);
-          return (
-            <div key={order.id} className="bg-card border border-border rounded-2xl p-5 shadow-sm">
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <div>
-                  <div className="flex items-center gap-3 mb-1">
-                    <span className="font-semibold text-sm">{order.id}</span>
-                    <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium capitalize", ORDER_STATUS_STYLES[order.status])}>
-                      {order.status.replace(/-/g, " ")}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Room <strong className="text-foreground">{order.room}</strong> · {order.guest} · Ordered at {order.time}
-                  </p>
-                  <p className="text-sm mt-1">{order.items}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-lg font-bold">${order.total}</p>
-                  {order.status !== "delivered" && (
-                    <button
-                      onClick={() => advance(order.id)}
-                      className="mt-2 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors"
-                    >
-                      Advance →
-                    </button>
-                  )}
-                </div>
-              </div>
-              {/* Progress bar */}
-              <div className="flex items-center gap-2">
-                {STATUS_STEPS.map((step, idx) => (
-                  <React.Fragment key={step}>
-                    <div className={cn("flex items-center gap-1.5 text-xs font-medium capitalize transition-colors", idx <= stepIdx ? "text-primary" : "text-muted-foreground/40")}>
-                      <div className={cn("w-2.5 h-2.5 rounded-full border-2 transition-colors", idx <= stepIdx ? "bg-primary border-primary" : "border-muted-foreground/30")} />
-                      <span className="hidden sm:inline">{step.replace(/-/g, " ")}</span>
-                    </div>
-                    {idx < STATUS_STEPS.length - 1 && (
-                      <div className={cn("flex-1 h-0.5 rounded transition-colors", idx < stepIdx ? "bg-primary" : "bg-muted-foreground/20")} />
-                    )}
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </PageShell>
-  );
-}
-
-// ─── F&B Inventory ───────────────────────────────────────────────────────────
-
-interface StockItem {
-  id: number;
-  name: string;
-  category: string;
-  unit: string;
-  current: number;
-  par: number;
-  reorderAt: number;
-  supplier: string;
-}
-
-const STOCK: StockItem[] = [
-  { id: 1, name: "Arborio Rice", category: "Dry Goods", unit: "kg", current: 45, par: 50, reorderAt: 20, supplier: "Metro Wholesale" },
-  { id: 2, name: "Black Truffle", category: "Speciality", unit: "g", current: 120, par: 500, reorderAt: 150, supplier: "Luxury Ingredients Co." },
-  { id: 3, name: "Wagyu Beef", category: "Meat", unit: "kg", current: 18, par: 30, reorderAt: 10, supplier: "Premium Meats" },
-  { id: 4, name: "Fresh Burrata", category: "Dairy", unit: "pcs", current: 8, par: 24, reorderAt: 8, supplier: "Cheese & Co." },
-  { id: 5, name: "Heirloom Tomatoes", category: "Produce", unit: "kg", current: 12, par: 15, reorderAt: 5, supplier: "Farm Direct" },
-  { id: 6, name: "Dark Chocolate", category: "Baking", unit: "kg", current: 6, par: 10, reorderAt: 3, supplier: "Valrhona" },
-  { id: 7, name: "Vanilla Ice Cream", category: "Frozen", unit: "L", current: 14, par: 20, reorderAt: 8, supplier: "Artisan Creamery" },
-  { id: 8, name: "Gin (Premium)", category: "Spirits", unit: "bottles", current: 22, par: 36, reorderAt: 12, supplier: "Spirits World" },
-  { id: 9, name: "Elderflower Cordial", category: "Mixer", unit: "bottles", current: 4, par: 12, reorderAt: 4, supplier: "Fever-Tree" },
-  { id: 10, name: "Espresso Beans", category: "Beverages", unit: "kg", current: 8, par: 15, reorderAt: 5, supplier: "Blue Bottle Coffee" },
-];
-
-function getStockLevel(item: StockItem): "critical" | "low" | "ok" {
-  const ratio = item.current / item.par;
-  if (item.current <= item.reorderAt) return ratio < 0.25 ? "critical" : "low";
-  return "ok";
-}
-
-const LEVEL_STYLES = {
-  critical: "text-red-600",
-  low: "text-amber-600",
-  ok: "text-emerald-600",
-};
-
-const BAR_STYLES = {
-  critical: "bg-red-500",
-  low: "bg-amber-500",
-  ok: "bg-emerald-500",
-};
-
-function FAndBInventory() {
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("All");
-
-  const categories = ["All", ...Array.from(new Set(STOCK.map(i => i.category)))];
-  const filtered = STOCK.filter(i =>
-    (filter === "All" || i.category === filter) &&
-    i.name.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const criticalCount = STOCK.filter(i => getStockLevel(i) === "critical").length;
-  const lowCount = STOCK.filter(i => getStockLevel(i) === "low").length;
-
-  return (
-    <PageShell
-      search={<SectionSearch value={search} onChange={setSearch} placeholder="Search inventory..." />}
-      header={<SectionHeader icon={UtensilsCrossed} title="F&B Inventory" subtitle="Stock levels and reorder management" />}
-      kpi={<KpiStrip items={[
-        { color: "bg-red-500", value: criticalCount, label: "Critical" },
-        { color: "bg-amber-500", value: lowCount, label: "Low Stock" },
-        { color: "bg-emerald-500", value: STOCK.length - criticalCount - lowCount, label: "OK" },
-        { color: "bg-blue-500", value: STOCK.length, label: "Total Items" },
-        { color: "bg-violet-500", value: categories.length - 1, label: "Categories" },
-      ]} />}
-    >
-        <div className="flex flex-wrap gap-3">
-          <div className="flex items-center gap-2 bg-card border border-border rounded-xl px-3 py-2 flex-1 min-w-0 max-w-xs">
-            <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-            <input
-              type="text"
-              placeholder="Search items..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="bg-transparent border-none outline-none text-sm flex-1 text-foreground placeholder:text-muted-foreground"
-            />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setFilter(cat)}
-                className={cn("px-3 py-2 rounded-xl text-sm font-medium transition-all border",
-                  filter === cat ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground hover:bg-secondary"
-                )}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
-
-      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden mb-8">
-        <table className="w-full text-sm">
-          <thead className="border-b border-border bg-secondary/30">
-            <tr>
-              {["Item", "Category", "Stock Level", "Current / Par", "Supplier", "Status"].map(h => (
-                <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {filtered.map(item => {
-              const level = getStockLevel(item);
-              const pct = Math.min(100, (item.current / item.par) * 100);
-              return (
-                <tr key={item.id} className="hover:bg-secondary/20 transition-colors">
-                  <td className="px-5 py-3 font-medium">{item.name}</td>
-                  <td className="px-5 py-3 text-muted-foreground">{item.category}</td>
-                  <td className="px-5 py-3 w-36">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-2 rounded-full bg-secondary overflow-hidden">
-                        <div className={cn("h-full rounded-full transition-all", BAR_STYLES[level])} style={{ width: `${pct}%` }} />
-                      </div>
-                      <span className="text-xs w-8 text-right">{Math.round(pct)}%</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3 text-muted-foreground">
-                    <span className={cn("font-semibold", LEVEL_STYLES[level])}>{item.current}</span> / {item.par} {item.unit}
-                  </td>
-                  <td className="px-5 py-3 text-muted-foreground text-xs">{item.supplier}</td>
-                  <td className="px-5 py-3">
-                    <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full capitalize",
-                      level === "critical" ? "bg-red-100 text-red-700" :
-                      level === "low" ? "bg-amber-100 text-amber-700" :
-                      "bg-emerald-100 text-emerald-700"
-                    )}>
-                      {level === "ok" ? "In Stock" : level === "low" ? "Reorder Soon" : "Critical"}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </PageShell>
-  );
-}
-
-function KitchenDisplay() {
-  const [columns, setColumns] = useState({
-    incoming: [
-      { id: "0891", table: "T14", time: "12:45", items: ["2x Wagyu Burger", "1x Caesar Salad", "1x House Fries"], priority: "normal" },
-      { id: "0892", table: "R305", time: "12:50", items: ["1x Grilled Fish", "2x Seasonal Vegetables"], priority: "rush" },
-      { id: "0893", table: "T22", time: "13:02", items: ["1x Pasta Carbonara"], priority: "vip" },
-    ],
-    inProgress: [
-      { id: "0890", table: "T08", time: "12:30", items: ["2x Ribeye Steak", "1x Lobster Tail"], priority: "vip" },
-      { id: "0888", table: "T19", time: "12:15", items: ["3x House Burger", "2x French Fries"], priority: "normal" },
-    ],
-    ready: [
-      { id: "0887", table: "T11", time: "12:00", items: ["1x Chicken Parmesan"], priority: "normal" },
-      { id: "0886", table: "R220", time: "11:55", items: ["1x Soup", "1x Salad"], priority: "normal" },
-    ],
-  });
-
-  const [station, setStation] = useState("All");
-  const [currentTime, setCurrentTime] = useState(new Date());
+function WinePairingModal({ item, onClose }: { item: any, onClose: () => void }) {
+  const [suggestion, setSuggestion] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   React.useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+    const fetchPairing = async () => {
+      setLoading(true);
+      try {
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const response = await ai.models.generateContent({
+          model: "gemini-3-flash-preview",
+          contents: `Suggest a specific wine pairing for this dish: "${item.name} - ${item.description}". Keep it short and professional, like a sommelier's recommendation. Mention why it pairs well.`,
+          config: {
+            systemInstruction: "You are a world-class sommelier. Provide concise, elegant wine pairing suggestions.",
+          }
+        });
+        setSuggestion(response.text || "A crisp Chardonnay would pair beautifully with this dish.");
+      } catch (error) {
+        console.error("AI Pairing Error:", error);
+        setSuggestion("We recommend a full-bodied Cabernet Sauvignon to complement the rich flavors of this dish.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const calculateElapsed = (timeStr: string) => {
-    const [hours, minutes] = timeStr.split(":").map(Number);
-    const orderTime = new Date();
-    orderTime.setHours(hours, minutes, 0);
-    const elapsed = Math.floor((currentTime.getTime() - orderTime.getTime()) / 60000);
-    return elapsed;
-  };
+    fetchPairing();
+  }, [item]);
 
-  const moveCard = (fromColumn: string, toColumn: string, cardId: string) => {
-    const card = columns[fromColumn as keyof typeof columns].find(c => c.id === cardId);
-    if (!card) return;
-    setColumns(prev => ({
-      ...prev,
-      [fromColumn]: prev[fromColumn as keyof typeof columns].filter(c => c.id !== cardId),
-      [toColumn]: [...prev[toColumn as keyof typeof columns], card],
-    }));
-  };
-
-  const getCardBorderColor = (time: string) => {
-    const elapsed = calculateElapsed(time);
-    if (elapsed > 15) return "border-red-500";
-    if (elapsed > 8) return "border-amber-500";
-    return "border-emerald-500";
-  };
-
-  const getPriorityBadge = (priority: string) => {
-    if (priority === "vip") return "bg-violet-100 text-violet-700";
-    if (priority === "rush") return "bg-red-100 text-red-700";
-    return "bg-slate-100 text-slate-700";
-  };
-
-  const TicketCard = ({ card, columnKey }: any) => {
-    const elapsed = calculateElapsed(card.time);
-    return (
-      <motion.div
-        layout
-        className={cn(
-          "p-4 bg-card border-2 rounded-xl shadow-sm hover:shadow-md transition-shadow",
-          getCardBorderColor(card.time)
-        )}
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+    >
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose}></div>
+      <motion.div 
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="bg-card w-full max-w-lg rounded-2xl shadow-2xl border border-border overflow-hidden relative z-10"
       >
-        <div className="flex justify-between items-start mb-3">
-          <div>
-            <div className="font-bold text-lg text-foreground">#{card.id}</div>
-            <div className="text-xs text-muted-foreground">{card.table} · {elapsed} min</div>
+        <div className="p-6 border-b border-border flex items-center justify-between bg-secondary/30">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
+              <Wine className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-foreground">AI Sommelier</h3>
+              <p className="text-xs text-muted-foreground">Perfect pairing for {item.name}</p>
+            </div>
           </div>
-          <span className={cn("text-xs font-medium px-2 py-1 rounded-full capitalize", getPriorityBadge(card.priority))}>
-            {card.priority}
-          </span>
+          <button onClick={onClose} className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors">
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <div className="space-y-1 mb-4">
-          {card.items.map((item: string, idx: number) => (
-            <div key={idx} className="text-sm text-foreground">{item}</div>
-          ))}
+
+        <div className="p-8">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-8 space-y-4">
+              <motion.div 
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              >
+                <Sparkles className="w-8 h-8 text-purple-500" />
+              </motion.div>
+              <p className="text-sm text-muted-foreground animate-pulse">Consulting the cellar...</p>
+            </div>
+          ) : (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+            >
+              <div className="bg-secondary/20 p-6 rounded-2xl border border-border italic text-foreground leading-relaxed relative">
+                <span className="absolute -top-3 -left-2 text-4xl text-purple-200 font-serif">"</span>
+                {suggestion}
+                <span className="absolute -bottom-6 -right-2 text-4xl text-purple-200 font-serif">"</span>
+              </div>
+              
+              <div className="flex items-center justify-between p-4 bg-purple-50 rounded-xl border border-purple-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                    <Wine className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-purple-900">Sommelier's Choice</p>
+                    <p className="text-[10px] text-purple-700">Available by the glass or bottle</p>
+                  </div>
+                </div>
+                <button className="px-4 py-2 bg-purple-600 text-white rounded-lg text-xs font-bold hover:bg-purple-700 transition-colors shadow-sm">
+                  Add to Order
+                </button>
+              </div>
+            </motion.div>
+          )}
         </div>
-        <div className="flex gap-2">
-          {columnKey === "incoming" && (
-            <button
-              onClick={() => moveCard("incoming", "inProgress", card.id)}
-              className="flex-1 px-2 py-1.5 text-xs font-medium bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              Start
-            </button>
-          )}
-          {columnKey === "inProgress" && (
-            <button
-              onClick={() => moveCard("inProgress", "ready", card.id)}
-              className="flex-1 px-2 py-1.5 text-xs font-medium bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
-            >
-              Ready
-            </button>
-          )}
-          {columnKey === "ready" && (
-            <button
-              onClick={() => moveCard("ready", "ready", card.id)}
-              className="flex-1 px-2 py-1.5 text-xs font-medium bg-slate-500 text-white rounded-lg hover:bg-slate-600 transition-colors"
-            >
-              Deliver
-            </button>
-          )}
+
+        <div className="p-4 bg-secondary/10 border-t border-border flex justify-end">
+          <button onClick={onClose} className="px-6 py-2 bg-card border border-border text-foreground rounded-xl text-xs font-medium hover:bg-secondary transition-colors">
+            Close
+          </button>
         </div>
       </motion.div>
-    );
+    </motion.div>
+  );
+}
+
+function TableManagement() {
+  const { tables, updateTableStatus } = useTables();
+  const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+
+  const handleUpdateStatus = (id: string, newStatus: Table["status"]) => {
+    updateTableStatus(id, newStatus);
+    setSelectedTable(null);
   };
 
   return (
-    <div>
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 md:-mx-8 md:px-8 -mt-4 pt-4 md:-mt-8 md:pt-8 pb-4 border-b border-border mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <SectionHeader title="Kitchen Display" subtitle={currentTime.toLocaleTimeString()} />
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-wrap items-center gap-6 bg-card p-4 rounded-2xl border border-border shadow-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+            <span className="text-sm font-medium text-muted-foreground">Available</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+            <span className="text-sm font-medium text-muted-foreground">Occupied</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+            <span className="text-sm font-medium text-muted-foreground">Reserved</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-rose-500"></div>
+            <span className="text-sm font-medium text-muted-foreground">Needs Cleaning</span>
           </div>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {["All", "Hot Kitchen", "Cold Kitchen", "Pastry", "Grill"].map(s => (
-            <button
-              key={s}
-              onClick={() => setStation(s)}
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-2 bg-secondary text-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">
+            <Filter className="w-4 h-4" /> Filter
+          </button>
+          <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
+            <Plus className="w-4 h-4" /> Add Table
+          </button>
+        </div>
+      </div>
+
+      {/* Visual Floor Plan */}
+      <div className="bg-card border border-border rounded-3xl shadow-lg p-8 min-h-[600px] relative overflow-hidden bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px] dark:bg-[radial-gradient(#1f2937_1px,transparent_1px)]">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-secondary/50 px-8 py-2 rounded-b-2xl border-x border-b border-border text-xs font-bold text-muted-foreground uppercase tracking-widest">
+          Entrance
+        </div>
+        
+        <div className="absolute bottom-0 right-0 bg-secondary/50 px-8 py-4 rounded-tl-3xl border-t border-l border-border flex items-center gap-3">
+          <ChefHat className="w-6 h-6 text-primary" />
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Kitchen Area</span>
+        </div>
+
+        <div className="relative w-full h-full">
+          {tables.map(table => (
+            <motion.div
+              key={table.id}
+              layoutId={table.id}
+              onClick={() => setSelectedTable(table)}
+              initial={false}
+              animate={{ 
+                left: `${table.x}%`, 
+                top: `${table.y}%`,
+                scale: selectedTable?.id === table.id ? 1.1 : 1
+              }}
               className={cn(
-                "px-3 py-2 rounded-lg text-sm font-medium transition-all border",
-                station === s ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"
+                "absolute w-24 h-24 rounded-2xl border-2 flex flex-col items-center justify-center cursor-pointer transition-all shadow-sm hover:shadow-md z-10",
+                table.status === "Available" ? "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400" :
+                table.status === "Occupied" ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400" :
+                table.status === "Reserved" ? "bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400" :
+                "bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-900/20 dark:border-rose-800 dark:text-rose-400"
               )}
             >
-              {s}
-            </button>
+              <span className="text-xl font-black">{table.id}</span>
+              <div className="flex items-center gap-1 text-[10px] font-bold opacity-70">
+                <User className="w-3 h-3" />
+                {table.capacity}
+              </div>
+              {table.status === "Occupied" && (
+                <div className="absolute -top-2 -right-2 w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm">
+                  <Clock className="w-3 h-3" />
+                </div>
+              )}
+            </motion.div>
           ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        {["incoming", "inProgress", "ready"].map(col => {
-          const headers = { incoming: "Incoming", inProgress: "In Progress", ready: "Ready" };
-          const headerColors = { incoming: "bg-blue-500", inProgress: "bg-amber-500", ready: "bg-emerald-500" };
-          return (
-            <div key={col} className="space-y-3">
-              <div className={cn("h-10 rounded-t-lg flex items-center px-4 text-sm font-semibold text-white", headerColors[col as keyof typeof headerColors])}>
-                {headers[col as keyof typeof headers]}
-              </div>
-              <div className="space-y-3">
-                <AnimatePresence mode="popLayout">
-                  {columns[col as keyof typeof columns].map(card => (
-                    <TicketCard key={card.id} card={card} columnKey={col} />
-                  ))}
-                </AnimatePresence>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
+      <AnimatePresence>
+        {selectedTable && (
+          <TableActionModal 
+            table={selectedTable} 
+            onClose={() => setSelectedTable(null)} 
+            onUpdate={handleUpdateStatus}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-function BarManagement() {
-  const [tabs, setTabs] = useState([
-    { id: "B001", guest: "T05", items: ["Mocktail 1", "Iced Tea"], total: "$28.50", status: "Open" },
-    { id: "B002", guest: "T12", items: ["Fresh Juice", "Sparkling Water"], total: "$15.25", status: "Closed" },
-    { id: "B003", guest: "R401", items: ["House Special"], total: "$12.00", status: "Open" },
-    { id: "B004", guest: "T08", items: ["Mocktail 1", "Mocktail 1", "Iced Tea"], total: "$45.75", status: "On Hold" },
-  ]);
-
-  const openTabs = tabs.filter(t => t.status === "Open").length;
-  const revenue = tabs.reduce((sum, t) => {
-    const amount = parseFloat(t.total.replace("$", ""));
-    return sum + amount;
-  }, 0);
-  const avgTabValue = (revenue / tabs.length).toFixed(2);
-  const mostPopular = "Mocktail of the Day";
-
-  const beverages = [
-    { name: "Mocktail 1", price: "$8.50" },
-    { name: "Iced Tea", price: "$4.50" },
-    { name: "Fresh Juice", price: "$5.25" },
-    { name: "Sparkling Water", price: "$3.00" },
-    { name: "House Special", price: "$12.00" },
-    { name: "Smoothie", price: "$6.75" },
-  ];
-
-  const [searchQuery, setSearchQuery] = useState("");
+function TableActionModal({ table, onClose, onUpdate }: { table: Table, onClose: () => void, onUpdate: (id: string, status: Table["status"]) => void }) {
   return (
-    <PageShell
-      search={<SectionSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search bar..." />}
-      header={<SectionHeader icon={UtensilsCrossed} title="Bar" subtitle={`Shift Summary: ${openTabs} open tabs · Revenue: $${revenue.toFixed(2)}`} actions={
-        <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
-          Open New Tab
-        </button>
-      } />}
-      kpi={<KpiStrip items={[
-        { color: "bg-violet-500", value: openTabs.toString(), label: "Open Tabs" },
-        { color: "bg-emerald-500", value: `$${revenue.toFixed(2)}`, label: "Today's Revenue" },
-        { color: "bg-amber-500", value: "Mocktail", label: "Most Popular" },
-        { color: "bg-blue-500", value: `$${avgTabValue}`, label: "Avg Tab Value" },
-        { color: "bg-rose-500", value: tabs.filter(t => t.status === "On Hold").length.toString(), label: "On Hold" },
-      ]} />}
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
     >
-
-      <div className="grid grid-cols-2 gap-8">
-        <div>
-          <SectionHeader title="Active Tabs" />
-          <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="border-b border-border bg-secondary/30">
-                <tr>
-                  {["Tab ID", "Guest/Table", "Items", "Total", "Status", "Actions"].map(h => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {tabs.map(tab => (
-                  <tr key={tab.id} className="hover:bg-secondary/20 transition-colors">
-                    <td className="px-4 py-3 font-medium">{tab.id}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{tab.guest}</td>
-                    <td className="px-4 py-3 text-xs">{tab.items.length} items</td>
-                    <td className="px-4 py-3 font-medium">{tab.total}</td>
-                    <td className="px-4 py-3">
-                      <span className={cn(
-                        "text-xs font-medium px-2 py-1 rounded-full",
-                        tab.status === "Open" ? "bg-emerald-100 text-emerald-700" :
-                        tab.status === "Closed" ? "bg-slate-100 text-slate-700" :
-                        "bg-amber-100 text-amber-700"
-                      )}>
-                        {tab.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-xs space-x-2">
-                      <button className="px-2 py-1 text-blue-600 hover:bg-blue-100 rounded transition-colors">Add</button>
-                      <button className="px-2 py-1 text-red-600 hover:bg-red-100 rounded transition-colors">Close</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose}></div>
+      <motion.div 
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="bg-card w-full max-w-md rounded-2xl shadow-2xl border border-border overflow-hidden relative z-10"
+      >
+        <div className="p-6 border-b border-border flex items-center justify-between bg-secondary/30">
+          <div>
+            <h3 className="font-bold text-lg">Table {table.id}</h3>
+            <p className="text-xs text-muted-foreground">Capacity: {table.capacity} guests</p>
           </div>
+          <button onClick={onClose} className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors">
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        <div>
-          <SectionHeader title="Quick Order" />
-          <div className="space-y-3">
-            <LegendBar items={[{ color: "bg-red-100 border-red-200", label: "3 items running low" }]} />
-            <div className="grid grid-cols-2 gap-2">
-              {beverages.map((bev, idx) => (
-                <button
-                  key={idx}
-                  className="p-3 bg-secondary hover:bg-secondary/80 border border-border rounded-lg text-sm font-medium text-foreground transition-colors"
-                >
-                  {bev.name}
-                  <div className="text-xs text-muted-foreground">{bev.price}</div>
-                </button>
-              ))}
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-2 gap-3">
+            {([
+              { status: "Available", icon: CheckCircle2, color: "emerald" },
+              { status: "Occupied", icon: User, color: "blue" },
+              { status: "Reserved", icon: Calendar, color: "amber" },
+              { status: "Needs Cleaning", icon: AlertCircle, color: "rose" }
+            ] as const).map(opt => (
+              <button
+                key={opt.status}
+                onClick={() => onUpdate(table.id, opt.status)}
+                className={cn(
+                  "flex flex-col items-center gap-2 p-4 rounded-xl border transition-all",
+                  table.status === opt.status 
+                    ? `bg-${opt.color}-500 text-white border-transparent shadow-md` 
+                    : "bg-background border-border hover:bg-secondary text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <opt.icon className="w-6 h-6" />
+                <span className="text-xs font-bold">{opt.status}</span>
+              </button>
+            ))}
+          </div>
+
+          {table.status === "Occupied" && (
+            <div className="space-y-4 pt-4 border-t border-border">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Server</span>
+                <span className="font-bold">{table.server}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Time Seated</span>
+                <span className="font-bold">{table.time}</span>
+              </div>
+              <button className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-sm hover:bg-primary/90 transition-colors">
+                Open POS Order
+              </button>
             </div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function RoomService() {
+  const { orders, updateOrderStatus } = useMenu();
+  
+  const roomServiceOrders = useMemo(() => {
+    return orders.filter(o => o.roomNumber !== undefined);
+  }, [orders]);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
+        <div className="flex flex-wrap items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+            <span className="text-sm font-medium text-muted-foreground">Pending</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+            <span className="text-sm font-medium text-muted-foreground">Preparing</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+            <span className="text-sm font-medium text-muted-foreground">Delivering</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+            <span className="text-sm font-medium text-muted-foreground">Completed</span>
           </div>
         </div>
       </div>
-    </PageShell>
+
+      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+        <div className="p-5 grid gap-4">
+          {roomServiceOrders.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              No room service orders found.
+            </div>
+          ) : (
+            roomServiceOrders.map((order) => (
+              <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border rounded-lg hover:bg-secondary/20 transition-colors gap-4">
+                <div className="flex items-start gap-4">
+                  <div className={cn(
+                    "p-2 rounded-full mt-1",
+                    order.status === "Pending" ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" :
+                    order.status === "Preparing" ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" :
+                    order.status === "Delivered" ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                    "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+                  )}>
+                    <BedDouble className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium">Room {order.roomNumber}</h3>
+                      <span className={cn(
+                        "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
+                        order.status === "Pending" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                        order.status === "Preparing" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                        order.status === "Delivered" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                        "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                      )}>
+                        {order.status}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Order {order.id.slice(-6)} • {order.items.length} items • ${order.total.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Clock className="w-4 h-4" />
+                    {order.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <select 
+                    value={order.status}
+                    onChange={(e) => updateOrderStatus(order.id, e.target.value as any)}
+                    className="bg-secondary text-foreground rounded-md px-2 py-1 text-xs border-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Preparing">Preparing</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FAndBInventory() {
+  const inventory = useMemo(() => [
+    { id: "INV-001", item: "Premium Coffee Beans", category: "Beverage", stock: 12, unit: "kg", status: "Low Stock", lastUpdated: "Today, 08:00 AM" },
+    { id: "INV-002", item: "Avocado", category: "Produce", stock: 45, unit: "pcs", status: "In Stock", lastUpdated: "Today, 07:30 AM" },
+    { id: "INV-003", item: "Sourdough Bread", category: "Bakery", stock: 8, unit: "loaves", status: "Low Stock", lastUpdated: "Today, 09:15 AM" },
+    { id: "INV-004", item: "House Red Wine", category: "Alcohol", stock: 24, unit: "bottles", status: "In Stock", lastUpdated: "Yesterday, 11:00 PM" },
+    { id: "INV-005", item: "Truffle Oil", category: "Pantry", stock: 2, unit: "bottles", status: "Critical", lastUpdated: "Yesterday, 04:00 PM" },
+  ], []);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
+        <div className="flex flex-wrap items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+            <span className="text-sm font-medium text-muted-foreground">In Stock</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+            <span className="text-sm font-medium text-muted-foreground">Low Stock</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            <span className="text-sm font-medium text-muted-foreground">Critical</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
+            <Plus className="w-4 h-4" /> Add Item
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+              <tr>
+                <th className="px-4 py-3 font-medium">Item ID</th>
+                <th className="px-4 py-3 font-medium">Name</th>
+                <th className="px-4 py-3 font-medium">Category</th>
+                <th className="px-4 py-3 font-medium">Stock Level</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Last Updated</th>
+                <th className="px-4 py-3 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {inventory.map((item) => (
+                <tr key={item.id} className="border-b border-border hover:bg-secondary/20 transition-colors">
+                  <td className="p-4 font-medium">{item.id}</td>
+                  <td className="px-4 py-3">{item.item}</td>
+                  <td className="p-4 text-muted-foreground">{item.category}</td>
+                  <td className="px-4 py-3">
+                    <span className="font-medium">{item.stock}</span> <span className="text-muted-foreground text-sm">{item.unit}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={cn(
+                      "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                      item.status === "In Stock" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                      item.status === "Low Stock" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                      "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                    )}>
+                      {item.status}
+                    </span>
+                  </td>
+                  <td className="p-4 text-sm text-muted-foreground">{item.lastUpdated}</td>
+                  <td className="px-4 py-3 text-right">
+                    <button className="p-2 hover:bg-secondary rounded-lg transition-colors text-muted-foreground hover:text-foreground">
+                      <Info className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+function FAndBSettings() {
+  return (
+    <div className="space-y-6 max-w-4xl">
+      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-border">
+          <h3 className="text-lg font-bold text-foreground">Food & Beverage Settings</h3>
+          <p className="text-sm text-muted-foreground">Configure global parameters for POS, menus, and inventory.</p>
+        </div>
+        <div className="p-6 space-y-8">
+          
+          <div className="space-y-4">
+            <h4 className="font-semibold text-foreground flex items-center gap-2">
+              <UtensilsCrossed className="w-4 h-4 text-primary" />
+              Point of Sale (POS)
+            </h4>
+            <div className="grid gap-4">
+              <div className="flex items-center justify-between p-4 border border-border rounded-xl">
+                <div>
+                  <p className="font-medium text-foreground">Auto-Print Kitchen Tickets</p>
+                  <p className="text-sm text-muted-foreground">Automatically send orders to the kitchen printer.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <div className="w-11 h-6 bg-secondary peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                </label>
+              </div>
+              <div className="flex items-center justify-between p-4 border border-border rounded-xl">
+                <div>
+                  <p className="font-medium text-foreground">Default Gratuity</p>
+                  <p className="text-sm text-muted-foreground">Standard service charge applied to all checks.</p>
+                </div>
+                <div className="relative">
+                  <input type="number" defaultValue="18" className="bg-background border border-border rounded-lg pl-3 pr-7 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/50 w-24" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="font-semibold text-foreground flex items-center gap-2">
+              <BedDouble className="w-4 h-4 text-primary" />
+              Room Service
+            </h4>
+            <div className="grid gap-4">
+              <div className="flex items-center justify-between p-4 border border-border rounded-xl">
+                <div>
+                  <p className="font-medium text-foreground">Delivery Fee</p>
+                  <p className="text-sm text-muted-foreground">Standard delivery charge for in-room dining.</p>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <input type="number" defaultValue="5" className="bg-background border border-border rounded-lg pl-7 pr-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/50 w-24" />
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-4 border border-border rounded-xl">
+                <div>
+                  <p className="font-medium text-foreground">Estimated Delivery Time</p>
+                  <p className="text-sm text-muted-foreground">Default time shown to guests when ordering.</p>
+                </div>
+                <select className="bg-background border border-border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/50">
+                  <option>30 mins</option>
+                  <option>45 mins</option>
+                  <option>60 mins</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div className="p-6 border-t border-border bg-secondary/30 flex justify-end">
+          <button className="bg-primary text-primary-foreground px-6 py-2 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm">
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GenericView({ title }: { title: string }) {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center bg-card p-4 rounded-2xl border border-border shadow-sm">
+        <h3 className="font-semibold">{title}</h3>
+        <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm">
+          <Plus className="w-4 h-4" /> Add New
+        </button>
+      </div>
+      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+        <div className="p-8 text-center text-muted-foreground">
+          <p>No {title.toLowerCase()} records found.</p>
+        </div>
+      </div>
+    </div>
   );
 }
