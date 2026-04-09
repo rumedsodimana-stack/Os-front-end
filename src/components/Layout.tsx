@@ -8,6 +8,7 @@ import {
   Menu,
   X,
   Hotel,
+  Globe,
   Sparkles,
   ConciergeBell,
   Brush,
@@ -34,10 +35,7 @@ import {
   MessageSquare,
   Settings2,
   Command,
-  BookOpen,
-  Coins,
-  Wine,
-  BellRing
+  BookOpen
 } from "lucide-react";
 import { useTheme } from "./theme-provider";
 import { cn } from "../lib/utils";
@@ -66,12 +64,12 @@ type Department =
   | "Purchasing & Procurement"
   | "Reservations"
   | "Legal & Compliance"
-  | "Configuration"
-  | "Guest Relations"
-  | "Connect"
   | "Cost Control"
   | "Mini Bar"
   | "Room Service"
+  | "Configuration"
+  | "Guest Relations"
+  | "Connect"
   | "Readme";
 
 interface LayoutProps {
@@ -82,6 +80,7 @@ interface LayoutProps {
   setActiveSubmenu: (sub: string) => void;
   aiEnabled: boolean;
   setAiEnabled: (enabled: boolean) => void;
+  onViewWebsite?: () => void;
 }
 
 const DEPARTMENTS: { name: Department; icon: React.ElementType; submenus: string[] }[] = [
@@ -102,12 +101,12 @@ const DEPARTMENTS: { name: Department; icon: React.ElementType; submenus: string
   { name: "Purchasing & Procurement", icon: ShoppingBag, submenus: ["Overview", "Purchase Orders", "Requisitions", "Receiving (GRN)", "Inventory", "Suppliers", "Contracts", "Bids"] },
   { name: "Reservations", icon: CalendarCheck, submenus: ["Overview", "Direct Bookings", "Group Blocks", "Waitlists"] },
   { name: "Legal & Compliance", icon: Scale, submenus: ["Overview", "Contracts", "Permits", "Safety Standards"] },
+  { name: "Cost Control", icon: Calculator, submenus: ["Overview", "Cost Centers"] },
+  { name: "Mini Bar", icon: ShoppingBag, submenus: ["Overview", "Stock Management", "Refill Requests", "Billing"] },
+  { name: "Room Service", icon: UtensilsCrossed, submenus: ["Overview", "Orders", "Kitchen Display", "Delivery Tracking"] },
   { name: "Configuration", icon: Sliders, submenus: ["Overview", "Appearance", "System Parameters", "User Roles", "Integrations"] },
   { name: "Guest Relations", icon: HeartHandshake, submenus: ["Overview", "Feedback", "VIP Tracking", "Loyalty Program"] },
   { name: "Connect", icon: MessageSquare, submenus: ["Overview", "Messaging", "Approvals", "Authorizations", "Notifications", "Incident Log"] },
-  { name: "Cost Control", icon: Coins, submenus: ["Overview", "Cost Centers", "Cost Transfers", "Master Inventory", "Physical Inventory", "Month-End Valuation", "Settings"] },
-  { name: "Mini Bar", icon: Wine, submenus: ["Overview", "Room Plan", "Mini Bar Inventory", "Item Expiry Tracking", "Inventory Movements", "Settings"] },
-  { name: "Room Service", icon: BellRing, submenus: ["Overview", "Orders Board", "Room Plan", "Menu", "Inventory", "Item Expiry Tracking", "Inventory Movements", "Settings"] },
   { name: "Readme", icon: BookOpen, submenus: ["About", "User Guide", "UI Assets"] },
 ];
 
@@ -118,7 +117,8 @@ export function Layout({
   activeSubmenu,
   setActiveSubmenu,
   aiEnabled,
-  setAiEnabled
+  setAiEnabled,
+  onViewWebsite
 }: LayoutProps) {
   const { theme, setTheme, config } = useTheme();
   const { user, logout } = useAuth();
@@ -143,105 +143,12 @@ export function Layout({
   const displayDept = DEPARTMENTS.find(d => d.name === displayDeptName)!;
 
   const isGlass = config.sidebarStyle === "glass";
-  const isTopNav = config.sidebarVariant === "top-nav";
 
   return (
-    <div className="h-screen bg-background font-sans overflow-hidden flex flex-col">
-
-      {/* Top Nav variant */}
-      {isTopNav && (
-        <nav
-          className={cn("w-full h-16 flex-shrink-0 flex items-center gap-2 px-6 border-b border-white/10 z-30 shadow-sm", isGlass ? "backdrop-blur-xl" : "")}
-          style={{ backgroundColor: isGlass
-            ? `color-mix(in srgb, var(--sidebar-main-bg) 85%, transparent)`
-            : `var(--sidebar-main-bg)` }}
-        >
-          <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white font-bold text-lg shrink-0 mr-4">O</div>
-          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide flex-1">
-            {DEPARTMENTS.map(dept => {
-              const isActive = activeDepartment === dept.name;
-              return (
-                <div key={dept.name} className="relative group shrink-0">
-                  <button
-                    onClick={() => {
-                      setActiveDepartment(dept.name);
-                      setActiveSubmenu(dept.submenus[0]);
-                    }}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
-                      isActive ? "bg-white/20 text-white shadow-inner" : "text-white/80 hover:text-white hover:bg-white/10"
-                    )}
-                  >
-                    <dept.icon className="w-4 h-4" />
-                    <span className="hidden lg:inline">{dept.name}</span>
-                  </button>
-                  {/* Mega dropdown */}
-                  <div className="absolute top-full left-0 mt-1 w-56 bg-card border border-border rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
-                    <div className="p-2">
-                      {dept.submenus.map(sub => {
-                        const isSubActive = activeSubmenu === sub && activeDepartment === dept.name;
-                        return (
-                          <button
-                            key={sub}
-                            onClick={() => {
-                              setActiveDepartment(dept.name);
-                              setActiveSubmenu(sub);
-                            }}
-                            className={cn(
-                              "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
-                              isSubActive ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-secondary"
-                            )}
-                          >
-                            {sub}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <button onClick={() => logout()} className="text-white/80 hover:text-white p-2 rounded-lg hover:bg-white/10 shrink-0" title="Logout">
-            <LogOut className="w-4 h-4" />
-          </button>
-        </nav>
-      )}
-
-      {/* Top Nav — Submenu bar (always visible) */}
-      {isTopNav && (
-        <div
-          className="w-full h-12 flex-shrink-0 flex items-center gap-1 px-6 overflow-x-auto scrollbar-hide border-b border-border z-20 shadow-sm"
-          style={{ backgroundColor: `var(--sidebar-sub-bg)` }}
-        >
-          <span className="text-[11px] font-bold uppercase tracking-wider text-white/70 mr-3 shrink-0">
-            {displayDept.name}
-          </span>
-          {displayDept.submenus.map(sub => {
-            const isSubActive = activeSubmenu === sub;
-            return (
-              <button
-                key={sub}
-                onClick={() => setActiveSubmenu(sub)}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap shrink-0",
-                  isSubActive
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-white/80 hover:text-white hover:bg-white/10"
-                )}
-              >
-                {sub}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Horizontal row: sidebar (if any) + content + AI panel */}
-      <div className="flex flex-1 overflow-hidden">
-
+    <div className="flex h-screen bg-background font-sans overflow-hidden">
+      
       {/* Left Sidebar */}
-      {!isTopNav && <aside
+      <aside 
         className={cn(
           "flex h-full w-[340px] flex-shrink-0 transition-all duration-300 z-20 relative rounded-r-3xl overflow-hidden",
           sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0 md:w-24"
@@ -250,14 +157,13 @@ export function Layout({
         {/* Darker Left Strip (Main Menu) */}
         <div className={cn(
           "w-24 h-full rounded-r-3xl z-20 flex flex-col items-center py-6 shadow-[4px_0_24px_rgba(0,0,0,0.1)] absolute left-0 top-0 border-r border-white/10 transition-all duration-500",
-          isGlass ? "backdrop-blur-xl" : ""
-        )}
-        style={{ backgroundColor: isGlass
-          ? `color-mix(in srgb, var(--sidebar-main-bg) 80%, transparent)`
-          : `var(--sidebar-main-bg)` }}>
+          isGlass 
+            ? "bg-violet-700/80 backdrop-blur-xl" 
+            : "bg-violet-800"
+        )}>
           {/* Logo */}
-          <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-8 text-white font-bold text-xl shadow-inner shrink-0">
-            O
+          <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-8 text-white font-brand text-2xl shadow-inner shrink-0">
+            T
           </div>
 
           {/* Main Menu Icons - 2 Columns for compactness but with good spacing */}
@@ -318,11 +224,10 @@ export function Layout({
         {/* Submenu Area */}
         <div className={cn(
           "w-full h-full pl-24 flex flex-col z-10 py-6 transition-all duration-500 rounded-r-3xl",
-          isGlass ? "backdrop-blur-lg" : ""
-        )}
-        style={{ backgroundColor: isGlass
-          ? `color-mix(in srgb, var(--sidebar-sub-bg) 70%, transparent)`
-          : `var(--sidebar-sub-bg)` }}>
+          isGlass 
+            ? "bg-violet-500/70 backdrop-blur-lg" 
+            : "bg-violet-600"
+        )}>
           
           {/* User Profile */}
           <div className="flex items-center gap-3 px-6 mb-8 text-white">
@@ -389,30 +294,24 @@ export function Layout({
                 setActiveSubmenu("Settings");
               }}
               className={cn(
-                "w-full flex items-center gap-3 px-4 py-3 rounded-l-full transition-colors relative group text-left outline-none",
-                activeSubmenu === "Settings" ? "text-violet-700 dark:text-violet-300 font-medium" : "text-white/80 hover:text-white hover:bg-white/10"
+                "w-full flex items-center gap-3 px-4 py-3 text-white/80 hover:text-white transition-colors",
+                activeSubmenu === "Settings" && "text-white bg-white/10"
               )}
             >
-              {activeSubmenu === "Settings" && (
-                <motion.div
-                  layoutId="activeSubmenuBg"
-                  className="absolute top-0 bottom-0 left-0 right-0 bg-background rounded-l-full z-0"
-                  initial={false}
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                >
-                  {/* Top curve */}
-                  <svg className="absolute -top-[16px] right-0 w-[16px] h-[16px] pointer-events-none" viewBox="0 0 16 16">
-                    <path d="M 0 16 A 16 16 0 0 0 16 0 L 16 16 Z" fill="var(--background)" />
-                  </svg>
-                  {/* Bottom curve */}
-                  <svg className="absolute -bottom-[16px] right-0 w-[16px] h-[16px] pointer-events-none" viewBox="0 0 16 16">
-                    <path d="M 0 0 A 16 16 0 0 1 16 16 L 16 0 Z" fill="var(--background)" />
-                  </svg>
-                </motion.div>
-              )}
-              <Settings className="w-5 h-5 shrink-0 relative z-10" />
-              <span className={cn("text-sm font-medium relative z-10", !sidebarOpen && "md:hidden")}>Settings</span>
+              <Settings className="w-5 h-5 shrink-0" />
+              <span className={cn("text-sm font-medium", !sidebarOpen && "md:hidden")}>
+                Settings
+              </span>
             </button>
+            {onViewWebsite && (
+              <button 
+                onClick={onViewWebsite}
+                className="w-full flex items-center gap-3 px-4 py-3 text-white/80 hover:text-white transition-colors"
+              >
+                <Globe className="w-5 h-5 shrink-0" />
+                <span className={cn("text-sm font-medium", !sidebarOpen && "md:hidden")}>Public Website</span>
+              </button>
+            )}
             <button 
               onClick={() => logout()}
               className="w-full flex items-center gap-3 px-4 py-3 text-white/80 hover:text-white transition-colors"
@@ -422,7 +321,7 @@ export function Layout({
             </button>
           </div>
         </div>
-      </aside>}
+      </aside>
 
       {/* Center Content */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
@@ -592,9 +491,7 @@ export function Layout({
         <AgenticAIPanel department={activeDepartment} onClose={() => setAiEnabled(false)} />
       )}
 
-      </div>
-
-      <CommandPalette
+      <CommandPalette 
         isOpen={commandPaletteOpen} 
         onClose={() => setCommandPaletteOpen(false)} 
       />

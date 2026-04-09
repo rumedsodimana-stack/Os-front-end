@@ -1,21 +1,7 @@
 @import "tailwindcss";
-@import "./styles/tokens.css";
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
 
 @theme {
-  /* Semantic status tokens (source: tokens.json / tokens.css) */
-  --color-success-100: var(--color-success-100);
-  --color-success-500: var(--color-success-500);
-  --color-success-700: var(--color-success-700);
-  --color-warning-100: var(--color-warning-100);
-  --color-warning-500: var(--color-warning-500);
-  --color-warning-700: var(--color-warning-700);
-  --color-danger-100: var(--color-danger-100);
-  --color-danger-500: var(--color-danger-500);
-  --color-danger-700: var(--color-danger-700);
-  --color-info-100: var(--color-info-100);
-  --color-info-500: var(--color-info-500);
-  --color-info-700: var(--color-info-700);
-
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -50,6 +36,7 @@
   --font-sans: var(--font-sans);
   --font-heading: var(--font-heading);
   --font-mono: var(--font-mono);
+  --font-brand: var(--font-brand);
 }
 
 @layer base {
@@ -87,6 +74,7 @@
     --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
     --font-heading: "Outfit", "Inter", sans-serif;
     --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+    --font-brand: "Pacifico", cursive;
   }
 
   .dark {
@@ -147,12 +135,4 @@
   .transform-style-3d {
     transform-style: preserve-3d;
   }
-
-  /* KPI gradient utilities (source: tokens.json) */
-  .bg-kpi-arrivals   { background-image: linear-gradient(135deg, var(--kpi-arrivals-from),   var(--kpi-arrivals-to)); }
-  .bg-kpi-in-house   { background-image: linear-gradient(135deg, var(--kpi-in-house-from),   var(--kpi-in-house-to)); }
-  .bg-kpi-departures { background-image: linear-gradient(135deg, var(--kpi-departures-from), var(--kpi-departures-to)); }
-  .bg-kpi-revenue    { background-image: linear-gradient(135deg, var(--kpi-revenue-from),    var(--kpi-revenue-to)); }
-  .bg-kpi-occupancy  { background-image: linear-gradient(135deg, var(--kpi-occupancy-from),  var(--kpi-occupancy-to)); }
-  .bg-kpi-adr-revpar { background-image: linear-gradient(135deg, var(--kpi-adr-revpar-from), var(--kpi-adr-revpar-to)); }
 }

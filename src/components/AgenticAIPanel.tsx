@@ -461,10 +461,7 @@ export function AgenticAIPanel({ department, onClose }: AgenticAIPanelProps) {
   };
 
   return (
-    <div
-      className="w-[450px] border-l border-border h-full flex flex-col shadow-2xl z-30 animate-in slide-in-from-right duration-300 rounded-l-3xl overflow-hidden relative"
-      style={{ backgroundColor: "var(--ai-panel-bg)" }}
-    >
+    <div className="w-[450px] bg-card border-l border-border h-full flex flex-col shadow-2xl z-30 animate-in slide-in-from-right duration-300 rounded-l-3xl overflow-hidden relative">
       
       {/* Background Gradient Mesh */}
       <div className="absolute bottom-0 left-0 right-0 h-3/4 opacity-60 pointer-events-none z-0 overflow-hidden">

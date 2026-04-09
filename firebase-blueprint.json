@@ -1,5 +1,38 @@
 {
   "entities": {
+    "User": {
+      "title": "User",
+      "description": "A staff member or admin user.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["admin", "manager", "staff"] },
+        "hotelId": { "type": "string", "description": "The ID of the hotel this user belongs to." },
+        "department": { "type": "string" }
+      },
+      "required": ["name", "email", "role"]
+    },
+    "Hotel": {
+      "title": "Hotel",
+      "description": "A hotel registered in the system.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "brand": { "type": "string" },
+        "category": { "type": "string", "enum": ["Luxury", "Boutique", "Business", "Resort", "Budget"] },
+        "address": { "type": "string" },
+        "city": { "type": "string" },
+        "country": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "website": { "type": "string" },
+        "totalRooms": { "type": "integer" },
+        "onboardedAt": { "type": "string", "format": "date-time" },
+        "ownerUid": { "type": "string" }
+      },
+      "required": ["name", "category", "ownerUid", "onboardedAt"]
+    },
     "Notification": {
       "title": "Notification",
       "description": "A system-wide notification for staff.",
@@ -174,6 +207,19 @@
         }
       },
       "required": ["guestId", "bookingId", "roomNumber", "status", "totalBalance", "items"]
+    },
+    "CostCenter": {
+      "title": "CostCenter",
+      "description": "A department or functional area for cost tracking.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "code": { "type": "string" },
+        "description": { "type": "string" },
+        "budget": { "type": "number" },
+        "manager": { "type": "string" }
+      },
+      "required": ["name", "code", "budget"]
     }
   },
   "firestore": {
@@ -208,6 +254,18 @@
     "/folios/{folioId}": {
       "schema": "Folio",
       "description": "Guest folios and billing."
+    },
+    "/hotels/{hotelId}": {
+      "schema": "Hotel",
+      "description": "Registered hotels."
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and roles."
+    },
+    "/costCenters/{costCenterId}": {
+      "schema": "CostCenter",
+      "description": "Cost centers for financial tracking."
     }
   }
 }

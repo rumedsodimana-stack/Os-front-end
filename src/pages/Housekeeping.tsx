@@ -3,8 +3,6 @@ import { Sparkles, Bed, Brush, AlertTriangle, CheckCircle, Thermometer, Droplets
 import { cn } from "../lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { KPICard } from "../components/ui/KPICard";
-import { RoomCard, ROOM_GRID } from "../components/ui/RoomCard";
-import { RoomProfileModal } from "./FrontDesk";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../components/ui/Table";
 import { useRooms, Room, RoomStatus as RoomStatusType, HKStatus } from "../context/RoomContext";
 
@@ -237,7 +235,6 @@ function RoomStatus() {
   const [filterFloor, setFilterFloor] = useState("All Floors");
   const [filterStatus, setFilterStatus] = useState("All Statuses");
   const [toast, setToast] = useState<string | null>(null);
-  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
 
   const staff = ["Unassigned", "Maria G.", "John D.", "Sarah L.", "Engineering"];
 
@@ -318,72 +315,70 @@ function RoomStatus() {
       </div>
 
       {/* Rooms Grid */}
-      <div className={ROOM_GRID}>
-        {filteredRooms.map((room) => {
-          const tone: "success" | "danger" | "warning" =
-            room.hkStatus === "Clean" || room.hkStatus === "Inspected" ? "success"
-            : room.hkStatus === "Dirty" ? "danger"
-            : "warning";
-          return (
-            <RoomCard
-              key={room.number}
-              room={room}
-              tone={tone}
-              onClick={() => setSelectedRoom(room)}
-              topRight={
-                <CheckCircle className={cn(
-                  "w-4 h-4",
-                  room.hkStatus === "Inspected" ? "text-success-500" : "opacity-30",
-                )} />
-              }
-              subtitle={
-                <span className="flex items-center gap-2">
-                  {room.status}
-                  {room.status === "Arrival" && (
-                    <span className="px-1.5 py-0.5 bg-primary text-primary-foreground text-[9px] rounded uppercase tracking-wider font-bold">VIP</span>
-                  )}
-                </span>
-              }
-              badge={{ label: room.hkStatus, tone }}
-              footer={
-                <div className="space-y-2">
-                  <div className="space-y-1">
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Assignee</p>
-                    <select className="w-full bg-background border border-border rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-primary/50">
-                      {staff.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Condition</p>
-                    <div className="flex flex-wrap gap-1">
-                      {(["Dirty", "Clean", "Inspected"] as const).map(status => (
-                        <button
-                          key={status}
-                          onClick={(e) => { e.stopPropagation(); handleUpdateHK(room.number, status as HKStatus); }}
-                          className={cn(
-                            "px-2 py-1 rounded text-[10px] font-bold transition-all border",
-                            room.hkStatus === status
-                              ? "bg-foreground text-background border-foreground"
-                              : "bg-transparent border-border hover:border-primary/50",
-                          )}
-                        >
-                          {status}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="pt-1 flex items-center gap-1 text-[10px] font-bold text-muted-foreground border-t border-border">
-                    <Clock className="w-3 h-3" /> Updated 5m ago
-                  </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+        {filteredRooms.map((room) => (
+          <div 
+            key={room.number} 
+            className={cn(
+              "p-5 rounded-2xl border shadow-sm flex flex-col gap-4 transition-all hover:shadow-md", 
+              room.hkStatus === "Clean" || room.hkStatus === "Inspected" ? "bg-emerald-100/40 border-emerald-200 text-emerald-900 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300" :
+              room.hkStatus === "Dirty" ? "bg-red-100/40 border-red-200 text-red-900 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300" :
+              "bg-amber-100/40 border-amber-200 text-amber-900 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-300"
+            )}
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-2xl font-bold flex items-center gap-2">
+                  {room.number}
+                  {room.status === "Arrival" && <span className="px-1.5 py-0.5 bg-purple-500 text-white text-[10px] rounded uppercase tracking-wider font-bold">VIP</span>}
+                </h3>
+                <p className="text-xs opacity-70 font-medium">{room.type} • {room.status}</p>
+              </div>
+              <div className="flex gap-1">
+                {room.hkStatus === "Inspected" && <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
+                {room.hkStatus !== "Inspected" && <CheckCircle className="w-4 h-4 opacity-30" />}
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <p className="text-[10px] uppercase tracking-wider font-bold opacity-50">Assignee</p>
+                <select 
+                  className="w-full bg-background/50 border border-current/10 rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-current/20"
+                >
+                  {staff.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-[10px] uppercase tracking-wider font-bold opacity-50">Condition</p>
+                <div className="flex flex-wrap gap-1">
+                  {["Dirty", "Clean", "Inspected"].map(status => (
+                    <button
+                      key={status}
+                      onClick={() => handleUpdateHK(room.number, status as HKStatus)}
+                      className={cn(
+                        "px-2 py-1 rounded text-[10px] font-bold transition-all border",
+                        room.hkStatus === status 
+                          ? "bg-foreground text-background border-foreground" 
+                          : "bg-transparent border-current/20 hover:border-current/40"
+                      )}
+                    >
+                      {status}
+                    </button>
+                  ))}
                 </div>
-              }
-            />
-          );
-        })}
+              </div>
+            </div>
+            
+            <div className="mt-auto pt-3 flex justify-between items-center text-[10px] font-bold opacity-60 border-t border-current/10">
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" /> Updated 5m ago
+              </span>
+            </div>
+          </div>
+        ))}
       </div>
-      <AnimatePresence>
-        {selectedRoom && <RoomProfileModal room={selectedRoom} onClose={() => setSelectedRoom(null)} />}
-      </AnimatePresence>
     </div>
   );
 }

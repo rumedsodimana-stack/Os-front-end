@@ -66,7 +66,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     if (!user) return;
 
     const path = 'notifications';
-    if ((import.meta as any).env?.DEV) return;
     const q = query(collection(db, path), orderBy('timestamp', 'desc'), limit(50));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {

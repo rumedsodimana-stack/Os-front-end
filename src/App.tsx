@@ -10,7 +10,7 @@ import { BookingProvider } from "./context/BookingContext";
 import { FolioProvider } from "./context/FolioContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { Hotel } from "lucide-react";
+import { Hotel, ArrowLeft } from "lucide-react";
 import { FrontDesk } from "./pages/FrontDesk";
 import { Housekeeping } from "./pages/Housekeeping";
 import { FoodAndBeverage } from "./pages/FoodAndBeverage";
@@ -32,11 +32,9 @@ import { ITAndSystems } from "./pages/ITAndSystems";
 import { Reservations } from "./pages/Reservations";
 import { LegalAndCompliance } from "./pages/LegalAndCompliance";
 import { CostControl } from "./pages/CostControl";
-import { MiniBar } from "./pages/MiniBar";
-import { RoomService } from "./pages/RoomService";
-import { InventoryProvider } from "./context/InventoryContext";
-import { CostCenterProvider } from "./context/CostCenterContext";
 import { Readme } from "./pages/Readme";
+import { Onboarding } from "./pages/Onboarding";
+import { LandingPage } from "./pages/LandingPage";
 
 type Department = 
   | "Front Desk" 
@@ -56,12 +54,12 @@ type Department =
   | "Purchasing & Procurement"
   | "Reservations"
   | "Legal & Compliance"
-  | "Configuration"
-  | "Guest Relations"
-  | "Connect"
   | "Cost Control"
   | "Mini Bar"
   | "Room Service"
+  | "Configuration"
+  | "Guest Relations"
+  | "Connect"
   | "Readme";
 
 export default function App() {
@@ -77,10 +75,12 @@ export default function App() {
 }
 
 function AppContent() {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const [activeDepartment, setActiveDepartment] = useState<Department>("Front Desk");
   const [activeSubmenu, setActiveSubmenu] = useState<string>("Overview");
   const [aiEnabled, setAiEnabled] = useState(true);
+  const [showLogin, setShowLogin] = useState(false);
+  const [viewWebsite, setViewWebsite] = useState(false);
 
   if (loading) {
     return (
@@ -90,8 +90,26 @@ function AppContent() {
     );
   }
 
-  if (!user) {
-    return <LoginScreen />;
+  if (!user || viewWebsite) {
+    if (showLogin) {
+      return <LoginScreen onBack={() => setShowLogin(false)} />;
+    }
+    return (
+      <LandingPage 
+        isLoggedIn={!!user}
+        onGetStarted={() => {
+          if (user) {
+            setViewWebsite(false);
+          } else {
+            setShowLogin(true);
+          }
+        }} 
+      />
+    );
+  }
+
+  if (!profile || !profile.hotelId) {
+    return <Onboarding onComplete={() => {}} />;
   }
 
   return (
@@ -102,21 +120,24 @@ function AppContent() {
             <RoomProvider>
               <BookingProvider>
                 <FolioProvider>
-                  <InventoryProvider>
-                    <CostCenterProvider>
-                  <Layout
+                  <Layout 
                     activeDepartment={activeDepartment} 
                     setActiveDepartment={setActiveDepartment}
                     activeSubmenu={activeSubmenu}
                     setActiveSubmenu={setActiveSubmenu}
                     aiEnabled={aiEnabled}
                     setAiEnabled={setAiEnabled}
+                    onViewWebsite={() => setViewWebsite(true)}
                   >
                     {activeDepartment === "Front Desk" && <FrontDesk aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
                     {activeDepartment === "Housekeeping" && <Housekeeping aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
                     {activeDepartment === "Food & Beverage" && <FoodAndBeverage aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
                     {activeDepartment === "Human Resources" && <HumanResources aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
-                    {activeDepartment === "Configuration" && <Configuration activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Configuration" && activeSubmenu === "Overview" ? (
+                      <Onboarding onComplete={() => setActiveSubmenu("Overview")} />
+                    ) : (
+                      activeDepartment === "Configuration" && <Configuration activeSubmenu={activeSubmenu} />
+                    )}
                     {activeDepartment === "Purchasing & Procurement" && <Purchasing aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
                     {activeDepartment === "Sales & Revenue" && <SalesAndRevenue aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
                     {activeDepartment === "Engineering" && <Engineering aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
@@ -133,12 +154,10 @@ function AppContent() {
                     {activeDepartment === "Reservations" && <Reservations aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
                     {activeDepartment === "Legal & Compliance" && <LegalAndCompliance aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
                     {activeDepartment === "Cost Control" && <CostControl aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
-                    {activeDepartment === "Mini Bar" && <MiniBar aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
-                    {activeDepartment === "Room Service" && <RoomService aiEnabled={aiEnabled} activeSubmenu={activeSubmenu} />}
+                    {activeDepartment === "Mini Bar" && <div className="p-8">Mini Bar Module</div>}
+                    {activeDepartment === "Room Service" && <div className="p-8">Room Service Module</div>}
                     {activeDepartment === "Readme" && <Readme activeSubmenu={activeSubmenu} />}
                   </Layout>
-                    </CostCenterProvider>
-                  </InventoryProvider>
                 </FolioProvider>
               </BookingProvider>
             </RoomProvider>
@@ -149,7 +168,7 @@ function AppContent() {
   );
 }
 
-function LoginScreen() {
+function LoginScreen({ onBack }: { onBack: () => void }) {
   const { login } = useAuth();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -165,12 +184,18 @@ function LoginScreen() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
+      <button 
+        onClick={onBack}
+        className="absolute top-8 left-8 flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back to Website
+      </button>
       <div className="max-w-md w-full bg-card border border-border rounded-3xl p-10 shadow-2xl text-center">
         <div className="w-20 h-20 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner">
           <Hotel className="w-10 h-10" />
         </div>
-        <h1 className="text-3xl font-bold mb-2 tracking-tight">OmniStay</h1>
+        <h1 className="text-4xl font-brand mb-2 tracking-tight">TravelBook HOS</h1>
         <p className="text-muted-foreground mb-10">
           Advanced Hotel Management & Intelligence Platform
         </p>

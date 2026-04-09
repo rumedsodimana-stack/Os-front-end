@@ -2,67 +2,6 @@
 
 This document outlines the standard UI components, assets, and design patterns used across the application. When adding new features or modules, please adhere to these guidelines to maintain a consistent, luxury 5-star standard.
 
-> **Live preview:** open the app → **Readme → UI Assets** to see every token and component rendered live.
-
-## 0. Design Tokens (source of truth)
-
-All colours, radii, shadows, and gradients flow from **one** source:
-
-- `src/styles/tokens.json` — machine-readable Style-Dictionary-shaped tokens (Figma sync target).
-- `src/styles/tokens.css` — runtime CSS variables mirroring `tokens.json`.
-- `src/index.css` — `@theme` block + semantic utilities + `.bg-kpi-*` gradient utilities.
-
-**Rule:** never hardcode a hex or a raw Tailwind palette class (`bg-emerald-500`, `text-red-700`, `from-pink-500`). Always use the semantic utility so a tenant re-theme is a one-file override.
-
-### Status colours (100 / 500 / 700)
-
-| Semantic | Utility | CSS var |
-|---|---|---|
-| Success (emerald) | `bg-success-100`, `bg-success-500`, `bg-success-700` | `--color-success-{100,500,700}` |
-| Warning (amber)   | `bg-warning-100`, `bg-warning-500`, `bg-warning-700` | `--color-warning-{100,500,700}` |
-| Danger (red)      | `bg-danger-100`, `bg-danger-500`, `bg-danger-700`    | `--color-danger-{100,500,700}`  |
-| Info (blue)       | `bg-info-100`, `bg-info-500`, `bg-info-700`          | `--color-info-{100,500,700}`    |
-
-✅ `bg-success-100 text-success-700` · ❌ `bg-emerald-100 text-emerald-700`
-
-### KPI gradients
-
-Use on KPI hero tiles / stat cards:
-
-`.bg-kpi-arrivals` · `.bg-kpi-in-house` · `.bg-kpi-departures` · `.bg-kpi-revenue` · `.bg-kpi-occupancy` · `.bg-kpi-adr-revpar`
-
-### Radius scale
-
-`--radius-sm` (0.25rem) · `--radius-md` (0.5rem) · `--radius-lg` (0.75rem) · `--radius-xl` (1rem) · `--radius-2xl` (1.5rem) · `--radius-full` (9999px)
-
-### Shadow scale
-
-`--shadow-sm` · `--shadow-md` · `--shadow-lg` · `--shadow-xl`
-
-### Adding a new token
-
-1. Add it to `src/styles/tokens.json` (source of truth, Figma-sync).
-2. Mirror it as a CSS var in `src/styles/tokens.css` (+ `.dark` override).
-3. Register the semantic utility in the `@theme` block of `src/index.css`.
-4. Add it to the `ThemeConfig` interface + `defaultThemeConfig` + `CSS_VAR_MAP` in `src/components/theme-provider.tsx` so it becomes runtime-editable.
-5. Expose a control for it in `src/pages/Configuration.tsx` → Appearance → Theme Studio.
-6. Use the semantic utility in code — never the raw hex.
-
-### Theme Studio — edit everything live, export as a theme pack
-
-Go to **Configuration → Appearance → Theme Studio** to edit every design token at runtime. Sections:
-
-- **Surfaces** — background, foreground, card, border
-- **Status colours** — success / warning / danger / info (edits the 500 shade)
-- **KPI gradients** — all 6 gradient pairs with live previews
-- **Typography (advanced)** — monospace font, base font size (12–20 px)
-- **Motion** — fast / base / slow animation durations
-- **Theme pack — export / import** — download the complete config as a single `theme.json`, or upload one from another tenant
-
-Changes apply live and persist to `localStorage` under key `omnistay-config`. Hit **Reset to Default Settings** at the bottom to clear all overrides.
-
-**Theme pack (`theme.json`)** is the one-file tenant white-label: drop it into any Orbit OS deployment and the entire UI rebrands without touching code.
-
 ## 1. KPI Cards (`KPICard`)
 
 **CRITICAL INSTRUCTION:** Do NOT create custom KPI cards using raw `div` elements (e.g., `<div className="bg-card p-6 rounded-2xl...">`). You **MUST** use the standardized `KPICard` component for all metric displays to ensure consistency across the system.
@@ -255,24 +194,6 @@ Standardized spacing and styling for form elements.
 ## 7. Icons
 
 We use `lucide-react` for all icons. Ensure icons are sized appropriately (usually `w-4 h-4` for inline text, `w-5 h-5` for buttons, `w-6 h-6` for headers).
-
----
-
-## 8. Front Desk — Room Profile Modal
-
-`RoomProfileModal` (exported from `src/pages/FrontDesk.tsx`, reused by Housekeeping, Mini Bar and Room Service) is now fully operational against the shared contexts:
-
-- **Header status badge** — driven by the `statusBadgeTone(status)` helper, pure semantic tokens (`bg-info-100`, `bg-success-100`, `bg-warning-100`, `bg-danger-100`, `bg-secondary`).
-- **Overview tab** — live from `useGuests()`, `useBookings()`, `useFolios()`. Shows real guest (name, phone, nationality, VIP loyalty tier), real active booking (res ID, arrival/departure, nights, rate, status) and live folio balance; empty fields fall back to `—`.
-- **Folio & Charges** — renders real `folio.items` with date/category/description/amount + total. "Post Charge" opens the existing `PostChargeForm` sub-modal; mini-bar sales post via `addFolioItem` against the current booking's folio.
-- **Mini Bar** — pulls from `useInventory().getItemsByDepartment("Mini Bar")`; "Post Charge" calls `postMovement({ type: "SALE", … })` and posts a `F&B` charge to the folio in a single action. Out-of-stock items are disabled.
-- **Maintenance** — shows a room-scoped empty state + "Create Ticket" launcher. Work-order listing is left as a clear TODO until a `MaintenanceContext` exists (no new context invented).
-- **Assets** — minimal static reference list, explicitly labelled "no asset-by-room context yet".
-- **History** — pulls `useBookings()` filtered by the linked guest's full name; empty state when the guest has no prior stays.
-- **Smart Controls** — fully token-migrated (`bg-success-100 text-success-700` ONLINE pill). Climate +/− and all three toggles (Master Lights, DND, MUR) are wired to local `useState` and visually reflect the current value.
-- **Footer** — Check In/Out and Save now use `bg-primary text-primary-foreground`; the Alerts button uses `bg-danger-100 text-danger-700 border-danger-200`. Accompany / Comments / Profile Notes open an inline note sub-modal (same pattern as Billing/Traces/Routing) that persists to local state and toasts "Saved". No Post toggles a warning-tone state. All 32 Opera Options toast on click; the 5 wired ones (Billing, Wake-up Call, Traces, Alerts, Routing) open their existing sub-modals.
-
-No new hardcoded palette colours were introduced; all changes flow through existing semantic tokens and reuse the existing `DetailField`, `ActionButton`, `PostChargeForm`, `CreateTicketForm`, `CheckInWizard`, `CheckOutWizard` primitives already in `FrontDesk.tsx`.
 
 ---
 *Note: Always use the `cn()` utility function from `src/lib/utils.ts` when conditionally joining Tailwind classes.*

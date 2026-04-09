@@ -143,7 +143,7 @@ service cloud.firestore {
     match /rooms/{roomNumber} {
       allow read: if isAuthenticated();
       allow create: if isAdmin() && isValidRoom(request.resource.data);
-      allow update: if isAuthenticated() && isValidRoom(request.resource.data);
+      allow update: if isAuthenticated() && (isValidRoom(request.resource.data) || isAdmin());
       allow delete: if isAdmin();
     }
 
@@ -178,8 +178,22 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /costCenters/{costCenterId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && hasRequiredFields(['name', 'code', 'budget']);
+      allow update: if isAuthenticated() && hasRequiredFields(['name', 'code', 'budget']);
+      allow delete: if isAdmin();
+    }
+
     match /test/connection {
       allow read: if isAuthenticated();
+    }
+
+    match /hotels/{hotelId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated(); // Anyone logged in can create a hotel (onboarding)
+      allow update: if isAdmin() || (isAuthenticated() && resource.data.ownerUid == request.auth.uid);
+      allow delete: if isAdmin();
     }
 
     match /users/{userId} {

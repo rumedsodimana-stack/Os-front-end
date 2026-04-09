@@ -37,7 +37,6 @@ export function TableProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) return;
     const path = "tables";
-    if ((import.meta as any).env?.DEV) { setLoading(false); return; }
     const tablesQuery = query(collection(db, path), orderBy("id"));
     const unsubscribe = onSnapshot(tablesQuery, (snapshot) => {
       const tableData = snapshot.docs.map(doc => ({ 
