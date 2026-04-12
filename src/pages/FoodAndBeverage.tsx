@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
 import { useMenu, MenuItem } from "../context/MenuContext";
 import { useTables, Table } from "../context/TableContext";
+import { useBookings } from "../context/BookingContext";
+import { useGuests } from "../context/GuestContext";
 import { KPICard } from "../components/ui/KPICard";
 import { 
   UtensilsCrossed, 
@@ -57,6 +59,8 @@ export function FoodAndBeverage({ aiEnabled, activeSubmenu = "Overview" }: FoodA
         return <SmartMenu4D />;
       case "POS":
         return <POSSystem />;
+      case "Kitchen Display (KDS)":
+        return <KitchenDisplay />;
       case "Table Management":
         return <TableManagement />;
       case "Room Service":
@@ -427,14 +431,30 @@ function MenuCard4D({ item, onAdd, onWinePairing }: { item: any, onAdd: () => vo
 // Point of Sale System
 function POSSystem() {
   const { menuItems, placeOrder } = useMenu();
+  const { tables, updateTableStatus } = useTables();
+  const { bookings } = useBookings();
+  const { guests, updateGuest } = useGuests();
+
   const [activeCategory, setActiveCategory] = useState("All");
   const [orderType, setOrderType] = useState<"Dine-in" | "Takeaway" | "Room Service">("Dine-in");
-  const [tableOrRoom, setTableOrRoom] = useState("");
-  const [cart, setCart] = useState<{item: MenuItem, quantity: number}[]>([]);
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  const [cart, setCart] = useState<{item: MenuItem, quantity: number, notes?: string}[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [discount, setDiscount] = useState(0);
+  const [serviceCharge, setServiceCharge] = useState(10); // Default 10%
+  const [splitCount, setSplitCount] = useState(1);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"Cash" | "Card" | "Room Charge">("Cash");
+  const [redeemPoints, setRedeemPoints] = useState(false);
+  const [showRecentOrders, setShowRecentOrders] = useState(false);
 
   const categories = ["All", "Starters", "Mains", "Desserts", "Beverages"];
+
+  const checkedInBookings = useMemo(() => {
+    return bookings.filter(b => b.status === "Checked In");
+  }, [bookings]);
 
   const filteredItems = useMemo(() => {
     return menuItems.filter(item => {
@@ -446,17 +466,17 @@ function POSSystem() {
 
   const addToCart = (item: MenuItem) => {
     setCart(prev => {
-      const existing = prev.find(i => i.item.id === item.id);
+      const existing = prev.find(i => i.item.id === item.id && !i.notes);
       if (existing) {
-        return prev.map(i => i.item.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
+        return prev.map(i => (i.item.id === item.id && !i.notes) ? { ...i, quantity: i.quantity + 1 } : i);
       }
       return [...prev, { item, quantity: 1 }];
     });
   };
 
-  const updateQuantity = (id: string, delta: number) => {
+  const updateQuantity = (id: string, delta: number, notes?: string) => {
     setCart(prev => prev.map(i => {
-      if (i.item.id === id) {
+      if (i.item.id === id && i.notes === notes) {
         const newQuantity = Math.max(0, i.quantity + delta);
         return { ...i, quantity: newQuantity };
       }
@@ -464,26 +484,70 @@ function POSSystem() {
     }).filter(i => i.quantity > 0));
   };
 
-  const removeFromCart = (id: string) => {
-    setCart(prev => prev.filter(i => i.item.id !== id));
+  const updateNotes = (id: string, currentNotes: string | undefined, newNotes: string) => {
+    setCart(prev => prev.map(i => {
+      if (i.item.id === id && i.notes === currentNotes) {
+        return { ...i, notes: newNotes };
+      }
+      return i;
+    }));
   };
+
+  const removeFromCart = (id: string, notes?: string) => {
+    setCart(prev => prev.filter(i => !(i.item.id === id && i.notes === notes)));
+  };
+
+  const subtotal = cart.reduce((sum, {item, quantity}) => sum + (item.price * quantity), 0);
+  const discountAmount = (subtotal * discount) / 100;
+  const serviceChargeAmount = (subtotal * serviceCharge) / 100;
+  
+  const selectedBooking = useMemo(() => checkedInBookings.find(b => b.id === selectedBookingId), [checkedInBookings, selectedBookingId]);
+  const selectedGuest = useMemo(() => guests.find(g => g.firstName + " " + g.lastName === selectedBooking?.guestName), [guests, selectedBooking]);
+  
+  // Calculate total before points to determine max points value
+  const prePointsTax = (subtotal - discountAmount + serviceChargeAmount) * 0.08;
+  const prePointsTotal = subtotal - discountAmount + serviceChargeAmount + prePointsTax;
+  
+  const pointsValue = redeemPoints && selectedGuest ? Math.min(selectedGuest.loyaltyPoints / 100, prePointsTotal) : 0; // 100 points = $1
+  
+  const tax = (subtotal - discountAmount + serviceChargeAmount - pointsValue) * 0.08; // 8% tax
+  const total = Math.max(0, subtotal - discountAmount + serviceChargeAmount + tax - pointsValue);
 
   const handlePlaceOrder = async () => {
     if (cart.length === 0) return;
     setIsPlacingOrder(true);
     try {
+      const booking = checkedInBookings.find(b => b.id === selectedBookingId);
+      
       await placeOrder({
         items: cart.map(c => ({
           itemId: c.item.id,
-          name: c.item.name,
+          name: c.item.name + (c.notes ? ` (${c.notes})` : ""),
           quantity: c.quantity,
           price: c.item.price
         })),
-        total: cart.reduce((sum, c) => sum + (c.item.price * c.quantity), 0),
-        roomNumber: orderType === "Room Service" ? tableOrRoom : undefined
+        total: total,
+        roomNumber: orderType === "Room Service" ? booking?.roomNumber : undefined,
+        guestId: booking?.id
       });
+
+      if (selectedTableId && orderType === "Dine-in") {
+        await updateTableStatus(selectedTableId, "Occupied");
+      }
+
+      // Deduct loyalty points if redeemed
+      if (redeemPoints && selectedGuest) {
+        const pointsToDeduct = Math.min(selectedGuest.loyaltyPoints, Math.floor(pointsValue * 100));
+        await updateGuest(selectedGuest.id, {
+          loyaltyPoints: selectedGuest.loyaltyPoints - pointsToDeduct
+        });
+      }
+
       setCart([]);
-      setTableOrRoom("");
+      setSelectedTableId(null);
+      setSelectedBookingId(null);
+      setShowPaymentModal(false);
+      setRedeemPoints(false);
     } catch (error) {
       console.error("Order failed:", error);
     } finally {
@@ -491,34 +555,78 @@ function POSSystem() {
     }
   };
 
-  const subtotal = cart.reduce((sum, {item, quantity}) => sum + (item.price * quantity), 0);
-  const tax = subtotal * 0.08; // 8% tax
-  const total = subtotal + tax;
-
   return (
     <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-8rem)] -mx-4 md:-mx-8 -mb-8">
       {/* Main POS Area */}
       <div className="flex-1 flex flex-col px-4 md:px-8 overflow-hidden">
         {/* Header & Controls */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-end gap-4 py-4 border-b border-border">
-          <div className="flex items-center gap-2 bg-secondary/50 p-1 rounded-xl">
-            {(["Dine-in", "Takeaway", "Room Service"] as const).map(type => (
-              <button
-                key={type}
-                onClick={() => setOrderType(type)}
-                className={cn(
-                  "px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2",
-                  orderType === type 
-                    ? "bg-background text-foreground shadow-sm" 
-                    : "text-muted-foreground hover:text-foreground"
-                )}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4 border-b border-border">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-secondary/50 p-1 rounded-xl">
+              {(["Dine-in", "Takeaway", "Room Service"] as const).map(type => (
+                <button
+                  key={type}
+                  onClick={() => {
+                    setOrderType(type);
+                    setSelectedTableId(null);
+                    setSelectedBookingId(null);
+                  }}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2",
+                    orderType === type 
+                      ? "bg-background text-foreground shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {type === "Dine-in" && <UtensilsCrossed className="w-4 h-4" />}
+                  {type === "Takeaway" && <ShoppingCart className="w-4 h-4" />}
+                  {type === "Room Service" && <BedDouble className="w-4 h-4" />}
+                  <span className="hidden sm:inline">{type}</span>
+                </button>
+              ))}
+            </div>
+            
+            <button 
+              onClick={() => setShowRecentOrders(!showRecentOrders)}
+              className={cn(
+                "p-2 rounded-xl border transition-all flex items-center gap-2 text-sm font-medium",
+                showRecentOrders ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Clock className="w-4 h-4" />
+              <span className="hidden md:inline">Recent Orders</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {orderType === "Dine-in" && (
+              <select 
+                value={selectedTableId || ""} 
+                onChange={(e) => setSelectedTableId(e.target.value)}
+                className="bg-card border border-border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
-                {type === "Dine-in" && <UtensilsCrossed className="w-4 h-4" />}
-                {type === "Takeaway" && <ShoppingCart className="w-4 h-4" />}
-                {type === "Room Service" && <BedDouble className="w-4 h-4" />}
-                <span className="hidden sm:inline">{type}</span>
-              </button>
-            ))}
+                <option value="">Select Table</option>
+                {tables.map(t => (
+                  <option key={t.id} value={t.id} disabled={t.status === "Occupied"}>
+                    Table {t.id} ({t.status})
+                  </option>
+                ))}
+              </select>
+            )}
+            {orderType === "Room Service" && (
+              <select 
+                value={selectedBookingId || ""} 
+                onChange={(e) => setSelectedBookingId(e.target.value)}
+                className="bg-card border border-border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="">Select Room / Guest</option>
+                {checkedInBookings.map(b => (
+                  <option key={b.id} value={b.id}>
+                    Room {b.roomNumber} - {b.guestName}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         </div>
 
@@ -552,34 +660,38 @@ function POSSystem() {
           </div>
         </div>
 
-        {/* Menu Grid */}
+        {/* Menu Grid or Recent Orders */}
         <div className="flex-1 overflow-y-auto pb-8 pr-2">
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => addToCart(item)}
-                className="bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-md transition-all text-left flex flex-col group"
-              >
-                <div className="h-32 w-full bg-secondary relative overflow-hidden">
-                  <img 
-                    src={item.image} 
-                    alt={item.name} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
-                  <div className="absolute bottom-2 right-2 bg-background/90 backdrop-blur-sm px-2 py-1 rounded-lg text-sm font-bold shadow-sm">
-                    ${item.price}
+          {showRecentOrders ? (
+            <RecentOrdersView />
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filteredItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => addToCart(item)}
+                  className="bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-md transition-all text-left flex flex-col group"
+                >
+                  <div className="h-32 w-full bg-secondary relative overflow-hidden">
+                    <img 
+                      src={item.image} 
+                      alt={item.name} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+                    <div className="absolute bottom-2 right-2 bg-background/90 backdrop-blur-sm px-2 py-1 rounded-lg text-sm font-bold shadow-sm">
+                      ${item.price}
+                    </div>
                   </div>
-                </div>
-                <div className="p-3 flex-1 flex flex-col">
-                  <h3 className="font-semibold text-sm leading-tight mb-1">{item.name}</h3>
-                  <p className="text-xs text-muted-foreground mt-auto">{item.category}</p>
-                </div>
-              </button>
-            ))}
-          </div>
+                  <div className="p-3 flex-1 flex flex-col">
+                    <h3 className="font-semibold text-sm leading-tight mb-1">{item.name}</h3>
+                    <p className="text-xs text-muted-foreground mt-auto">{item.category}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -588,24 +700,40 @@ function POSSystem() {
         <div className="p-4 border-b border-border bg-secondary/30">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-lg">Current Order</h2>
-            <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded-md">
-              Ticket #4092
-            </span>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setCart([])}
+                className="text-[10px] font-bold text-rose-500 hover:text-rose-600 px-2 py-1 rounded-md hover:bg-rose-50 transition-colors"
+              >
+                Clear
+              </button>
+              <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded-md">
+                Ticket #4092
+              </span>
+            </div>
           </div>
           
-          <div className="relative">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-              {orderType === "Dine-in" ? <UtensilsCrossed className="w-4 h-4" /> : 
-               orderType === "Room Service" ? <BedDouble className="w-4 h-4" /> : 
-               <User className="w-4 h-4" />}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              {orderType === "Dine-in" && (
+                <>
+                  <UtensilsCrossed className="w-4 h-4" />
+                  <span>Table: {selectedTableId || "Not Selected"}</span>
+                </>
+              )}
+              {orderType === "Room Service" && (
+                <>
+                  <BedDouble className="w-4 h-4" />
+                  <span>Room: {checkedInBookings.find(b => b.id === selectedBookingId)?.roomNumber || "Not Selected"}</span>
+                </>
+              )}
+              {orderType === "Takeaway" && (
+                <>
+                  <ShoppingCart className="w-4 h-4" />
+                  <span>Takeaway Order</span>
+                </>
+              )}
             </div>
-            <input 
-              type="text" 
-              placeholder={orderType === "Dine-in" ? "Table Number" : orderType === "Room Service" ? "Room Number" : "Customer Name"} 
-              value={tableOrRoom}
-              onChange={(e) => setTableOrRoom(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-            />
           </div>
         </div>
         
@@ -616,8 +744,8 @@ function POSSystem() {
               <p>No items added yet</p>
             </div>
           ) : (
-            cart.map((cartItem) => (
-              <div key={cartItem.item.id} className="flex flex-col gap-2 bg-background p-3 rounded-xl border border-border group">
+            cart.map((cartItem, idx) => (
+              <div key={`${cartItem.item.id}-${idx}`} className="flex flex-col gap-2 bg-background p-3 rounded-xl border border-border group">
                 <div className="flex justify-between items-start">
                   <div className="flex-1 pr-2">
                     <p className="font-medium text-sm leading-tight">{cartItem.item.name}</p>
@@ -628,17 +756,28 @@ function POSSystem() {
                   </div>
                 </div>
                 
+                {/* Modifiers / Notes */}
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="Add note (e.g. No onions)" 
+                    value={cartItem.notes || ""}
+                    onChange={(e) => updateNotes(cartItem.item.id, cartItem.notes, e.target.value)}
+                    className="flex-1 bg-secondary/50 border-none text-[10px] px-2 py-1 rounded focus:ring-1 focus:ring-primary/30"
+                  />
+                </div>
+                
                 <div className="flex items-center justify-between mt-1">
                   <div className="flex items-center gap-1 bg-secondary rounded-lg p-0.5 border border-border">
                     <button 
-                      onClick={() => updateQuantity(cartItem.item.id, -1)}
+                      onClick={() => updateQuantity(cartItem.item.id, -1, cartItem.notes)}
                       className="p-1 hover:bg-background rounded-md transition-colors"
                     >
                       <Minus className="w-3 h-3" />
                     </button>
                     <span className="w-6 text-center text-sm font-medium">{cartItem.quantity}</span>
                     <button 
-                      onClick={() => updateQuantity(cartItem.item.id, 1)}
+                      onClick={() => updateQuantity(cartItem.item.id, 1, cartItem.notes)}
                       className="p-1 hover:bg-background rounded-md transition-colors"
                     >
                       <Plus className="w-3 h-3" />
@@ -646,7 +785,7 @@ function POSSystem() {
                   </div>
                   
                   <button 
-                    onClick={() => removeFromCart(cartItem.item.id)}
+                    onClick={() => removeFromCart(cartItem.item.id, cartItem.notes)}
                     className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -662,6 +801,39 @@ function POSSystem() {
             <div className="flex justify-between text-muted-foreground">
               <span>Subtotal</span>
               <span>${subtotal.toFixed(2)}</span>
+            </div>
+            
+            {/* Discount & Service Charge Controls */}
+            <div className="flex items-center justify-between gap-4 py-1">
+              <div className="flex items-center gap-2 flex-1">
+                <span className="text-xs text-muted-foreground">Disc %</span>
+                <input 
+                  type="number" 
+                  value={discount} 
+                  onChange={(e) => setDiscount(Number(e.target.value))}
+                  className="w-12 bg-background border border-border rounded px-1 py-0.5 text-xs"
+                />
+              </div>
+              <div className="flex items-center gap-2 flex-1 justify-end">
+                <span className="text-xs text-muted-foreground">Svc %</span>
+                <input 
+                  type="number" 
+                  value={serviceCharge} 
+                  onChange={(e) => setServiceCharge(Number(e.target.value))}
+                  className="w-12 bg-background border border-border rounded px-1 py-0.5 text-xs"
+                />
+              </div>
+            </div>
+
+            {discount > 0 && (
+              <div className="flex justify-between text-rose-500">
+                <span>Discount ({discount}%)</span>
+                <span>-${discountAmount.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-muted-foreground">
+              <span>Service Charge ({serviceCharge}%)</span>
+              <span>+${serviceChargeAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-muted-foreground">
               <span>Tax (8%)</span>
@@ -684,36 +856,188 @@ function POSSystem() {
             </button>
           </div>
           
-          <div className="grid grid-cols-2 gap-2">
-            <button 
-              disabled={cart.length === 0 || isPlacingOrder}
-              onClick={handlePlaceOrder}
-              className="py-3 rounded-xl bg-blue-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors shadow-sm flex items-center justify-center gap-2"
-            >
-              <CreditCard className="w-4 h-4" />
-              Card
-            </button>
-            <button 
-              disabled={cart.length === 0 || isPlacingOrder}
-              onClick={handlePlaceOrder}
-              className="py-3 rounded-xl bg-emerald-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-emerald-600 transition-colors shadow-sm flex items-center justify-center gap-2"
-            >
-              <Banknote className="w-4 h-4" />
-              Cash
-            </button>
-          </div>
-          
-          {orderType === "Room Service" && (
-            <button 
-              disabled={cart.length === 0 || !tableOrRoom || isPlacingOrder}
-              onClick={handlePlaceOrder}
-              className="w-full mt-2 py-3 rounded-xl bg-primary text-primary-foreground font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors shadow-sm flex items-center justify-center gap-2"
-            >
-              <BedDouble className="w-4 h-4" />
-              Charge to Room
-            </button>
-          )}
+          <button 
+            disabled={cart.length === 0}
+            onClick={() => setShowPaymentModal(true)}
+            className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors shadow-sm flex items-center justify-center gap-2"
+          >
+            <CreditCard className="w-4 h-4" />
+            Checkout / Pay
+          </button>
         </div>
+      </div>
+
+      {/* Payment Modal */}
+      <AnimatePresence>
+        {showPaymentModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+              onClick={() => setShowPaymentModal(false)}
+            />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-card w-full max-w-md rounded-3xl shadow-2xl border border-border overflow-hidden relative z-10"
+            >
+              <div className="p-6 border-b border-border flex items-center justify-between bg-secondary/30">
+                <h3 className="font-bold text-lg">Checkout</h3>
+                <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-secondary rounded-lg transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <div className="bg-secondary/20 p-4 rounded-2xl border border-border text-center">
+                  <p className="text-sm text-muted-foreground mb-1">Total Amount Due</p>
+                  <p className="text-3xl font-bold text-primary">${total.toFixed(2)}</p>
+                  {pointsValue > 0 && (
+                    <p className="text-xs text-emerald-600 font-medium mt-1">
+                      Includes ${pointsValue.toFixed(2)} points discount
+                    </p>
+                  )}
+                </div>
+
+                {selectedGuest && selectedGuest.loyaltyPoints > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                    <div className="flex items-center gap-2">
+                      <Star className="w-4 h-4 text-emerald-600 fill-emerald-600" />
+                      <div className="text-left">
+                        <p className="text-xs font-bold text-emerald-900">Loyalty Points</p>
+                        <p className="text-[10px] text-emerald-700">{selectedGuest.loyaltyPoints} points available</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setRedeemPoints(!redeemPoints)}
+                      className={cn(
+                        "px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all",
+                        redeemPoints 
+                          ? "bg-emerald-600 text-white" 
+                          : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                      )}
+                    >
+                      {redeemPoints ? "Redeemed" : "Redeem"}
+                    </button>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold">Split Bill</p>
+                  <div className="flex items-center gap-4 bg-secondary/50 p-3 rounded-xl border border-border">
+                    <span className="text-sm text-muted-foreground flex-1">Split between</span>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => setSplitCount(Math.max(1, splitCount - 1))} className="p-1 bg-background rounded border border-border"><Minus className="w-4 h-4"/></button>
+                      <span className="font-bold w-4 text-center">{splitCount}</span>
+                      <button onClick={() => setSplitCount(splitCount + 1)} className="p-1 bg-background rounded border border-border"><Plus className="w-4 h-4"/></button>
+                    </div>
+                  </div>
+                  {splitCount > 1 && (
+                    <p className="text-xs text-center text-muted-foreground">
+                      Each person pays: <span className="font-bold text-foreground">${(total / splitCount).toFixed(2)}</span>
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold">Payment Method</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["Cash", "Card", "Room Charge"] as const).map(method => (
+                      <button
+                        key={method}
+                        onClick={() => setPaymentMethod(method)}
+                        disabled={method === "Room Charge" && orderType !== "Room Service" && !selectedBookingId}
+                        className={cn(
+                          "flex flex-col items-center gap-2 p-3 rounded-xl border transition-all",
+                          paymentMethod === method 
+                            ? "bg-primary/10 border-primary text-primary shadow-sm" 
+                            : "bg-background border-border text-muted-foreground hover:border-primary/50 hover:text-foreground",
+                          method === "Room Charge" && orderType !== "Room Service" && !selectedBookingId && "opacity-50 cursor-not-allowed"
+                        )}
+                      >
+                        {method === "Cash" && <Banknote className="w-5 h-5" />}
+                        {method === "Card" && <CreditCard className="w-5 h-5" />}
+                        {method === "Room Charge" && <BedDouble className="w-5 h-5" />}
+                        <span className="text-[10px] font-bold uppercase">{method}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button 
+                  disabled={isPlacingOrder || (paymentMethod === "Room Charge" && !selectedBookingId)}
+                  onClick={handlePlaceOrder}
+                  className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg hover:bg-primary/90 transition-all flex items-center justify-center gap-2"
+                >
+                  {isPlacingOrder ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-5 h-5" />
+                      Complete Payment & Order
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function RecentOrdersView() {
+  const { orders } = useMenu();
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold text-lg">Recent Tickets</h3>
+        <p className="text-xs text-muted-foreground">{orders.length} orders found</p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {orders.map((order) => (
+          <div key={order.id} className="bg-card border border-border rounded-2xl p-4 shadow-sm hover:shadow-md transition-all">
+            <div className="flex justify-between items-start mb-3">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm font-bold">Ticket #{order.id.slice(-4).toUpperCase()}</span>
+                  <span className={cn(
+                    "text-[10px] px-2 py-0.5 rounded-full font-bold uppercase",
+                    order.status === "Delivered" ? "bg-emerald-100 text-emerald-700" :
+                    order.status === "Preparing" ? "bg-amber-100 text-amber-700" :
+                    order.status === "Cancelled" ? "bg-rose-100 text-rose-700" :
+                    "bg-blue-100 text-blue-700"
+                  )}>
+                    {order.status}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {order.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="font-bold text-primary">${order.total.toFixed(2)}</p>
+                <p className="text-[10px] text-muted-foreground">{order.roomNumber ? `Room ${order.roomNumber}` : "Dine-in"}</p>
+              </div>
+            </div>
+            
+            <div className="space-y-1 border-t border-border/50 pt-3">
+              {order.items.map((item, idx) => (
+                <div key={idx} className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">{item.quantity}x {item.name}</span>
+                  <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -975,15 +1299,28 @@ function TableActionModal({ table, onClose, onUpdate }: { table: Table, onClose:
             ))}
           </div>
 
+          {table.status === "Reserved" && (
+            <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 space-y-2">
+              <p className="text-xs font-bold text-amber-900 uppercase tracking-wider">Upcoming Reservation</p>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-amber-700" />
+                  <span className="text-sm font-medium text-amber-800">Mr. Anderson</span>
+                </div>
+                <span className="text-xs font-bold text-amber-700">7:30 PM</span>
+              </div>
+            </div>
+          )}
+
           {table.status === "Occupied" && (
             <div className="space-y-4 pt-4 border-t border-border">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Server</span>
-                <span className="font-bold">{table.server}</span>
+                <span className="font-bold">{table.server || "Not Assigned"}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Time Seated</span>
-                <span className="font-bold">{table.time}</span>
+                <span className="font-bold">{table.time || "Just now"}</span>
               </div>
               <button className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-sm hover:bg-primary/90 transition-colors">
                 Open POS Order
@@ -998,104 +1335,311 @@ function TableActionModal({ table, onClose, onUpdate }: { table: Table, onClose:
 
 function RoomService() {
   const { orders, updateOrderStatus } = useMenu();
+  const [view, setView] = useState<"Orders" | "Delivery Tracking">("Orders");
   
   const roomServiceOrders = useMemo(() => {
     return orders.filter(o => o.roomNumber !== undefined);
   }, [orders]);
 
+  const activeDeliveries = useMemo(() => {
+    return roomServiceOrders.filter(o => o.status === "Delivered");
+  }, [roomServiceOrders]);
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
-        <div className="flex flex-wrap items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-            <span className="text-sm font-medium text-muted-foreground">Pending</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-            <span className="text-sm font-medium text-muted-foreground">Preparing</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-            <span className="text-sm font-medium text-muted-foreground">Delivering</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-            <span className="text-sm font-medium text-muted-foreground">Completed</span>
-          </div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 bg-secondary/50 p-1 rounded-xl">
+          {(["Orders", "Delivery Tracking"] as const).map(v => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                view === v ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {v}
+            </button>
+          ))}
         </div>
+        {view === "Delivery Tracking" && (
+          <div className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            {activeDeliveries.length} Active Deliveries
+          </div>
+        )}
       </div>
 
-      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
-        <div className="p-5 grid gap-4">
-          {roomServiceOrders.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              No room service orders found.
+      {view === "Orders" ? (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
+            <div className="flex flex-wrap items-center gap-6">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                <span className="text-sm font-medium text-muted-foreground">Pending</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                <span className="text-sm font-medium text-muted-foreground">Preparing</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                <span className="text-sm font-medium text-muted-foreground">Delivering</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                <span className="text-sm font-medium text-muted-foreground">Completed</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+            <div className="p-5 grid gap-4">
+              {roomServiceOrders.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  No room service orders found.
+                </div>
+              ) : (
+                roomServiceOrders.map((order) => (
+                  <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border rounded-lg hover:bg-secondary/20 transition-colors gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className={cn(
+                        "p-2 rounded-full mt-1",
+                        order.status === "Pending" ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" :
+                        order.status === "Preparing" ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" :
+                        order.status === "Delivered" ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                        "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+                      )}>
+                        <BedDouble className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium">Room {order.roomNumber}</h3>
+                          <span className={cn(
+                            "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
+                            order.status === "Pending" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                            order.status === "Preparing" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                            order.status === "Delivered" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                            "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                          )}>
+                            {order.status}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Order {order.id.slice(-6)} • {order.items.length} items • ${order.total.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm">
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Clock className="w-4 h-4" />
+                        {order.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                      <select 
+                        value={order.status}
+                        onChange={(e) => updateOrderStatus(order.id, e.target.value as any)}
+                        className="bg-secondary text-foreground rounded-md px-2 py-1 text-xs border-none focus:ring-1 focus:ring-primary"
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Preparing">Preparing</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
+                    </div>
+                  </div>
+                )
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {activeDeliveries.length === 0 ? (
+            <div className="col-span-full bg-card border border-dashed border-border rounded-3xl p-20 text-center">
+              <Sparkles className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20" />
+              <p className="text-muted-foreground font-medium">No active deliveries at the moment.</p>
             </div>
           ) : (
-            roomServiceOrders.map((order) => (
-              <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border rounded-lg hover:bg-secondary/20 transition-colors gap-4">
-                <div className="flex items-start gap-4">
-                  <div className={cn(
-                    "p-2 rounded-full mt-1",
-                    order.status === "Pending" ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" :
-                    order.status === "Preparing" ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" :
-                    order.status === "Delivered" ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" :
-                    "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
-                  )}>
-                    <BedDouble className="w-5 h-5" />
-                  </div>
+            activeDeliveries.map(order => (
+              <div key={order.id} className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-4">
+                <div className="flex justify-between items-start">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium">Room {order.roomNumber}</h3>
-                      <span className={cn(
-                        "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
-                        order.status === "Pending" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
-                        order.status === "Preparing" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
-                        order.status === "Delivered" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
-                        "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
-                      )}>
-                        {order.status}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Order {order.id.slice(-6)} • {order.items.length} items • ${order.total.toFixed(2)}
-                    </p>
+                    <h3 className="font-bold text-lg">Room {order.roomNumber}</h3>
+                    <p className="text-xs text-muted-foreground">Ticket #{order.id.slice(-4).toUpperCase()}</p>
+                  </div>
+                  <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
+                    <CheckCircle2 className="w-5 h-5" />
                   </div>
                 </div>
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <Clock className="w-4 h-4" />
-                    {order.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                
+                <div className="relative h-2 bg-secondary rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: "0%" }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 10, repeat: Infinity }}
+                    className="absolute inset-y-0 left-0 bg-emerald-500"
+                  />
+                </div>
+                
+                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  <span>Kitchen</span>
+                  <span className="text-emerald-600">Delivering</span>
+                  <span>Guest</span>
+                </div>
+                
+                <div className="pt-4 border-t border-border flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                      <User className="w-4 h-4" />
+                    </div>
+                    <span className="text-xs font-medium">John (Staff)</span>
                   </div>
-                  <select 
-                    value={order.status}
-                    onChange={(e) => updateOrderStatus(order.id, e.target.value as any)}
-                    className="bg-secondary text-foreground rounded-md px-2 py-1 text-xs border-none focus:ring-1 focus:ring-primary"
+                  <button 
+                    onClick={() => updateOrderStatus(order.id, "Delivered")}
+                    className="text-xs font-bold text-primary hover:underline"
                   >
-                    <option value="Pending">Pending</option>
-                    <option value="Preparing">Preparing</option>
-                    <option value="Delivered">Delivered</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </select>
+                    Mark as Received
+                  </button>
                 </div>
               </div>
             ))
           )}
         </div>
+      )}
+    </div>
+  );
+}
+
+function KitchenDisplay() {
+  const { orders, updateOrderStatus } = useMenu();
+  
+  const activeOrders = useMemo(() => {
+    return orders.filter(o => ["Pending", "Preparing"].includes(o.status))
+      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+  }, [orders]);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <ChefHat className="w-6 h-6 text-primary" />
+          <h2 className="text-xl font-bold">Live Kitchen Feed</h2>
+        </div>
+        <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-amber-500 animate-pulse"></div>
+            <span className="text-muted-foreground font-medium">New Orders</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+            <span className="text-muted-foreground font-medium">In Progress</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {activeOrders.length === 0 ? (
+          <div className="col-span-full bg-card border border-dashed border-border rounded-3xl p-20 text-center">
+            <UtensilsCrossed className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20" />
+            <p className="text-muted-foreground font-medium">Kitchen is clear. No active orders.</p>
+          </div>
+        ) : (
+          activeOrders.map((order) => (
+            <motion.div 
+              layout
+              key={order.id} 
+              className={cn(
+                "bg-card border-2 rounded-2xl overflow-hidden flex flex-col shadow-sm",
+                order.status === "Pending" ? "border-amber-500/30" : "border-blue-500/30"
+              )}
+            >
+              <div className={cn(
+                "p-4 flex justify-between items-center",
+                order.status === "Pending" ? "bg-amber-500/10" : "bg-blue-500/10"
+              )}>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Ticket</span>
+                  <p className="font-black text-lg">#{order.id.slice(-4).toUpperCase()}</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Wait Time</span>
+                  <p className="font-bold flex items-center gap-1 justify-end">
+                    <Clock className="w-3 h-3" />
+                    {Math.floor((new Date().getTime() - order.timestamp.getTime()) / 60000)}m
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 flex-1 space-y-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground mb-2">
+                  {order.roomNumber ? (
+                    <><BedDouble className="w-3 h-3" /> Room {order.roomNumber}</>
+                  ) : (
+                    <><UtensilsCrossed className="w-3 h-3" /> Dine-in</>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  {order.items.map((item, idx) => (
+                    <div key={idx} className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded bg-secondary flex items-center justify-center text-xs font-bold">
+                        {item.quantity}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold leading-tight">{item.name}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-4 bg-secondary/30 border-t border-border mt-auto grid grid-cols-2 gap-2">
+                {order.status === "Pending" ? (
+                  <button 
+                    onClick={() => updateOrderStatus(order.id, "Preparing")}
+                    className="col-span-2 py-3 bg-blue-500 text-white rounded-xl font-bold text-sm hover:bg-blue-600 transition-colors shadow-sm"
+                  >
+                    Start Cooking
+                  </button>
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => updateOrderStatus(order.id, "Delivered")}
+                      className="py-3 bg-emerald-500 text-white rounded-xl font-bold text-sm hover:bg-emerald-600 transition-colors shadow-sm"
+                    >
+                      Ready
+                    </button>
+                    <button 
+                      onClick={() => updateOrderStatus(order.id, "Pending")}
+                      className="py-3 bg-secondary text-foreground rounded-xl font-bold text-sm hover:bg-secondary/80 transition-colors"
+                    >
+                      Hold
+                    </button>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          ))
+        )}
       </div>
     </div>
   );
 }
 
 function FAndBInventory() {
-  const inventory = useMemo(() => [
-    { id: "INV-001", item: "Premium Coffee Beans", category: "Beverage", stock: 12, unit: "kg", status: "Low Stock", lastUpdated: "Today, 08:00 AM" },
-    { id: "INV-002", item: "Avocado", category: "Produce", stock: 45, unit: "pcs", status: "In Stock", lastUpdated: "Today, 07:30 AM" },
-    { id: "INV-003", item: "Sourdough Bread", category: "Bakery", stock: 8, unit: "loaves", status: "Low Stock", lastUpdated: "Today, 09:15 AM" },
-    { id: "INV-004", item: "House Red Wine", category: "Alcohol", stock: 24, unit: "bottles", status: "In Stock", lastUpdated: "Yesterday, 11:00 PM" },
-    { id: "INV-005", item: "Truffle Oil", category: "Pantry", stock: 2, unit: "bottles", status: "Critical", lastUpdated: "Yesterday, 04:00 PM" },
-  ], []);
+  const { menuItems, updateStock } = useMenu();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [tempStock, setTempStock] = useState<number>(0);
+
+  const handleStartEdit = (item: MenuItem) => {
+    setEditingId(item.id);
+    setTempStock(item.stock);
+  };
+
+  const handleSaveStock = async (id: string) => {
+    await updateStock(id, tempStock);
+    setEditingId(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -1107,16 +1651,16 @@ function FAndBInventory() {
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-            <span className="text-sm font-medium text-muted-foreground">Low Stock</span>
+            <span className="text-sm font-medium text-muted-foreground">Low Stock (&lt;10)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-red-500"></div>
-            <span className="text-sm font-medium text-muted-foreground">Critical</span>
+            <span className="text-sm font-medium text-muted-foreground">Out of Stock</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
-            <Plus className="w-4 h-4" /> Add Item
+            <Plus className="w-4 h-4" /> Add Menu Item
           </button>
         </div>
       </div>
@@ -1126,35 +1670,68 @@ function FAndBInventory() {
           <table className="w-full text-sm text-left border-collapse">
             <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
               <tr>
-                <th className="px-4 py-3 font-medium">Item ID</th>
-                <th className="px-4 py-3 font-medium">Name</th>
+                <th className="px-4 py-3 font-medium">Item</th>
                 <th className="px-4 py-3 font-medium">Category</th>
                 <th className="px-4 py-3 font-medium">Stock Level</th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Last Updated</th>
-                <th className="px-4 py-3 font-medium">Actions</th>
+                <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
-              {inventory.map((item) => (
+              {menuItems.map((item) => (
                 <tr key={item.id} className="border-b border-border hover:bg-secondary/20 transition-colors">
-                  <td className="p-4 font-medium">{item.id}</td>
-                  <td className="px-4 py-3">{item.item}</td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-3">
+                      <img src={item.image} alt="" className="w-10 h-10 rounded-lg object-cover" referrerPolicy="no-referrer" />
+                      <span className="font-medium">{item.name}</span>
+                    </div>
+                  </td>
                   <td className="p-4 text-muted-foreground">{item.category}</td>
                   <td className="px-4 py-3">
-                    <span className="font-medium">{item.stock}</span> <span className="text-muted-foreground text-sm">{item.unit}</span>
+                    {editingId === item.id ? (
+                      <div className="flex items-center gap-2">
+                        <input 
+                          type="number" 
+                          value={tempStock} 
+                          onChange={(e) => setTempStock(Number(e.target.value))}
+                          className="w-20 bg-background border border-border rounded px-2 py-1 text-sm"
+                          autoFocus
+                        />
+                        <button 
+                          onClick={() => handleSaveStock(item.id)}
+                          className="p-1 bg-emerald-500 text-white rounded hover:bg-emerald-600"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => setEditingId(null)}
+                          className="p-1 bg-secondary text-foreground rounded hover:bg-secondary/80"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 group">
+                        <span className="font-bold text-lg">{item.stock}</span>
+                        <button 
+                          onClick={() => handleStartEdit(item)}
+                          className="p-1 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <span className={cn(
                       "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                      item.status === "In Stock" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
-                      item.status === "Low Stock" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                      item.stock > 10 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                      item.stock > 0 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
                       "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                     )}>
-                      {item.status}
+                      {item.stock > 10 ? "In Stock" : item.stock > 0 ? "Low Stock" : "Out of Stock"}
                     </span>
                   </td>
-                  <td className="p-4 text-sm text-muted-foreground">{item.lastUpdated}</td>
                   <td className="px-4 py-3 text-right">
                     <button className="p-2 hover:bg-secondary rounded-lg transition-colors text-muted-foreground hover:text-foreground">
                       <Info className="w-4 h-4" />

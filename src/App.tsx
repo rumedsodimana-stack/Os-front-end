@@ -35,6 +35,7 @@ import { CostControl } from "./pages/CostControl";
 import { Readme } from "./pages/Readme";
 import { Onboarding } from "./pages/Onboarding";
 import { LandingPage } from "./pages/LandingPage";
+import { NewFeature } from "./pages/NewFeature";
 
 type Department = 
   | "Front Desk" 
@@ -60,7 +61,8 @@ type Department =
   | "Configuration"
   | "Guest Relations"
   | "Connect"
-  | "Readme";
+  | "Readme"
+  | "Sandbox";
 
 export default function App() {
   return (
@@ -76,7 +78,7 @@ export default function App() {
 
 function AppContent() {
   const { user, profile, loading } = useAuth();
-  const [activeDepartment, setActiveDepartment] = useState<Department>("Front Desk");
+  const [activeDepartment, setActiveDepartment] = useState<Department>("Sandbox");
   const [activeSubmenu, setActiveSubmenu] = useState<string>("Overview");
   const [aiEnabled, setAiEnabled] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
@@ -110,6 +112,26 @@ function AppContent() {
 
   if (!profile || !profile.hotelId) {
     return <Onboarding onComplete={() => {}} />;
+  }
+
+  if (activeDepartment === "Sandbox") {
+    return (
+      <NotificationProvider>
+        <GuestProvider>
+          <MenuProvider>
+            <TableProvider>
+              <RoomProvider>
+                <BookingProvider>
+                  <FolioProvider>
+                    <NewFeature />
+                  </FolioProvider>
+                </BookingProvider>
+              </RoomProvider>
+            </TableProvider>
+          </MenuProvider>
+        </GuestProvider>
+      </NotificationProvider>
+    );
   }
 
   return (

@@ -195,5 +195,42 @@ Standardized spacing and styling for form elements.
 
 We use `lucide-react` for all icons. Ensure icons are sized appropriately (usually `w-4 h-4` for inline text, `w-5 h-5` for buttons, `w-6 h-6` for headers).
 
+## 8. Orbit OS Theme (Layout)
+
+The application supports a premium, macOS-inspired layout called the **Orbit OS Theme**. This layout replaces the traditional left-hand sidebar with a top menu bar and a floating bottom dock.
+
+**Key Features of Orbit OS Theme:**
+- **Glassmorphism:** Heavy use of `backdrop-blur-xl` and semi-transparent backgrounds (`bg-background/40`) to create a frosted glass effect.
+- **Top Menu Bar:** Displays the active department icon and name on the left, followed by its sub-menus. System actions (Search, AI, Theme, Notifications) are aligned to the right.
+- **Floating Dock:** A centered, glassy dock at the bottom of the screen containing icons for the main departments. Tooltips appear on hover to identify each department.
+
+**Usage:**
+To activate this theme, set the `layoutStyle` in the `ThemeConfig` to `"orbit-os"`.
+
+```tsx
+// In theme-provider.tsx or via setConfig
+setConfig({ layoutStyle: "orbit-os" });
+```
+
+**Claude AI Handover Context:**
+When modifying the Orbit OS layout in `Layout.tsx`, look for the `isOrbitOS` boolean. Ensure that any new elements added to the top bar or bottom dock maintain the established glassmorphism styling (e.g., `bg-background/40 backdrop-blur-xl border-white/10 dark:border-white/5`).
+
+## 9. AI Coworker (Sandbox)
+
+The AI Coworker is an experimental feature located in the Sandbox module (`src/pages/NewFeature.tsx`). It leverages the Gemini API to assist hotel staff with complex operational tasks.
+
+**Key Capabilities:**
+- **Conversational Interface:** Users can chat with the AI to request tasks.
+- **Dynamic UI Generation:** The AI can return structured JSON that triggers the rendering of specific UI components (e.g., `reservation_form`, `reservation_table`).
+- **Live Data Integration:** The AI Coworker is wired into the application's core context providers (like `BookingContext`). When the AI generates a reservation form and the user confirms it, it writes real data to the Firestore database and displays the live result in a table.
+
+**Claude AI Handover Context:**
+- The core logic for processing AI responses and rendering dynamic UI is in `src/pages/NewFeature.tsx` within the `handleStart` function and the message rendering loop.
+- To add new capabilities (e.g., generating a housekeeping schedule), you must:
+  1. Update the `systemInstruction` in the Gemini API call to understand the new request.
+  2. Add a new `uiComponent` type to the JSON schema.
+  3. Add the corresponding rendering logic in the message loop in `NewFeature.tsx`.
+- The `ReservationTable` component (`src/components/ReservationTable.tsx`) has been updated to prioritize displaying specific live data when passed via props, falling back to all bookings or mock data as needed.
+
 ---
 *Note: Always use the `cn()` utility function from `src/lib/utils.ts` when conditionally joining Tailwind classes.*

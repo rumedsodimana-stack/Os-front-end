@@ -10,6 +10,7 @@ export interface ThemeConfig {
   fontMono: string;
   fontSizeBase: number;
   sidebarStyle: "glass" | "solid" | "gradient";
+  layoutStyle: "sidebar" | "orbit-os";
   sidebarMainBg: string;
   sidebarSubBg: string;
   sidebarActiveBg: string;
@@ -26,6 +27,7 @@ const defaultThemeConfig: ThemeConfig = {
   fontMono: "JetBrains Mono",
   fontSizeBase: 16,
   sidebarStyle: "glass",
+  layoutStyle: "orbit-os",
   sidebarMainBg: "#5b21b6",
   sidebarSubBg: "#7c3aed",
   sidebarActiveBg: "#f3f4f6",
